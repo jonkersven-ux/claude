@@ -1,33 +1,19 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { InsightCard } from "@/components/ui/insight-card";
-
-// Demo data — will be replaced by API calls
-const kpis = {
-  totalGuests: 127,
-  totalMatches: 17,
-  totalSpend: 111400,
-  totalRevenue: 450000,
-  roi: 304,
-  attendanceRate: 87,
-  costPerGuest: 876,
-};
-
-const upcomingMatches = [
-  { id: "1", homeTeam: "Ajax", awayTeam: "Feyenoord", matchDate: "2026-10-25", priority: "A_MATCH", invitations: 16, maxGuests: 20 },
-  { id: "2", homeTeam: "Ajax", awayTeam: "PSV", matchDate: "2026-11-22", priority: "A_MATCH", invitations: 4, maxGuests: 20 },
-  { id: "3", homeTeam: "Ajax", awayTeam: "AZ", matchDate: "2026-12-13", priority: "NORMAL", invitations: 0, maxGuests: 20 },
-];
+import { getDashboardData, getAuth } from "@/lib/store";
 
 const insights = [
   {
     type: "GUEST_PRIORITIZATION",
     title: "High-value prospect available",
-    content: "Peter van den Berg (ACME Corp, €450K pipeline) has accepted the invitation to Ajax vs Feyenoord. Recommend seating him next to Jan de Vries for direct executive engagement.",
+    content: "Peter van den Berg (ACME Corp, \u20AC450K pipeline) has accepted the invitation to Ajax vs Feyenoord. Recommend seating him next to Jan de Vries for direct executive engagement.",
     confidence: 0.92,
   },
   {
@@ -44,14 +30,23 @@ const insights = [
   },
 ];
 
-const invitationFunnel = { total: 24, sent: 3, accepted: 16, declined: 2, checkedIn: 0, noShow: 0 };
-
 export default function DashboardPage() {
+  const [data, setData] = useState<ReturnType<typeof getDashboardData> | null>(null);
+  const auth = getAuth();
+
+  useEffect(() => {
+    setData(getDashboardData());
+  }, []);
+
+  if (!data) return null;
+
+  const { kpis, invitationFunnel, upcomingMatches } = data;
+
   return (
     <AppLayout>
       <PageHeader
         title="Dashboard"
-        description="Season 2026/2027 — Johan Cruijff ArenA"
+        description={auth ? `${auth.company.name} — Season 2026/2027` : "Season 2026/2027"}
       />
 
       {/* KPI row */}
@@ -59,36 +54,44 @@ export default function DashboardPage() {
         <KpiCard
           label="Total Guests"
           value={kpis.totalGuests}
-          change="+12 this month"
-          changeType="positive"
+          change={`${kpis.totalMatches} matches planned`}
         />
         <KpiCard
           label="Attendance Rate"
-          value={`${kpis.attendanceRate}%`}
-          change="+3% vs last season"
-          changeType="positive"
+          value={kpis.attendanceRate > 0 ? `${kpis.attendanceRate}%` : "—"}
+          change="Based on responses"
         />
         <KpiCard
-          label="Total Spend"
-          value={`€${(kpis.totalSpend / 1000).toFixed(0)}K`}
+          label="Total Invitations"
+          value={kpis.totalInvitations}
         />
         <KpiCard
-          label="ROI"
-          value={`${kpis.roi}%`}
-          change={`€${(kpis.totalRevenue / 1000).toFixed(0)}K attributed revenue`}
-          changeType="positive"
+          label="Pipeline"
+          value={kpis.totalPipeline > 0 ? `\u20AC${(kpis.totalPipeline / 1000).toFixed(0)}K` : "\u20AC0"}
+          change="Total guest pipeline"
         />
       </div>
 
       <div className="mt-8 grid grid-cols-3 gap-6">
-        {/* Upcoming matches */}
+        {/* Upcoming matches — now clickable */}
         <div className="col-span-2">
           <h2 className="mb-4 text-lg font-semibold text-surface-900">Upcoming Matches</h2>
           <div className="space-y-3">
+            {upcomingMatches.length === 0 && (
+              <div className="card flex items-center justify-center py-8">
+                <div className="text-center">
+                  <p className="text-sm text-surface-500">No matches yet</p>
+                  <Link href="/matches" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
+                    Add your first match
+                  </Link>
+                </div>
+              </div>
+            )}
             {upcomingMatches.map((match) => (
-              <div
+              <Link
                 key={match.id}
-                className="card flex items-center justify-between px-5 py-4"
+                href={`/matches/${match.id}`}
+                className="card flex items-center justify-between px-5 py-4 hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div>
@@ -108,11 +111,11 @@ export default function DashboardPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-surface-900">
-                    {match.invitations}/{match.maxGuests}
+                    {match.invitationCount}/{match.maxGuests}
                   </p>
                   <p className="text-xs text-surface-500">guests invited</p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
 

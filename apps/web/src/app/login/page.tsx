@@ -1,15 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { login, register, getAuth, seedIfEmpty } from "@/lib/store";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [companyName, setCompanyName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    seedIfEmpty();
+    if (getAuth()) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      if (isRegister) {
+        if (password.length < 6) {
+          setError("Password must be at least 6 characters");
+          setLoading(false);
+          return;
+        }
+        register({ companyName, email, password, firstName, lastName });
+      } else {
+        const result = login(email, password);
+        if (!result) {
+          setError("Invalid email or password");
+          setLoading(false);
+          return;
+        }
+      }
+      router.push("/dashboard");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -34,14 +74,22 @@ export default function LoginPage() {
               : "Sign in to your HostIQ account."}
           </p>
 
-          <form
-            className="mt-8 space-y-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              // Auth logic handled by API client
-              window.location.href = "/dashboard";
-            }}
-          >
+          {!isRegister && (
+            <div className="mt-4 rounded-lg bg-brand-50 p-3">
+              <p className="text-xs font-medium text-brand-700">Demo account</p>
+              <p className="text-xs text-brand-600">
+                Email: admin@hostiq.io &nbsp;|&nbsp; Password: admin123
+              </p>
+            </div>
+          )}
+
+          {error && (
+            <div className="mt-4 rounded-lg bg-red-50 p-3">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             {isRegister && (
               <>
                 <div className="grid grid-cols-2 gap-3">
@@ -92,22 +140,25 @@ export default function LoginPage() {
               <input
                 type="password"
                 className="input"
-                placeholder={isRegister ? "Min. 8 characters" : "Enter your password"}
+                placeholder={isRegister ? "Min. 6 characters" : "Enter your password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
 
-            <button type="submit" className="btn-primary w-full">
-              {isRegister ? "Create account" : "Sign in"}
+            <button type="submit" className="btn-primary w-full" disabled={loading}>
+              {loading ? "Please wait..." : isRegister ? "Create account" : "Sign in"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-surface-500">
             {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
             <button
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setError("");
+              }}
               className="font-medium text-brand-600 hover:text-brand-700"
             >
               {isRegister ? "Sign in" : "Start free trial"}

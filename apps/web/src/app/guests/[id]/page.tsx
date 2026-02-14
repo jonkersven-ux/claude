@@ -1,35 +1,51 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
 import { AppLayout } from "@/components/layout/app-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { InsightCard } from "@/components/ui/insight-card";
-
-const guest = {
-  firstName: "Peter",
-  lastName: "van den Berg",
-  email: "peter@acmecorp.nl",
-  phone: "+31 6 1234 5678",
-  jobTitle: "CEO",
-  guestCompany: "ACME Corp",
-  commercialValue: "VERY_HIGH",
-  relationshipStage: "QUALIFIED_LEAD",
-  accountManager: "Lisa Bakker",
-  tags: ["enterprise", "decision-maker"],
-  notes: "Key decision maker for their digital transformation initiative. Strong interest in our platform capabilities. Prefers direct executive engagement.",
-};
-
-const opportunities = [
-  { id: "1", title: "ACME Corp Enterprise Platform Deal", value: 450000, stage: "QUALIFICATION", probability: 35, expectedClose: "2027-03-31" },
-];
-
-const attendance = [
-  { match: "Ajax vs Feyenoord", date: "2026-10-25", status: "ACCEPTED" },
-  { match: "Ajax vs PSV", date: "2026-03-15", status: "CHECKED_IN" },
-  { match: "Ajax vs AZ", date: "2025-12-07", status: "CHECKED_IN" },
-];
+import {
+  getGuest,
+  getInvitations,
+  getMatches,
+  type Guest,
+  type Invitation,
+  type Match,
+} from "@/lib/store";
 
 export default function GuestDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
+  const [guest, setGuest] = useState<Guest | null>(null);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
+
+  useEffect(() => {
+    setGuest(getGuest(id));
+    setInvitations(getInvitations({ guestId: id }));
+    setMatches(getMatches());
+  }, [id]);
+
+  if (!guest) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-lg font-medium text-surface-900">Guest not found</p>
+            <Link href="/guests" className="mt-2 inline-block text-sm text-brand-600 hover:text-brand-700">
+              Back to guests
+            </Link>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const matchForInvitation = (matchId: string) => matches.find((m) => m.id === matchId);
+
   return (
     <AppLayout>
       <PageHeader
@@ -37,8 +53,7 @@ export default function GuestDetailPage() {
         description={`${guest.jobTitle} at ${guest.guestCompany}`}
         actions={
           <div className="flex gap-3">
-            <button className="btn-secondary">Generate Follow-Up</button>
-            <button className="btn-primary">Invite to Match</button>
+            <Link href="/invitations" className="btn-secondary">Invite to Match</Link>
           </div>
         }
       />
@@ -69,24 +84,32 @@ export default function GuestDetailPage() {
             <div className="mt-6 grid grid-cols-2 gap-4 border-t border-surface-200 pt-6">
               <div>
                 <p className="text-xs font-medium text-surface-500">Email</p>
-                <p className="mt-0.5 text-sm text-surface-900">{guest.email}</p>
+                <p className="mt-0.5 text-sm text-surface-900">{guest.email || "\u2014"}</p>
               </div>
               <div>
                 <p className="text-xs font-medium text-surface-500">Phone</p>
-                <p className="mt-0.5 text-sm text-surface-900">{guest.phone}</p>
+                <p className="mt-0.5 text-sm text-surface-900">{guest.phone || "\u2014"}</p>
               </div>
               <div>
                 <p className="text-xs font-medium text-surface-500">Account Manager</p>
-                <p className="mt-0.5 text-sm text-surface-900">{guest.accountManager}</p>
+                <p className="mt-0.5 text-sm text-surface-900">{guest.accountManager || "\u2014"}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-surface-500">Tags</p>
-                <div className="mt-0.5 flex gap-1">
-                  {guest.tags.map((tag) => (
-                    <span key={tag} className="badge-gray">{tag}</span>
-                  ))}
-                </div>
+                <p className="text-xs font-medium text-surface-500">Pipeline</p>
+                <p className="mt-0.5 text-sm font-medium text-surface-900">
+                  {guest.pipeline > 0 ? `\u20AC${(guest.pipeline / 1000).toFixed(0)}K` : "\u2014"}
+                </p>
               </div>
+              {guest.tags.length > 0 && (
+                <div className="col-span-2">
+                  <p className="text-xs font-medium text-surface-500">Tags</p>
+                  <div className="mt-0.5 flex gap-1">
+                    {guest.tags.map((tag) => (
+                      <span key={tag} className="badge-gray">{tag}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {guest.notes && (
@@ -97,63 +120,47 @@ export default function GuestDetailPage() {
             )}
           </div>
 
-          {/* Opportunities */}
-          <div>
-            <h3 className="mb-3 text-lg font-semibold text-surface-900">Opportunities</h3>
-            {opportunities.map((opp) => (
-              <div key={opp.id} className="card-padded">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium text-surface-900">{opp.title}</p>
-                    <p className="mt-1 text-sm text-surface-500">
-                      Expected close: {new Date(opp.expectedClose).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold text-surface-900">
-                      &euro;{(opp.value / 1000).toFixed(0)}K
-                    </p>
-                    <StatusBadge status={opp.stage} />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <div className="flex items-center justify-between text-xs text-surface-500 mb-1">
-                    <span>Probability</span>
-                    <span>{opp.probability}%</span>
-                  </div>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-surface-200">
-                    <div className="h-full rounded-full bg-brand-500" style={{ width: `${opp.probability}%` }} />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
           {/* Attendance history */}
           <div>
-            <h3 className="mb-3 text-lg font-semibold text-surface-900">Attendance History</h3>
-            <div className="card overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-surface-200 bg-surface-50">
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Match</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Date</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-surface-100">
-                  {attendance.map((a, i) => (
-                    <tr key={i}>
-                      <td className="px-4 py-3 text-sm font-medium text-surface-900">{a.match}</td>
-                      <td className="px-4 py-3 text-sm text-surface-500">
-                        {new Date(a.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                      </td>
-                      <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
+            <h3 className="mb-3 text-lg font-semibold text-surface-900">Invitation History</h3>
+            {invitations.length === 0 ? (
+              <div className="card flex items-center justify-center py-8">
+                <p className="text-sm text-surface-500">No invitations for this guest yet</p>
+              </div>
+            ) : (
+              <div className="card overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-surface-200 bg-surface-50">
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Match</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-surface-500">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-surface-100">
+                    {invitations.map((inv) => {
+                      const m = matchForInvitation(inv.matchId);
+                      return (
+                        <tr key={inv.id}>
+                          <td className="px-4 py-3">
+                            <Link
+                              href={`/matches/${inv.matchId}`}
+                              className="text-sm font-medium text-surface-900 hover:text-brand-600"
+                            >
+                              {m ? `${m.homeTeam} vs ${m.awayTeam}` : "Unknown match"}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-surface-500">
+                            {m ? new Date(m.matchDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "\u2014"}
+                          </td>
+                          <td className="px-4 py-3"><StatusBadge status={inv.status} /></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
@@ -162,37 +169,44 @@ export default function GuestDetailPage() {
           <h3 className="text-lg font-semibold text-surface-900">AI Insights</h3>
           <InsightCard
             type="RELATIONSHIP_HEALTH"
-            title="Engagement trending up"
-            content="Peter has attended 3 consecutive events and his deal moved from Identified to Qualification. Engagement is strong — maintain current cadence of executive-level touchpoints."
+            title="Engagement summary"
+            content={`${guest.firstName} has been invited to ${invitations.length} event${invitations.length !== 1 ? "s" : ""}. ${invitations.filter((i) => i.status === "ACCEPTED" || i.status === "CHECKED_IN").length} accepted. ${guest.relationshipStage === "PROSPECT" ? "Consider inviting to a high-priority match to deepen the relationship." : "Maintain the current engagement cadence."}`}
             confidence={0.89}
           />
-          <InsightCard
-            type="FOLLOW_UP_SUGGESTION"
-            title="Suggested next step"
-            content="Schedule a focused 1-on-1 dinner at the Ajax vs PSV match (Nov 22). The A-Match atmosphere plus a smaller setting is ideal for advancing qualification discussions."
-            confidence={0.84}
-          />
-          <InsightCard
-            type="EMAIL_DRAFT"
-            title="Draft follow-up ready"
-            content="A personalized follow-up email is ready referencing the Ajax vs Feyenoord match and his interest in the platform analytics capabilities discussed during halftime."
-            confidence={0.91}
-          />
+          {guest.pipeline > 0 && (
+            <InsightCard
+              type="ROI_INSIGHT"
+              title="Pipeline opportunity"
+              content={`\u20AC${(guest.pipeline / 1000).toFixed(0)}K in active pipeline. Hospitality events can accelerate deal progression \u2014 prioritize this contact for upcoming A-Matches.`}
+              confidence={0.84}
+            />
+          )}
 
-          {/* Relationship health score */}
+          {/* Quick stats */}
           <div className="card-padded">
-            <h4 className="text-sm font-semibold text-surface-900">Relationship Health</h4>
-            <div className="mt-3 flex items-center gap-3">
-              <div className="relative h-16 w-16">
-                <svg className="h-16 w-16 -rotate-90" viewBox="0 0 36 36">
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#e9ecef" strokeWidth="3" />
-                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#4c6ef5" strokeWidth="3" strokeDasharray="78, 100" />
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-surface-900">78</span>
+            <h4 className="text-sm font-semibold text-surface-900">Quick Stats</h4>
+            <div className="mt-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-surface-500">Events attended</span>
+                <span className="text-sm font-medium text-surface-900">{guest.eventsAttended}</span>
               </div>
-              <div>
-                <p className="text-sm font-medium text-surface-900">Strong</p>
-                <p className="text-xs text-surface-500">+5 since last month</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-surface-500">Invitations</span>
+                <span className="text-sm font-medium text-surface-900">{invitations.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-surface-500">Accepted</span>
+                <span className="text-sm font-medium text-surface-900">
+                  {invitations.filter((i) => i.status === "ACCEPTED" || i.status === "CHECKED_IN").length}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-surface-500">Response rate</span>
+                <span className="text-sm font-medium text-surface-900">
+                  {invitations.length > 0
+                    ? `${Math.round((invitations.filter((i) => i.status !== "DRAFT" && i.status !== "SENT").length / invitations.length) * 100)}%`
+                    : "\u2014"}
+                </span>
               </div>
             </div>
           </div>

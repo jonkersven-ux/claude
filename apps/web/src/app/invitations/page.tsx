@@ -1,33 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/app-layout";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { DataTable } from "@/components/ui/data-table";
-
-const invitations = [
-  { id: "1", guest: "Peter van den Berg", company: "ACME Corp", match: "Ajax vs Feyenoord", matchDate: "2026-10-25", status: "ACCEPTED", sentAt: "2026-10-01", respondedAt: "2026-10-03" },
-  { id: "2", guest: "Maria Hendriks", company: "GlobalTech", match: "Ajax vs Feyenoord", matchDate: "2026-10-25", status: "ACCEPTED", sentAt: "2026-10-01", respondedAt: "2026-10-02" },
-  { id: "3", guest: "Thomas Smit", company: "InnovaTech", match: "Ajax vs Feyenoord", matchDate: "2026-10-25", status: "SENT", sentAt: "2026-10-05", respondedAt: null },
-  { id: "4", guest: "Emma de Groot", company: "Dutch Finance Group", match: "Ajax vs Feyenoord", matchDate: "2026-10-25", status: "ACCEPTED", sentAt: "2026-10-01", respondedAt: "2026-10-01" },
-  { id: "5", guest: "Robert Visser", company: "BuildRight BV", match: "Ajax vs PSV", matchDate: "2026-11-22", status: "DRAFT", sentAt: null, respondedAt: null },
-  { id: "6", guest: "Anna Vermeer", company: "LogisticsPro", match: "Ajax vs PSV", matchDate: "2026-11-22", status: "DRAFT", sentAt: null, respondedAt: null },
-  { id: "7", guest: "Daan Kuijpers", company: "MediaWorks", match: "Ajax vs PSV", matchDate: "2026-11-22", status: "SENT", sentAt: "2026-10-20", respondedAt: null },
-  { id: "8", guest: "Peter van den Berg", company: "ACME Corp", match: "Ajax vs PSV", matchDate: "2026-11-22", status: "SENT", sentAt: "2026-10-18", respondedAt: null },
-];
+import { Modal } from "@/components/ui/modal";
+import {
+  getInvitations,
+  getGuests,
+  getMatches,
+  createInvitation,
+  updateInvitationStatus,
+  type Invitation,
+  type Guest,
+  type Match,
+} from "@/lib/store";
 
 export default function InvitationsPage() {
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [matchFilter, setMatchFilter] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ matchId: "", guestId: "", personalMessage: "" });
+
+  const reload = () => {
+    setInvitations(getInvitations());
+    setGuests(getGuests());
+    setMatches(getMatches());
+  };
+
+  useEffect(() => {
+    reload();
+  }, []);
+
+  const guestName = (guestId: string) => {
+    const g = guests.find((g) => g.id === guestId);
+    return g ? `${g.firstName} ${g.lastName}` : "Unknown";
+  };
+
+  const guestCompany = (guestId: string) => {
+    const g = guests.find((g) => g.id === guestId);
+    return g?.guestCompany || "";
+  };
+
+  const matchLabel = (matchId: string) => {
+    const m = matches.find((m) => m.id === matchId);
+    return m ? `${m.homeTeam} vs ${m.awayTeam}` : "Unknown";
+  };
+
+  const matchDate = (matchId: string) => {
+    const m = matches.find((m) => m.id === matchId);
+    return m?.matchDate || "";
+  };
 
   const filtered = invitations.filter((inv) => {
     const matchesStatus = !statusFilter || inv.status === statusFilter;
-    const matchesMatch = !matchFilter || inv.match === matchFilter;
+    const matchesMatch = !matchFilter || inv.matchId === matchFilter;
     return matchesStatus && matchesMatch;
   });
-
-  const uniqueMatches = [...new Set(invitations.map((i) => i.match))];
 
   const statusCounts = {
     total: invitations.length,
@@ -37,6 +70,19 @@ export default function InvitationsPage() {
     declined: invitations.filter((i) => i.status === "DECLINED").length,
   };
 
+  const handleAdd = () => {
+    if (!form.matchId || !form.guestId) return;
+    createInvitation(form);
+    reload();
+    setShowAdd(false);
+    setForm({ matchId: "", guestId: "", personalMessage: "" });
+  };
+
+  const handleStatusChange = (id: string, status: string) => {
+    updateInvitationStatus(id, status);
+    reload();
+  };
+
   return (
     <AppLayout>
       <PageHeader
@@ -44,8 +90,7 @@ export default function InvitationsPage() {
         description="Manage and track all hospitality invitations"
         actions={
           <div className="flex gap-3">
-            <button className="btn-secondary">Send reminders</button>
-            <button className="btn-primary">New invitation</button>
+            <button className="btn-primary" onClick={() => setShowAdd(true)}>New invitation</button>
           </div>
         }
       />
@@ -77,8 +122,8 @@ export default function InvitationsPage() {
           onChange={(e) => setMatchFilter(e.target.value)}
         >
           <option value="">All matches</option>
-          {uniqueMatches.map((m) => (
-            <option key={m} value={m}>{m}</option>
+          {matches.map((m) => (
+            <option key={m.id} value={m.id}>{m.homeTeam} vs {m.awayTeam}</option>
           ))}
         </select>
         <select
@@ -101,21 +146,21 @@ export default function InvitationsPage() {
           {
             key: "guest",
             header: "Guest",
-            render: (inv) => (
+            render: (inv: Invitation) => (
               <div>
-                <p className="font-medium text-surface-900">{inv.guest}</p>
-                <p className="text-xs text-surface-500">{inv.company}</p>
+                <p className="font-medium text-surface-900">{guestName(inv.guestId)}</p>
+                <p className="text-xs text-surface-500">{guestCompany(inv.guestId)}</p>
               </div>
             ),
           },
           {
             key: "match",
             header: "Match",
-            render: (inv) => (
+            render: (inv: Invitation) => (
               <div>
-                <p className="text-sm text-surface-900">{inv.match}</p>
+                <p className="text-sm text-surface-900">{matchLabel(inv.matchId)}</p>
                 <p className="text-xs text-surface-500">
-                  {new Date(inv.matchDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  {matchDate(inv.matchId) ? new Date(matchDate(inv.matchId)).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : ""}
                 </p>
               </div>
             ),
@@ -123,39 +168,62 @@ export default function InvitationsPage() {
           {
             key: "status",
             header: "Status",
-            render: (inv) => <StatusBadge status={inv.status} />,
+            render: (inv: Invitation) => <StatusBadge status={inv.status} />,
           },
           {
             key: "sentAt",
             header: "Sent",
-            render: (inv) => (
+            render: (inv: Invitation) => (
               <span className="text-sm text-surface-500">
-                {inv.sentAt ? new Date(inv.sentAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                {inv.sentAt ? new Date(inv.sentAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "\u2014"}
               </span>
             ),
           },
           {
             key: "respondedAt",
             header: "Responded",
-            render: (inv) => (
+            render: (inv: Invitation) => (
               <span className="text-sm text-surface-500">
-                {inv.respondedAt ? new Date(inv.respondedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—"}
+                {inv.respondedAt ? new Date(inv.respondedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "\u2014"}
               </span>
             ),
           },
           {
             key: "actions",
             header: "",
-            render: (inv) => (
+            render: (inv: Invitation) => (
               <div className="flex gap-2">
                 {inv.status === "DRAFT" && (
-                  <button className="text-xs font-medium text-brand-600 hover:text-brand-700">Send</button>
+                  <button
+                    onClick={() => handleStatusChange(inv.id, "SENT")}
+                    className="text-xs font-medium text-brand-600 hover:text-brand-700"
+                  >
+                    Send
+                  </button>
                 )}
                 {inv.status === "SENT" && (
-                  <button className="text-xs font-medium text-brand-600 hover:text-brand-700">Remind</button>
+                  <>
+                    <button
+                      onClick={() => handleStatusChange(inv.id, "ACCEPTED")}
+                      className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange(inv.id, "DECLINED")}
+                      className="text-xs font-medium text-red-600 hover:text-red-700"
+                    >
+                      Decline
+                    </button>
+                  </>
                 )}
                 {inv.status === "ACCEPTED" && (
-                  <button className="text-xs font-medium text-emerald-600 hover:text-emerald-700">Check in</button>
+                  <button
+                    onClick={() => handleStatusChange(inv.id, "CHECKED_IN")}
+                    className="text-xs font-medium text-emerald-600 hover:text-emerald-700"
+                  >
+                    Check in
+                  </button>
                 )}
               </div>
             ),
@@ -164,6 +232,62 @@ export default function InvitationsPage() {
         data={filtered}
         emptyMessage="No invitations match your filters"
       />
+
+      {/* New invitation modal */}
+      <Modal
+        open={showAdd}
+        onClose={() => setShowAdd(false)}
+        title="New Invitation"
+        actions={
+          <>
+            <button className="btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
+            <button className="btn-primary" onClick={handleAdd}>Create invitation</button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="label">Match</label>
+            <select
+              className="input"
+              value={form.matchId}
+              onChange={(e) => setForm({ ...form, matchId: e.target.value })}
+            >
+              <option value="">Select a match...</option>
+              {matches.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.homeTeam} vs {m.awayTeam} ({new Date(m.matchDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Guest</label>
+            <select
+              className="input"
+              value={form.guestId}
+              onChange={(e) => setForm({ ...form, guestId: e.target.value })}
+            >
+              <option value="">Select a guest...</option>
+              {guests.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.firstName} {g.lastName} — {g.guestCompany}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Personal message (optional)</label>
+            <textarea
+              className="input"
+              rows={3}
+              value={form.personalMessage}
+              onChange={(e) => setForm({ ...form, personalMessage: e.target.value })}
+              placeholder="Add a personal touch to this invitation..."
+            />
+          </div>
+        </div>
+      </Modal>
     </AppLayout>
   );
 }
