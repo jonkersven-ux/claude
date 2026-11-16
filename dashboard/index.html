@@ -1,0 +1,821 @@
+<title>De Ploegleider</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: sidebar-cockpit (nav + timer) left, working area right; collapses to sticky top bar on phones. */
+:root{
+  --bg:#EDF1EF; --surface:#FFFFFF; --surface-2:#F5F8F6; --line:#D5DED9; --fg:#13201B; --muted:#5A6A63;
+  --accent:#0B6477; --accent-ink:#FFFFFF; --accent-soft:#D5EBEF;
+  --jersey:#D99A12; --jersey-soft:#FAEDCF;
+  --good:#2C8A53; --good-soft:#DCF0E3; --warn:#A86C0A; --warn-soft:#FAEACD; --bad:#BF3A2D; --bad-soft:#F7DDD9;
+  --cost:#A3B3AC;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0D1412; --surface:#141E1A; --surface-2:#19251F; --line:#283831; --fg:#E5EEEA; --muted:#92A59D;
+  --accent:#58B9CC; --accent-ink:#03161B; --accent-soft:#12363E;
+  --jersey:#F0BE4C; --jersey-soft:#3A2E11;
+  --good:#5CC489; --good-soft:#123021; --warn:#E3A53C; --warn-soft:#38290F; --bad:#F07B6D; --bad-soft:#3C1915;
+  --cost:#4A5D55; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1412; --surface:#141E1A; --surface-2:#19251F; --line:#283831; --fg:#E5EEEA; --muted:#92A59D;
+  --accent:#58B9CC; --accent-ink:#03161B; --accent-soft:#12363E;
+  --jersey:#F0BE4C; --jersey-soft:#3A2E11;
+  --good:#5CC489; --good-soft:#123021; --warn:#E3A53C; --warn-soft:#38290F; --bad:#F07B6D; --bad-soft:#3C1915;
+  --cost:#4A5D55; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--f-body);font-size:14px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,td.n,.tile b{font-variant-numeric:tabular-nums}
+
+.app{display:grid;grid-template-columns:220px minmax(0,1fr);gap:28px;max-width:1440px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.side{position:sticky;top:calc(env(safe-area-inset-top,0px) + 20px);align-self:start;display:flex;flex-direction:column;gap:18px}
+.side .top-row{display:flex;flex-direction:column;gap:18px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{flex:none}
+.brand h1{font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.01em;margin:0;line-height:1;text-transform:uppercase}
+.brand small{display:block;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+nav.menu{display:flex;flex-direction:column;gap:2px}
+nav.menu a{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;color:var(--fg);text-decoration:none;font-weight:500}
+nav.menu a:hover{background:var(--surface)}
+nav.menu a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+nav.menu a .cnt{font-size:11px;font-variant-numeric:tabular-nums;opacity:.75}
+nav.menu a .dot{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;display:inline-grid;place-items:center;font-weight:600}
+
+.timer{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
+.timer .lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.timer .clock{font-family:var(--f-display);font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.timer.running{border-color:var(--jersey);background:var(--jersey-soft)}
+.timer select{width:100%}
+
+main{min-width:0;display:flex;flex-direction:column;gap:22px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.head h2{font-family:var(--f-display);font-size:34px;line-height:1;margin:0;font-weight:700;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance}
+.head p{margin:4px 0 0;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+.btn{border:1px solid var(--line);background:var(--surface);padding:7px 12px;border-radius:8px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.pri:hover{filter:brightness(1.08)}
+.btn.sm{padding:3px 9px;font-size:12px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--fg);border-color:var(--line)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.danger.armed{background:var(--bad);color:#fff}
+
+.banner{border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.banner.ex{background:var(--jersey-soft);border-color:var(--jersey)}
+.banner.err{background:var(--bad-soft);border-color:var(--bad)}
+
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (min-width:1240px){.tiles{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media (max-width:600px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tile .lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.tile b{font-family:var(--f-display);font-size:30px;font-weight:600;line-height:1.05}
+.tile .sub{color:var(--muted);font-size:12px}
+.meter{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:4px;border:1px solid var(--line)}
+.meter i{display:block;height:100%;background:var(--accent)}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.panel h3{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:19px;letter-spacing:.02em;font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.panel h3 small{font-family:var(--f-body);text-transform:none;letter-spacing:0;font-size:12px;color:var(--muted);font-weight:400}
+
+.todo{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.todo li{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.todo li:first-child{border-top:0}
+.todo .sev{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.todo .sev.bad{background:var(--bad)} .todo .sev.warn{background:var(--warn)} .todo .sev.ok{background:var(--accent)}
+.todo .t{min-width:0}
+.todo .t span{display:block;color:var(--muted);font-size:12px}
+.empty{color:var(--muted);padding:18px 4px;text-align:center}
+
+.chart svg{width:100%;height:auto;display:block}
+.chart .ax{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.chart .gl{stroke:var(--line);stroke-width:1}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+
+/* urencriterium track */
+.track{position:relative;height:34px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
+.track .fill{position:absolute;inset:0 auto 0 0;background:var(--accent-soft);border-right:3px solid var(--accent)}
+.track .pace{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--jersey)}
+.track .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:12px;font-weight:600}
+.trackkey{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)}
+
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
+.pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.pill.bad{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.pill.acc{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.ex{background:var(--jersey-soft);color:var(--warn);border-color:transparent}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0}
+input,select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;width:100%}
+textarea{min-height:80px;resize:vertical}
+.toolbar select{width:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 10px;cursor:pointer;font-size:13px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface-2)}
+td.n,th.n{text-align:right;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+tfoot td{font-weight:600;background:var(--surface-2);border-bottom:0}
+.muted{color:var(--muted)}
+.sel{user-select:all}
+
+/* pipeline */
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(230px,1fr);gap:12px;overflow-x:auto;padding-bottom:6px}
+.col{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.col h4{margin:0;display:flex;justify-content:space-between;align-items:baseline;font-family:var(--f-display);text-transform:uppercase;font-size:16px;letter-spacing:.03em}
+.col h4 span{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.card:hover{border-color:var(--accent)}
+.card .ttl{font-weight:600}
+.card .meta{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.card .mv{display:flex;justify-content:space-between}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;min-width:0}
+.pcard:hover{border-color:var(--accent)}
+.pcard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.pcard h4{margin:0;font-size:15px}
+.pcard p{margin:0;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.stars{color:var(--jersey);letter-spacing:2px}
+
+/* modal */
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);padding:0;width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px)}
+dialog::backdrop{background:rgba(5,15,12,.45)}
+dialog form{display:flex;flex-direction:column;max-height:calc(100vh - 34px)}
+dialog header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px}
+dialog header h3{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:22px}
+.fields{padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:12px;overflow-y:auto}
+.fields .full{grid-column:1/-1}
+.fields label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted);min-width:0}
+.fields .hint{font-weight:400;font-size:11.5px}
+dialog footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.calc{grid-column:1/-1;background:var(--surface-2);border-radius:8px;padding:10px 12px;font-size:13px;display:flex;gap:18px;flex-wrap:wrap}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:9px 16px;border-radius:999px;font-weight:500;z-index:50;max-width:calc(100vw - 32px)}
+
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.setgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
+
+@media (max-width:980px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);gap:16px;padding-block:0 40px}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px 8px;gap:10px;border-bottom:1px solid var(--line);margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .side .top-row{flex-direction:row;justify-content:space-between;align-items:center;gap:10px}
+  nav.menu{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
+  nav.menu a{flex:none;padding:6px 10px}
+  nav.menu a .cnt{display:none}
+  .timer{flex-direction:row;align-items:center;padding:6px 10px;gap:8px}
+  .timer .lab,.timer select{display:none}
+  .timer .clock{font-size:20px}
+  .head h2{font-size:28px}
+  .fields{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="top-row">
+      <div class="brand">
+        <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" fill="var(--accent)"/><path d="M5 25 L11 17 L15 21 L21 10 L29 25 Z" fill="var(--accent-ink)" opacity=".9"/><circle cx="21" cy="10" r="2.4" fill="var(--jersey)"/></svg>
+        <div><h1>De Ploegleider</h1><small>Zakelijk cockpit</small></div>
+      </div>
+      <div class="timer" id="timer"></div>
+    </div>
+    <nav class="menu" id="menu" aria-label="Onderdelen"></nav>
+  </aside>
+  <main id="main" aria-live="polite"></main>
+</div>
+<dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+"use strict";
+// ---------- helpers ----------
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const EUR = new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR",maximumFractionDigits:0});
+const EUR2 = new Intl.NumberFormat("nl-NL",{style:"currency",currency:"EUR"});
+const NUM1 = new Intl.NumberFormat("nl-NL",{maximumFractionDigits:1});
+const eur = v => EUR.format(Math.round(+v||0));
+const eur2 = v => EUR2.format(+v||0);
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const TODAY = () => iso(new Date());
+const parse = s => { if(!s) return null; const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const d=parse(s); if(!d) return ""; d.setDate(d.getDate()+n); return iso(d); };
+const fmtD = s => { const d=parse(s); return d ? d.toLocaleDateString("nl-NL",{day:"numeric",month:"short"}) : "—"; };
+const fmtDY = s => { const d=parse(s); return d ? d.toLocaleDateString("nl-NL",{day:"numeric",month:"short",year:"numeric"}) : "—"; };
+const daysBetween = (a,b) => Math.round((parse(b)-parse(a))/864e5);
+const YEAR = () => new Date().getFullYear();
+const inYear = (s,y=YEAR()) => !!s && s.slice(0,4)===String(y);
+const quarterOf = s => Math.floor((+s.slice(5,7)-1)/3)+1;
+const curQ = () => Math.floor(new Date().getMonth()/3)+1;
+const sum = (a,f) => a.reduce((t,x)=>t+(+f(x)||0),0);
+const store = { get(k){ try{return JSON.parse(localStorage.getItem(k));}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch{} } };
+let toastT; const toast = m => { const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2600); };
+
+// ---------- schema ----------
+const STAGES = ["Lead","Gesprek","Voorstel","Onderhandeling","Gewonnen","Verloren"];
+const OPEN_STAGES = STAGES.slice(0,4);
+const STAGE_PROB = {Lead:10,Gesprek:25,Voorstel:50,Onderhandeling:75,Gewonnen:100,Verloren:0};
+const WORKTYPES = ["Hospitality & hosting","Partnerships & sponsoring","Storytelling & content","Events","Presenteren","Advies & strategie","Overig"];
+const S_DEF = {bedrijf:"",naam:"",uurtarief:95,reservePct:32,jaardoel:90000,urenDoel:1225,termijn:14,kvk:"",btwnr:"",iban:""};
+
+const SCHEMA = {
+  deals:{one:"deal", fields:[
+    {k:"naam",l:"Deal / kans",t:"text",req:1,full:1,ph:"Bijv. VIP-hosting voorjaarsklassieker"},
+    {k:"organisatie",l:"Organisatie",t:"text",list:"orgs"},
+    {k:"contact",l:"Contactpersoon",t:"text",list:"people"},
+    {k:"waarde",l:"Waarde (excl. btw)",t:"money"},
+    {k:"fase",l:"Fase",t:"select",o:STAGES,def:"Lead"},
+    {k:"kans",l:"Kans %",t:"number",min:0,max:100,hint:"Leeg = standaard per fase"},
+    {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
+    {k:"volgendeStap",l:"Volgende stap",t:"text",full:1,ph:"Bijv. voorstel sturen, koffie in Enschede"},
+    {k:"stapDatum",l:"Datum volgende stap",t:"date"},
+    {k:"bron",l:"Bron",t:"select",o:["Netwerk","Referral","LinkedIn","Event","Inbound","Eigen pitch"]},
+    {k:"notitie",l:"Notitie",t:"textarea",full:1}]},
+  contacts:{one:"contact", fields:[
+    {k:"naam",l:"Naam",t:"text",req:1},
+    {k:"organisatie",l:"Organisatie",t:"text",list:"orgs"},
+    {k:"rol",l:"Rol",t:"text"},
+    {k:"warmte",l:"Relatie",t:"select",o:["Warm","Lauw","Koud"],def:"Lauw"},
+    {k:"email",l:"E-mail",t:"email"},
+    {k:"telefoon",l:"Telefoon",t:"tel"},
+    {k:"laatsteContact",l:"Laatste contact",t:"date",def:TODAY},
+    {k:"followUp",l:"Volgende follow-up",t:"date"},
+    {k:"tags",l:"Tags",t:"text",full:1,ph:"wielrennen, hospitality, beslisser"},
+    {k:"notitie",l:"Wat weet je van deze persoon?",t:"textarea",full:1}]},
+  projects:{one:"project", fields:[
+    {k:"naam",l:"Projectnaam",t:"text",req:1,full:1},
+    {k:"klant",l:"Klant",t:"text",list:"orgs"},
+    {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
+    {k:"status",l:"Status",t:"select",o:["Gepland","Lopend","Afgerond","On hold"],def:"Lopend"},
+    {k:"tarief",l:"Uurtarief (leeg = standaard)",t:"money"},
+    {k:"budget",l:"Budget / vaste prijs",t:"money"},
+    {k:"start",l:"Start",t:"date"},
+    {k:"eind",l:"Eind / deadline",t:"date"},
+    {k:"notitie",l:"Notitie",t:"textarea",full:1}]},
+  hours:{one:"urenregel", fields:[
+    {k:"datum",l:"Datum",t:"date",req:1,def:TODAY},
+    {k:"uren",l:"Uren",t:"number",step:.25,min:0,req:1},
+    {k:"project",l:"Project",t:"ref",ref:"projects"},
+    {k:"declarabel",l:"Declarabel",t:"select",o:["Ja","Nee"],def:"Ja"},
+    {k:"omschrijving",l:"Wat heb je gedaan?",t:"text",full:1,ph:"Bijv. hosting VIP-tent finish"}]},
+  invoices:{one:"factuur", fields:[
+    {k:"nr",l:"Factuurnummer",t:"text",req:1,def:()=>nextInvoiceNr()},
+    {k:"klant",l:"Klant",t:"text",req:1,list:"orgs"},
+    {k:"omschrijving",l:"Omschrijving",t:"text",full:1},
+    {k:"project",l:"Project",t:"ref",ref:"projects"},
+    {k:"bedrag",l:"Bedrag excl. btw",t:"money",req:1},
+    {k:"btw",l:"Btw",t:"select",o:["21","9","0"],def:"21",fmt:v=>v+"%"},
+    {k:"datum",l:"Factuurdatum",t:"date",def:TODAY},
+    {k:"termijn",l:"Betaaltermijn (dagen)",t:"number",def:()=>S.settings.termijn||14},
+    {k:"status",l:"Status",t:"select",o:["Concept","Verstuurd","Betaald"],def:"Concept"},
+    {k:"betaaldOp",l:"Betaald op",t:"date"}]},
+  expenses:{one:"uitgave", fields:[
+    {k:"datum",l:"Datum",t:"date",req:1,def:TODAY},
+    {k:"omschrijving",l:"Omschrijving",t:"text",req:1},
+    {k:"categorie",l:"Categorie",t:"select",o:["Reiskosten","Software & abonnementen","Telefoon & internet","Representatie","Kleding & materiaal","Opleiding","Marketing","Verzekeringen","Overig"]},
+    {k:"bedrag",l:"Bedrag excl. btw",t:"money",req:1},
+    {k:"btw",l:"Btw",t:"select",o:["21","9","0"],def:"21",fmt:v=>v+"%"},
+    {k:"notitie",l:"Notitie",t:"text"}]},
+  ideas:{one:"idee", fields:[
+    {k:"titel",l:"Idee",t:"text",req:1,full:1},
+    {k:"categorie",l:"Categorie",t:"select",o:["Concept / event","Merch & merk","Content & storytelling","Hospitality","Sportreis","Samenwerking","Eigen business"]},
+    {k:"potentie",l:"Potentie (1–5)",t:"select",o:["1","2","3","4","5"],def:"3"},
+    {k:"status",l:"Status",t:"select",o:["Idee","Uitwerken","Pitchen","Geparkeerd","Gerealiseerd"],def:"Idee"},
+    {k:"volgendeStap",l:"Kleinste volgende stap",t:"text",full:1},
+    {k:"notitie",l:"Uitwerking",t:"textarea",full:1}]},
+};
+const COLLS = Object.keys(SCHEMA);
+
+// ---------- state ----------
+const S = {settings:{...S_DEF}, loaded:{}, err:null, nodb:false};
+COLLS.forEach(c=>S[c]=[]);
+const F = {q:{}, invStatus:"Alle", hoursRange:"maand", contactSort:"followUp"};
+let db=null, downloads=null;
+
+// ---------- derived ----------
+const projById = id => S.projects.find(p=>p.id===id);
+const rateFor = h => { const p=projById(h.project); return +(p&&p.tarief)||+S.settings.uurtarief||0; };
+const invIncl = i => (+i.bedrag||0)*(1+(+i.btw||0)/100);
+const invBtw = i => (+i.bedrag||0)*((+i.btw||0)/100);
+const invDue = i => addDays(i.datum||TODAY(), +i.termijn||0);
+const invState = i => {
+  if(i.status==="Betaald") return "Betaald";
+  if(i.status==="Concept") return "Concept";
+  return invDue(i) < TODAY() ? "Verlopen" : "Verstuurd";
+};
+const dealProb = d => d.kans===""||d.kans==null ? STAGE_PROB[d.fase]??0 : +d.kans;
+function nextInvoiceNr(){
+  const y=YEAR(); let max=0;
+  S.invoices.forEach(i=>{ const m=String(i.nr||"").match(new RegExp("^"+y+"-(\\d+)$")); if(m) max=Math.max(max,+m[1]); });
+  return y+"-"+String(max+1).padStart(3,"0");
+}
+function kpis(){
+  const y=YEAR(), t=TODAY();
+  const realInv = S.invoices.filter(i=>i.status!=="Concept");
+  const omzet = sum(realInv.filter(i=>inYear(i.datum)),i=>i.bedrag);
+  const kosten = sum(S.expenses.filter(e=>inYear(e.datum)),e=>e.bedrag);
+  const open = S.invoices.filter(i=>["Verstuurd","Verlopen"].includes(invState(i)));
+  const late = open.filter(i=>invState(i)==="Verlopen");
+  const q=curQ();
+  const btwOut = sum(realInv.filter(i=>inYear(i.datum)&&quarterOf(i.datum)===q),invBtw);
+  const btwIn = sum(S.expenses.filter(e=>inYear(e.datum)&&quarterOf(e.datum)===q),e=>(+e.bedrag||0)*(+e.btw||0)/100);
+  const hoursY = S.hours.filter(h=>inYear(h.datum));
+  const urenY = sum(hoursY,h=>h.uren);
+  const m=t.slice(0,7);
+  const hoursM = S.hours.filter(h=>(h.datum||"").startsWith(m));
+  const urenM = sum(hoursM,h=>h.uren), declM = sum(hoursM.filter(h=>h.declarabel!=="Nee"),h=>h.uren);
+  const unbilled = sum(S.hours.filter(h=>h.declarabel!=="Nee"&&!h.gefactureerd),h=>(+h.uren||0)*rateFor(h));
+  const openDeals = S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
+  const pipeW = sum(openDeals,d=>(+d.waarde||0)*dealProb(d)/100);
+  const pipeT = sum(openDeals,d=>d.waarde);
+  const dayOfYear = Math.floor((parse(t)-new Date(y,0,1))/864e5)+1;
+  const doel = +S.settings.urenDoel||1225;
+  const pace = doel*dayOfYear/(y%4===0?366:365);
+  return {omzet,kosten,winst:omzet-kosten,open,late,openSum:sum(open,invIncl),lateSum:sum(late,invIncl),btwOut,btwIn,btwNet:btwOut-btwIn,q,
+    urenY,urenM,declM,unbilled,openDeals,pipeW,pipeT,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
+    reserve: Math.max(0,(omzet-kosten))*(+S.settings.reservePct||0)/100};
+}
+function todos(){
+  const t=TODAY(), out=[];
+  S.invoices.forEach(i=>{ const st=invState(i);
+    if(st==="Verlopen") out.push({sev:"bad",txt:`Factuur ${i.nr} – ${i.klant} is ${daysBetween(invDue(i),t)} dagen over tijd`,sub:eur2(invIncl(i))+" incl. btw",go:["invoices",i.id],k:0});
+    else if(st==="Concept") out.push({sev:"warn",txt:`Concept-factuur ${i.nr} – ${i.klant} nog versturen`,sub:eur2(invIncl(i)),go:["invoices",i.id],k:2});
+  });
+  S.contacts.forEach(c=>{ if(c.followUp && c.followUp<=t) out.push({sev:c.followUp<t?"warn":"ok",txt:`Follow-up ${c.naam}${c.organisatie?" ("+c.organisatie+")":""}`,sub:c.followUp<t?`Gepland ${fmtD(c.followUp)}`:"Vandaag",go:["contacts",c.id],k:1}); });
+  S.deals.forEach(d=>{ if(OPEN_STAGES.includes(d.fase) && d.stapDatum && d.stapDatum<=addDays(t,2)) out.push({sev:d.stapDatum<t?"warn":"ok",txt:`${d.volgendeStap||"Volgende stap"} – ${d.naam}`,sub:`${d.fase} · ${fmtD(d.stapDatum)}`,go:["deals",d.id],k:1}); });
+  S.projects.forEach(p=>{ if(p.status==="Lopend" && p.eind && p.eind>=t && p.eind<=addDays(t,7)) out.push({sev:"ok",txt:`Deadline ${p.naam}`,sub:fmtD(p.eind),go:["projects",p.id],k:3}); });
+  // btw deadline: last day of month after quarter
+  const now=new Date(), q=curQ(), dl=new Date(now.getFullYear(), q*3+1, 0), dlS=iso(dl), prevDl=new Date(now.getFullYear(), (q-1)*3+1, 0);
+  const daysPrev = daysBetween(t, iso(prevDl));
+  if(daysPrev>=0 && daysPrev<=31) out.push({sev:"warn",txt:`Btw-aangifte Q${q===1?4:q-1} indienen`,sub:`Uiterlijk ${fmtDY(iso(prevDl))}`,go:null,k:1});
+  else if(daysBetween(t,dlS)<=40) out.push({sev:"ok",txt:`Btw Q${q} komt eraan`,sub:`Aangifte uiterlijk ${fmtDY(dlS)}`,go:null,k:4});
+  return out.sort((a,b)=>a.k-b.k);
+}
+
+// ---------- routing ----------
+const VIEWS = [
+  ["overzicht","Overzicht"],["pipeline","Pipeline"],["netwerk","Netwerk"],["projecten","Projecten"],
+  ["uren","Uren"],["facturen","Facturen"],["uitgaven","Uitgaven"],["ideeen","Ideeënbank"],["instellingen","Instellingen"]];
+const VIEW_COLL = {pipeline:"deals",netwerk:"contacts",projecten:"projects",uren:"hours",facturen:"invoices",uitgaven:"expenses",ideeen:"ideas"};
+const COLL_VIEW = Object.fromEntries(Object.entries(VIEW_COLL).map(([v,c])=>[c,v]));
+const view = () => { const h=location.hash.slice(1); return VIEWS.some(v=>v[0]===h)?h:"overzicht"; };
+
+function renderMenu(){
+  const v=view(), k=kpis(), t=TODAY();
+  const badges = {
+    pipeline:[k.openDeals.length], netwerk:[S.contacts.length, S.contacts.filter(c=>c.followUp&&c.followUp<=t).length],
+    projecten:[S.projects.filter(p=>p.status==="Lopend").length], uren:[NUM1.format(k.urenM)+"u"],
+    facturen:[S.invoices.length,k.late.length], uitgaven:[S.expenses.length], ideeen:[S.ideas.length]};
+  $("#menu").innerHTML = VIEWS.map(([id,l])=>{
+    const b=badges[id]||[]; const alert=b[1]?`<span class="dot">${b[1]}</span>`:(b[0]!=null?`<span class="cnt">${esc(b[0])}</span>`:"");
+    return `<a href="#${id}" ${id===v?'aria-current="page"':""}><span>${l}</span>${alert}</a>`;
+  }).join("");
+}
+
+function render(){
+  renderMenu(); renderTimer();
+  const v=view(); const m=$("#main");
+  let html="";
+  if(S.nodb) html += `<div class="banner err"><span><b>Opslag niet bereikbaar.</b> Open deze pagina ingelogd op claude.ai om je gegevens te laden en op te slaan.</span></div>`;
+  else if(S.err) html += `<div class="banner err"><span>${esc(S.err)}</span></div>`;
+  const ex = COLLS.reduce((t,c)=>t+S[c].filter(r=>r.example).length,0);
+  if(ex && v!=="instellingen") html += `<div class="banner ex"><span><b>Je kijkt naar ${ex} voorbeeldregels.</b> Ze laten zien hoe alles werkt. Bewerk ze of wis ze in één keer zodra je je eigen data invoert.</span><button class="btn sm" data-act="clear-ex">Voorbeelden wissen</button></div>`;
+  html += ({overzicht:vOverview,pipeline:vPipeline,netwerk:vContacts,projecten:vProjects,uren:vHours,facturen:vInvoices,uitgaven:vExpenses,ideeen:vIdeas,instellingen:vSettings}[v])();
+  m.innerHTML = html;
+  if(VIEW_COLL[v]) renderList(VIEW_COLL[v]);
+}
+const loading = () => !S.nodb && COLLS.some(c=>!S.loaded[c]);
+
+// ---------- views ----------
+function head(title,sub,btns=""){ return `<div class="head"><div><h2>${title}</h2>${sub?`<p>${sub}</p>`:""}</div><div class="actions">${btns}</div></div>`; }
+const newBtn = (c,l,pri) => `<button class="btn ${pri?"pri":""}" data-new="${c}">+ ${l}</button>`;
+const exPill = r => r.example?` <span class="pill ex">voorbeeld</span>`:"";
+
+function vOverview(){
+  const k=kpis(), h=new Date().getHours();
+  const greet = h<6?"Goedenacht":h<12?"Goedemorgen":h<18?"Goedemiddag":"Goedenavond";
+  const name = S.settings.naam?(", "+esc(S.settings.naam.split(" ")[0])):"";
+  const dateStr = new Date().toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"});
+  const doelPct = S.settings.jaardoel? Math.min(100,k.omzet/S.settings.jaardoel*100):0;
+  const td = todos();
+  const urenPct = Math.min(100,k.urenY/k.doel*100), pacePct=Math.min(100,k.pace/k.doel*100);
+  const ahead = k.urenY - k.pace;
+  return head(`${greet}${name}`, `${dateStr[0].toUpperCase()+dateStr.slice(1)} · ${loading()?"Gegevens laden…":"koers voor "+YEAR()}`,
+      newBtn("hours","Uren",1)+newBtn("invoices","Factuur")+newBtn("deals","Deal")+newBtn("contacts","Contact")+newBtn("ideas","Idee")) +
+  `<div class="tiles">
+    <div class="tile"><span class="lab">Omzet ${YEAR()}</span><b>${eur(k.omzet)}</b><span class="sub">${S.settings.jaardoel?`${Math.round(doelPct)}% van doel ${eur(S.settings.jaardoel)}`:"excl. btw, gefactureerd"}</span><div class="meter"><i style="width:${doelPct}%"></i></div></div>
+    <div class="tile"><span class="lab">Openstaand</span><b>${eur(k.openSum)}</b><span class="sub">${k.open.length} facturen${k.late.length?` · <span style="color:var(--bad);font-weight:600">${k.late.length} verlopen (${eur(k.lateSum)})</span>`:" · niets verlopen"}</span></div>
+    <div class="tile"><span class="lab">Pipeline gewogen</span><b>${eur(k.pipeW)}</b><span class="sub">${k.openDeals.length} open deals · totaal ${eur(k.pipeT)}</span></div>
+    <div class="tile"><span class="lab">Nog te factureren</span><b>${eur(k.unbilled)}</b><span class="sub">declarabele uren × tarief</span></div>
+    <div class="tile"><span class="lab">Effectief uurtarief</span><b>${k.effRate?eur(k.effRate):"—"}</b><span class="sub">omzet ÷ declarabele uren ${YEAR()}</span></div>
+    <div class="tile"><span class="lab">Zet apart</span><b>${eur(k.reserve+Math.max(0,k.btwNet))}</b><span class="sub">${eur(k.reserve)} IB-reserve (${S.settings.reservePct}%) + ${eur(Math.max(0,k.btwNet))} btw Q${k.q}</span></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Cashflow <small>laatste 12 maanden · excl. btw</small></h3>${chart()}</div>
+    <div class="panel"><h3>Actiepunten <small>${td.length} open</small></h3>
+      ${td.length?`<ul class="todo">${td.slice(0,9).map(x=>`<li><span class="sev ${x.sev}"></span><div class="t">${esc(x.txt)}<span>${esc(x.sub)}</span></div>${x.go?`<button class="btn sm" data-edit="${x.go[0]}:${x.go[1]}">Open</button>`:""}</li>`).join("")}</ul>`:`<div class="empty">Alles bij. Geen verlopen facturen of follow-ups.</div>`}
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Urencriterium <small>${NUM1.format(k.urenY)} van ${k.doel} uur</small></h3>
+      <div class="track"><div class="fill" style="width:${urenPct}%"></div><div class="pace" style="left:${pacePct}%"></div><div class="lbl"><span>${NUM1.format(k.urenY)} u</span><span>${k.doel} u</span></div></div>
+      <div class="trackkey"><span><span class="pill ${ahead>=0?"good":"warn"}">${ahead>=0?"Op schema":"Achter"}</span> ${NUM1.format(Math.abs(ahead))} uur ${ahead>=0?"voor":"achter"} op het tempo voor zelfstandigenaftrek</span><span>Gele lijn = waar je vandaag moet zijn</span></div>
+      <div class="trackkey"><span>Deze maand: <b>${NUM1.format(k.urenM)} u</b> (${k.urenM?Math.round(k.declM/k.urenM*100):0}% declarabel)</span><span>Nodig per week tot 31 dec: <b>${NUM1.format(Math.max(0,(k.doel-k.urenY)/Math.max(1,(new Date(YEAR(),11,31)-new Date())/6048e5)))} u</b></span></div>
+    </div>
+    <div class="panel"><h3>Pipeline <small><a href="#pipeline" style="color:var(--accent)">Bekijk bord</a></small></h3>${pipeSummary()}</div>
+  </div>
+  <div class="panel"><h3>Recent gelogd <small><a href="#uren" style="color:var(--accent)">Alle uren</a></small></h3>${recentHours()}</div>`;
+}
+
+function chart(){
+  const now=new Date(), months=[];
+  for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+"-"+pad(d.getMonth()+1)); }
+  const rev = months.map(m=>sum(S.invoices.filter(i=>i.status!=="Concept"&&(i.datum||"").startsWith(m)),i=>i.bedrag));
+  const cost = months.map(m=>sum(S.expenses.filter(e=>(e.datum||"").startsWith(m)),e=>e.bedrag));
+  const max = Math.max(1,...rev,...cost);
+  const step = [500,1000,2000,2500,5000,10000,20000,25000,50000].find(s=>max/s<=4)||Math.ceil(max/4/10000)*10000;
+  const top = Math.ceil(max/step)*step;
+  const W=640,H=230,L=52,R=8,T=10,B=26, cw=(W-L-R)/12, bw=Math.min(16,cw/3);
+  const y=v=>T+(H-T-B)*(1-v/top);
+  let g="";
+  for(let v=0;v<=top+1e-6;v+=step) g+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${v>=1000?"€"+(v/1000)+"k":"€"+v}</text>`;
+  months.forEach((m,i)=>{
+    const x=L+cw*i+cw/2;
+    const cur=i===11;
+    g+=`<rect x="${x-bw-1}" y="${y(rev[i])}" width="${bw}" height="${Math.max(0,y(0)-y(rev[i]))}" rx="2" fill="var(--accent)" opacity="${cur?1:.85}"><title>${m}: omzet ${eur(rev[i])}</title></rect>`;
+    g+=`<rect x="${x+1}" y="${y(cost[i])}" width="${bw}" height="${Math.max(0,y(0)-y(cost[i]))}" rx="2" fill="var(--cost)"><title>${m}: kosten ${eur(cost[i])}</title></rect>`;
+    g+=`<text class="ax" x="${x}" y="${H-8}" text-anchor="middle" ${cur?'style="font-weight:600;fill:var(--fg)"':""}>${new Date(+m.slice(0,4),+m.slice(5)-1,1).toLocaleDateString("nl-NL",{month:"short"}).replace(".","")}</text>`;
+  });
+  const tr=sum(rev,x=>x), tc=sum(cost,x=>x);
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Omzet en kosten per maand">${g}</svg></div>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Omzet ${eur(tr)}</span><span><i style="background:var(--cost)"></i>Kosten ${eur(tc)}</span><span>Resultaat <b style="color:var(--fg)">${eur(tr-tc)}</b></span></div>`;
+}
+function pipeSummary(){
+  const open=S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
+  if(!open.length) return `<div class="empty">Nog geen open deals. <button class="btn sm" data-new="deals">+ Deal</button></div>`;
+  const tot=sum(open,d=>d.waarde)||1;
+  const cols=["var(--cost)","var(--accent-soft)","var(--accent)","var(--jersey)"];
+  const bar=OPEN_STAGES.map((s,i)=>{const v=sum(open.filter(d=>d.fase===s),d=>d.waarde); return v?`<i title="${s}: ${eur(v)}" style="width:${v/tot*100}%;background:${cols[i]}"></i>`:"";}).join("");
+  const top=[...open].sort((a,b)=>(b.waarde*dealProb(b))-(a.waarde*dealProb(a))).slice(0,4);
+  return `<div class="meter" style="height:12px;display:flex">${bar}</div>
+  <div class="legend">${OPEN_STAGES.map((s,i)=>`<span><i style="background:${cols[i]}"></i>${s} ${eur(sum(open.filter(d=>d.fase===s),d=>d.waarde))}</span>`).join("")}</div>
+  <ul class="todo">${top.map(d=>`<li><span class="sev ok"></span><div class="t">${esc(d.naam)}<span>${esc(d.organisatie||"")} · ${d.fase} · ${dealProb(d)}%</span></div><b class="num">${eur(d.waarde)}</b></li>`).join("")}</ul>`;
+}
+function recentHours(){
+  const r=[...S.hours].sort((a,b)=>(b.datum||"").localeCompare(a.datum||"")).slice(0,5);
+  if(!r.length) return `<div class="empty">Nog geen uren. Start de timer links of log met + Uren.</div>`;
+  return `<ul class="todo">${r.map(h=>{const p=projById(h.project);return `<li><span class="sev ${h.declarabel==="Nee"?"":"ok"}"></span><div class="t">${esc(h.omschrijving||"—")}<span>${fmtD(h.datum)} · ${esc(p?p.naam:"Geen project")}</span></div><b class="num">${NUM1.format(h.uren)} u</b></li>`}).join("")}</ul>`;
+}
+
+function vPipeline(){
+  const k=kpis();
+  return head("Pipeline",`${k.openDeals.length} open · ${eur(k.pipeT)} totaal · ${eur(k.pipeW)} gewogen`,newBtn("deals","Deal",1)) +
+    `<div class="toolbar"><input type="search" id="q-deals" placeholder="Zoek deal of organisatie" data-q="deals" value="${esc(F.q.deals||"")}"></div><div id="list-deals"></div>`;
+}
+function vContacts(){
+  return head("Netwerk",`${S.contacts.length} contacten · ${S.contacts.filter(c=>c.warmte==="Warm").length} warm`,newBtn("contacts","Contact",1)) +
+    `<div class="toolbar"><input type="search" id="q-contacts" placeholder="Zoek naam, organisatie of tag" data-q="contacts" value="${esc(F.q.contacts||"")}">
+    <div class="seg" role="group" aria-label="Sorteer">${[["followUp","Follow-up"],["laatsteContact","Langst niet gesproken"],["naam","Naam"]].map(([v,l])=>`<button type="button" data-csort="${v}" aria-pressed="${F.contactSort===v}">${l}</button>`).join("")}</div></div><div id="list-contacts"></div>`;
+}
+function vProjects(){
+  return head("Projecten",`${S.projects.filter(p=>p.status==="Lopend").length} lopend`,newBtn("projects","Project",1)) +
+    `<div class="toolbar"><input type="search" id="q-projects" placeholder="Zoek project of klant" data-q="projects" value="${esc(F.q.projects||"")}"></div><div id="list-projects"></div>`;
+}
+function vHours(){
+  const k=kpis();
+  return head("Uren",`${NUM1.format(k.urenY)} uur in ${YEAR()} · ${NUM1.format(k.urenM)} deze maand`,newBtn("hours","Uren",1)) +
+    `<div class="toolbar"><input type="search" id="q-hours" placeholder="Zoek omschrijving of project" data-q="hours" value="${esc(F.q.hours||"")}">
+    <div class="seg" role="group" aria-label="Periode">${[["week","Week"],["maand","Maand"],["jaar","Jaar"],["alles","Alles"]].map(([v,l])=>`<button type="button" data-hrange="${v}" aria-pressed="${F.hoursRange===v}">${l}</button>`).join("")}</div></div><div id="list-hours"></div>`;
+}
+function vInvoices(){
+  const k=kpis();
+  return head("Facturen",`${eur(k.openSum)} openstaand · ${eur(k.omzet)} gefactureerd in ${YEAR()}`,newBtn("invoices","Factuur",1)) +
+    `<div class="toolbar"><input type="search" id="q-invoices" placeholder="Zoek nummer of klant" data-q="invoices" value="${esc(F.q.invoices||"")}">
+    <div class="seg" role="group" aria-label="Status">${["Alle","Concept","Verstuurd","Verlopen","Betaald"].map(v=>`<button type="button" data-istat="${v}" aria-pressed="${F.invStatus===v}">${v}</button>`).join("")}</div></div><div id="list-invoices"></div>`;
+}
+function vExpenses(){
+  const k=kpis();
+  return head("Uitgaven",`${eur(k.kosten)} kosten in ${YEAR()} · ${eur(k.btwIn)} voorbelasting Q${k.q}`,newBtn("expenses","Uitgave",1)) +
+    `<div class="toolbar"><input type="search" id="q-expenses" placeholder="Zoek omschrijving of categorie" data-q="expenses" value="${esc(F.q.expenses||"")}"></div><div id="list-expenses"></div>`;
+}
+function vIdeas(){
+  return head("Ideeënbank","Elk idee een plek, elk idee een kleinste volgende stap.",newBtn("ideas","Idee",1)) +
+    `<div class="toolbar"><input type="search" id="q-ideas" placeholder="Zoek idee" data-q="ideas" value="${esc(F.q.ideas||"")}"></div><div id="list-ideas"></div>`;
+}
+function vSettings(){
+  const s=S.settings, k=kpis();
+  const f=(key,l,t="text",hint="")=>`<label>${l}<input id="set-${key}" data-set="${key}" type="${t}" value="${esc(s[key]??"")}" ${t==="number"?'step="any"':""}>${hint?`<span class="hint muted">${hint}</span>`:""}</label>`;
+  const ex = COLLS.reduce((t,c)=>t+S[c].filter(r=>r.example).length,0);
+  return head("Instellingen","Tarieven, doelen en je bedrijfsgegevens.",`<button class="btn pri" data-act="save-set">Opslaan</button>`) +
+  `<div class="panel"><h3>Bedrijf</h3><div class="setgrid">${f("naam","Je naam")}${f("bedrijf","Bedrijfsnaam")}${f("kvk","KvK-nummer")}${f("btwnr","Btw-id")}${f("iban","IBAN")}</div></div>
+  <div class="panel"><h3>Tarieven & doelen</h3><div class="setgrid">
+    ${f("uurtarief","Standaard uurtarief (€)","number")}${f("termijn","Betaaltermijn (dagen)","number")}
+    ${f("jaardoel","Omzetdoel "+YEAR()+" (€)","number")}${f("urenDoel","Urendoel","number","1.225 uur = urencriterium")}
+    ${f("reservePct","Reserve inkomstenbelasting (%)","number","Indicatie. Vraag je boekhouder naar jouw percentage.")}
+  </div></div>
+  <div class="panel"><h3>Exporteren <small>CSV voor je boekhouder, scheidingsteken ;</small></h3>
+    <div class="actions">${["invoices","hours","expenses","contacts","deals"].map(c=>`<button class="btn" data-export="${c}">${({invoices:"Facturen",hours:"Uren",expenses:"Uitgaven",contacts:"Netwerk",deals:"Pipeline"})[c]}</button>`).join("")}</div>
+    <p class="muted" style="margin:0">Jaarcijfers ${YEAR()}: omzet ${eur(k.omzet)}, kosten ${eur(k.kosten)}, resultaat ${eur(k.winst)}.</p></div>
+  <div class="panel"><h3>Voorbeelddata</h3><p class="muted" style="margin:0">${ex?`Er staan nog ${ex} voorbeeldregels in je cockpit.`:"Geen voorbeeldregels meer. Alles is van jou."}</p>${ex?`<div><button class="btn danger" data-act="clear-ex">Voorbeelden wissen</button></div>`:""}</div>`;
+}
+
+// ---------- lists ----------
+const match = (r,q,keys) => !q || keys.some(k=>String(r[k]??"").toLowerCase().includes(q));
+function renderList(c){
+  const el=$("#list-"+c); if(!el) return;
+  const q=(F.q[c]||"").trim().toLowerCase();
+  if(loading() && !S[c].length){ el.innerHTML=`<div class="empty">Gegevens laden…</div>`; return; }
+  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,hours:lHours,invoices:lInvoices,expenses:lExpenses,ideas:lIdeas}[c])(q);
+}
+function emptyState(c,txt){ return `<div class="panel"><div class="empty">${txt}<br><br><button class="btn pri" data-new="${c}">+ ${SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)} toevoegen</button></div></div>`; }
+
+function lDeals(q){
+  const rows=S.deals.filter(d=>match(d,q,["naam","organisatie","contact","type"]));
+  if(!S.deals.length) return emptyState("deals","Zet elke kans hier, ook als het nog een koffie-gesprek is.");
+  return `<div class="board">${STAGES.map(s=>{
+    const ds=rows.filter(d=>d.fase===s).sort((a,b)=>(+b.waarde||0)-(+a.waarde||0));
+    return `<div class="col"><h4>${s}<span>${ds.length} · ${eur(sum(ds,d=>d.waarde))}</span></h4>
+    ${ds.map(d=>{const due=d.stapDatum&&d.stapDatum<=TODAY()&&OPEN_STAGES.includes(s);return `<div class="card" data-edit="deals:${d.id}" tabindex="0">
+      <div class="ttl">${esc(d.naam)}${exPill(d)}</div>
+      <div class="meta"><span>${esc(d.organisatie||"")}</span><b class="num" style="color:var(--fg)">${eur(d.waarde)}</b></div>
+      ${d.volgendeStap&&OPEN_STAGES.includes(s)?`<div class="meta"><span>→ ${esc(d.volgendeStap)}</span>${d.stapDatum?`<span class="pill ${due?"warn":""}">${fmtD(d.stapDatum)}</span>`:""}</div>`:""}
+      <div class="mv"><button class="btn sm ghost" data-stage="${d.id}:-1" ${s==="Lead"?"disabled":""} aria-label="Fase terug">←</button><span class="muted" style="font-size:12px">${dealProb(d)}% kans</span><button class="btn sm ghost" data-stage="${d.id}:1" ${s==="Verloren"?"disabled":""} aria-label="Volgende fase">→</button></div>
+    </div>`}).join("")||`<div class="muted" style="font-size:12px;padding:6px 2px">Leeg</div>`}</div>`;}).join("")}</div>`;
+}
+function lContacts(q){
+  if(!S.contacts.length) return emptyState("contacts","Je netwerk is je kapitaal. Voeg de mensen toe die je deuren openen.");
+  const t=TODAY();
+  let rows=S.contacts.filter(r=>match(r,q,["naam","organisatie","rol","tags","notitie"]));
+  const s=F.contactSort;
+  rows.sort((a,b)=> s==="naam"? String(a.naam).localeCompare(b.naam) : s==="laatsteContact"? (a.laatsteContact||"0").localeCompare(b.laatsteContact||"0") : (a.followUp||"9999").localeCompare(b.followUp||"9999"));
+  return `<div class="tablewrap"><table><thead><tr><th>Naam</th><th>Organisatie</th><th>Relatie</th><th>Laatste contact</th><th>Follow-up</th><th>Contact</th><th></th></tr></thead><tbody>
+  ${rows.map(r=>{const ago=r.laatsteContact?daysBetween(r.laatsteContact,t):null;return `<tr data-edit="contacts:${r.id}">
+    <td><b>${esc(r.naam)}</b>${exPill(r)}<div class="muted" style="font-size:12px">${esc(r.rol||"")}</div></td>
+    <td>${esc(r.organisatie||"")}</td>
+    <td><span class="pill ${r.warmte==="Warm"?"good":r.warmte==="Koud"?"":"acc"}">${esc(r.warmte||"—")}</span></td>
+    <td>${fmtD(r.laatsteContact)}${ago!=null?`<div class="muted" style="font-size:12px">${ago===0?"vandaag":ago+" dagen geleden"}</div>`:""}</td>
+    <td>${r.followUp?`<span class="pill ${r.followUp<t?"bad":r.followUp===t?"warn":""}">${fmtD(r.followUp)}</span>`:'<span class="muted">—</span>'}</td>
+    <td style="font-size:12px"><span class="sel">${esc(r.email||"")}</span><br><span class="sel">${esc(r.telefoon||"")}</span></td>
+    <td class="n"><button class="btn sm" data-touch="${r.id}" title="Zet laatste contact op vandaag">Gesproken</button></td></tr>`}).join("")}
+  </tbody></table></div>`;
+}
+function lProjects(q){
+  if(!S.projects.length) return emptyState("projects","Elke opdracht een project, dan zie je wat elk uur oplevert.");
+  const order={"Lopend":0,"Gepland":1,"On hold":2,"Afgerond":3};
+  const rows=S.projects.filter(r=>match(r,q,["naam","klant","type"])).sort((a,b)=>(order[a.status]??9)-(order[b.status]??9));
+  return `<div class="cards">${rows.map(p=>{
+    const hs=S.hours.filter(h=>h.project===p.id), u=sum(hs,h=>h.uren), val=sum(hs.filter(h=>h.declarabel!=="Nee"),h=>h.uren*rateFor(h));
+    const inv=sum(S.invoices.filter(i=>i.project===p.id&&i.status!=="Concept"),i=>i.bedrag);
+    const pct=p.budget?Math.min(100,val/p.budget*100):0;
+    const st=p.status==="Lopend"?"good":p.status==="Gepland"?"acc":p.status==="Afgerond"?"":"warn";
+    return `<div class="pcard" data-edit="projects:${p.id}" tabindex="0">
+      <div class="top"><h4>${esc(p.naam)}${exPill(p)}</h4><span class="pill ${st}">${esc(p.status)}</span></div>
+      <p>${esc(p.klant||"")}${p.type?" · "+esc(p.type):""}</p>
+      <p>${p.start?fmtD(p.start):"?"} → ${p.eind?fmtD(p.eind):"?"}</p>
+      <div class="meta" style="display:flex;justify-content:space-between;font-size:12.5px"><span>${NUM1.format(u)} u · ${eur(val)} waarde</span><span>${eur(inv)} gefactureerd</span></div>
+      ${p.budget?`<div class="meter"><i style="width:${pct}%;${pct>=100?"background:var(--bad)":pct>80?"background:var(--warn)":""}"></i></div><p style="font-size:12px">${Math.round(pct)}% van budget ${eur(p.budget)}</p>`:""}
+    </div>`;}).join("")}</div>`;
+}
+function hoursInRange(){
+  const t=TODAY(), r=F.hoursRange;
+  return S.hours.filter(h=>{ const d=h.datum||"";
+    if(r==="week"){ const now=parse(t); const dow=(now.getDay()+6)%7; return d>=addDays(t,-dow) && d<=t; }
+    if(r==="maand") return d.startsWith(t.slice(0,7));
+    if(r==="jaar") return inYear(d);
+    return true; });
+}
+function lHours(q){
+  if(!S.hours.length) return emptyState("hours","Log je uren voor het urencriterium en om niets te vergeten te factureren.");
+  const rows=hoursInRange().filter(h=>{const p=projById(h.project);return !q||match(h,q,["omschrijving"])||(p&&p.naam.toLowerCase().includes(q));}).sort((a,b)=>(b.datum||"").localeCompare(a.datum||""));
+  if(!rows.length) return `<div class="panel"><div class="empty">Geen uren in deze periode.</div></div>`;
+  return `<div class="tablewrap"><table><thead><tr><th>Datum</th><th>Omschrijving</th><th>Project</th><th>Declarabel</th><th class="n">Uren</th><th class="n">Waarde</th></tr></thead><tbody>
+  ${rows.map(h=>{const p=projById(h.project);return `<tr data-edit="hours:${h.id}"><td>${fmtD(h.datum)}</td><td>${esc(h.omschrijving||"—")}${exPill(h)}</td><td>${esc(p?p.naam:"—")}</td><td>${h.declarabel==="Nee"?'<span class="pill">Nee</span>':'<span class="pill good">Ja</span>'}</td><td class="n">${NUM1.format(h.uren)}</td><td class="n">${h.declarabel==="Nee"?'<span class="muted">—</span>':eur(h.uren*rateFor(h))}</td></tr>`}).join("")}
+  </tbody><tfoot><tr><td colspan="4">${rows.length} regels</td><td class="n">${NUM1.format(sum(rows,h=>h.uren))}</td><td class="n">${eur(sum(rows.filter(h=>h.declarabel!=="Nee"),h=>h.uren*rateFor(h)))}</td></tr></tfoot></table></div>`;
+}
+function lInvoices(q){
+  if(!S.invoices.length) return emptyState("invoices","Houd hier bij wat je factureert en wat er nog binnen moet komen.");
+  const t=TODAY();
+  const rows=S.invoices.filter(i=>(F.invStatus==="Alle"||invState(i)===F.invStatus)&&match(i,q,["nr","klant","omschrijving"])).sort((a,b)=>String(b.nr).localeCompare(String(a.nr)));
+  const cls={Betaald:"good",Verstuurd:"acc",Verlopen:"bad",Concept:"warn"};
+  if(!rows.length) return `<div class="panel"><div class="empty">Geen facturen met deze status.</div></div>`;
+  return `<div class="tablewrap"><table><thead><tr><th>Nr</th><th>Klant</th><th>Datum</th><th>Vervalt</th><th class="n">Excl.</th><th class="n">Incl.</th><th>Status</th><th></th></tr></thead><tbody>
+  ${rows.map(i=>{const st=invState(i);return `<tr data-edit="invoices:${i.id}"><td><b>${esc(i.nr)}</b>${exPill(i)}</td><td>${esc(i.klant)}<div class="muted" style="font-size:12px">${esc(i.omschrijving||"")}</div></td><td>${fmtD(i.datum)}</td>
+    <td>${st==="Betaald"?`<span class="muted">${i.betaaldOp?"betaald "+fmtD(i.betaaldOp):"—"}</span>`:fmtD(invDue(i))+(st==="Verlopen"?`<div style="font-size:12px;color:var(--bad)">${daysBetween(invDue(i),t)} dagen te laat</div>`:"")}</td>
+    <td class="n">${eur2(i.bedrag)}</td><td class="n">${eur2(invIncl(i))}</td><td><span class="pill ${cls[st]}">${st}</span></td>
+    <td class="n">${st==="Concept"?`<button class="btn sm" data-istate="${i.id}:Verstuurd">Verstuurd</button>`:st!=="Betaald"?`<button class="btn sm" data-istate="${i.id}:Betaald">Betaald</button>`:""}</td></tr>`}).join("")}
+  </tbody><tfoot><tr><td colspan="4">${rows.length} facturen</td><td class="n">${eur2(sum(rows,i=>i.bedrag))}</td><td class="n">${eur2(sum(rows,invIncl))}</td><td colspan="2"></td></tr></tfoot></table></div>`;
+}
+function lExpenses(q){
+  if(!S.expenses.length) return emptyState("expenses","Leg je zakelijke kosten vast, dan klopt je btw-aangifte en je resultaat.");
+  const rows=S.expenses.filter(e=>match(e,q,["omschrijving","categorie","notitie"])).sort((a,b)=>(b.datum||"").localeCompare(a.datum||""));
+  const vat=e=>(+e.bedrag||0)*(+e.btw||0)/100;
+  return `<div class="tablewrap"><table><thead><tr><th>Datum</th><th>Omschrijving</th><th>Categorie</th><th class="n">Excl.</th><th class="n">Btw</th><th class="n">Incl.</th></tr></thead><tbody>
+  ${rows.map(e=>`<tr data-edit="expenses:${e.id}"><td>${fmtD(e.datum)}</td><td>${esc(e.omschrijving)}${exPill(e)}</td><td>${esc(e.categorie||"")}</td><td class="n">${eur2(e.bedrag)}</td><td class="n">${eur2(vat(e))}</td><td class="n">${eur2((+e.bedrag||0)+vat(e))}</td></tr>`).join("")}
+  </tbody><tfoot><tr><td colspan="3">${rows.length} uitgaven</td><td class="n">${eur2(sum(rows,e=>e.bedrag))}</td><td class="n">${eur2(sum(rows,vat))}</td><td class="n">${eur2(sum(rows,e=>(+e.bedrag||0)+vat(e)))}</td></tr></tfoot></table></div>`;
+}
+function lIdeas(q){
+  if(!S.ideas.length) return emptyState("ideas","Parkeer hier elk idee dat in de auto of tijdens een wandeling opkomt.");
+  const order={"Pitchen":0,"Uitwerken":1,"Idee":2,"Geparkeerd":3,"Gerealiseerd":4};
+  const rows=S.ideas.filter(r=>match(r,q,["titel","categorie","notitie"])).sort((a,b)=>(order[a.status]??9)-(order[b.status]??9)||(+b.potentie||0)-(+a.potentie||0));
+  return `<div class="cards">${rows.map(i=>`<div class="pcard" data-edit="ideas:${i.id}" tabindex="0">
+    <div class="top"><h4>${esc(i.titel)}${exPill(i)}</h4><span class="pill ${i.status==="Pitchen"?"good":i.status==="Uitwerken"?"acc":i.status==="Gerealiseerd"?"good":""}">${esc(i.status)}</span></div>
+    <p>${esc(i.categorie||"")} · <span class="stars" aria-label="Potentie ${+i.potentie||0} van 5">${"★".repeat(+i.potentie||0)}${"☆".repeat(5-(+i.potentie||0))}</span></p>
+    ${i.volgendeStap?`<p style="color:var(--fg)">→ ${esc(i.volgendeStap)}</p>`:""}
+    ${i.notitie?`<p>${esc(i.notitie.length>140?i.notitie.slice(0,140)+"…":i.notitie)}</p>`:""}
+  </div>`).join("")}</div>`;
+}
+
+// ---------- form ----------
+let editing=null, armed=false;
+function openForm(c,id,preset={}){
+  const sc=SCHEMA[c], row=id?S[c].find(r=>r.id===id):null;
+  if(id && !row) return;
+  editing={c,id}; armed=false;
+  const orgs=[...new Set([...S.contacts.map(x=>x.organisatie),...S.projects.map(x=>x.klant),...S.deals.map(x=>x.organisatie),...S.invoices.map(x=>x.klant)].filter(Boolean))].sort();
+  const people=[...new Set(S.contacts.map(x=>x.naam).filter(Boolean))].sort();
+  const val=f=>{ if(row) return row[f.k]??""; if(preset[f.k]!=null) return preset[f.k]; return typeof f.def==="function"?f.def():(f.def??""); };
+  const input=f=>{ const v=val(f), id="f-"+f.k, rq=f.req?"required":"";
+    if(f.t==="select") return `<select id="${id}" ${rq}>${f.def==null&&!f.req?'<option value="">—</option>':""}${f.o.map(o=>`<option value="${esc(o)}" ${String(v)===String(o)?"selected":""}>${esc(f.fmt?f.fmt(o):o)}</option>`).join("")}</select>`;
+    if(f.t==="ref") return `<select id="${id}"><option value="">—</option>${S[f.ref].map(p=>`<option value="${esc(p.id)}" ${v===p.id?"selected":""}>${esc(p.naam)}${p.klant?" · "+esc(p.klant):""}</option>`).join("")}</select>`;
+    if(f.t==="textarea") return `<textarea id="${id}" ${rq}>${esc(v)}</textarea>`;
+    const type=f.t==="money"?"number":f.t;
+    return `<input id="${id}" type="${type}" value="${esc(v)}" ${rq} ${f.t==="money"?'step="0.01" min="0" inputmode="decimal"':""} ${f.step?`step="${f.step}"`:""} ${f.min!=null?`min="${f.min}"`:""} ${f.max!=null?`max="${f.max}"`:""} ${f.ph?`placeholder="${esc(f.ph)}"`:""} ${f.list?`list="dl-${f.list}"`:""}>`;
+  };
+  const title=(row?"Bewerk ":"Nieuwe ")+sc.one;
+  $("#dlgForm").innerHTML = `<header><h3>${title}</h3><button type="button" class="btn ghost" data-act="close" aria-label="Sluiten">✕</button></header>
+  <div class="fields">${sc.fields.map(f=>`<label class="${f.full?"full":""}">${f.l}${input(f)}${f.hint?`<span class="hint">${f.hint}</span>`:""}</label>`).join("")}<div class="calc" id="calc" hidden></div></div>
+  <datalist id="dl-orgs">${orgs.map(o=>`<option value="${esc(o)}">`).join("")}</datalist><datalist id="dl-people">${people.map(o=>`<option value="${esc(o)}">`).join("")}</datalist>
+  <footer><div>${row?`<button type="button" class="btn danger" data-act="del">Verwijderen</button>`:""}</div><div class="actions"><button type="button" class="btn" data-act="close">Annuleren</button><button type="submit" class="btn pri">Opslaan</button></div></footer>`;
+  const dlg=$("#dlg"); if(!dlg.open) dlg.showModal();
+  updateCalc();
+  setTimeout(()=>{const first=$("#dlgForm .fields input, #dlgForm .fields select"); first&&first.focus();},30);
+}
+function updateCalc(){
+  const el=$("#calc"); if(!el||!editing) return;
+  const g=k=>{const e=$("#f-"+k);return e?e.value:"";};
+  if(editing.c==="invoices"||editing.c==="expenses"){
+    const b=+g("bedrag")||0, v=b*(+g("btw")||0)/100;
+    el.hidden=false; el.innerHTML=`<span>Btw <b>${eur2(v)}</b></span><span>Totaal incl. <b>${eur2(b+v)}</b></span>${editing.c==="invoices"&&g("datum")?`<span>Vervalt <b>${fmtDY(addDays(g("datum"),+g("termijn")||0))}</b></span>`:""}`;
+  } else if(editing.c==="hours"){
+    const p=projById(g("project")), r=+(p&&p.tarief)||+S.settings.uurtarief||0, u=+g("uren")||0;
+    el.hidden=false; el.innerHTML=`<span>Waarde <b>${g("declarabel")==="Nee"?"niet declarabel":eur2(u*r)}</b></span><span class="muted">tarief ${eur2(r)}/u</span>`;
+  } else if(editing.c==="deals"){
+    const w=+g("waarde")||0, k=g("kans")===""?STAGE_PROB[g("fase")]??0:+g("kans");
+    el.hidden=false; el.innerHTML=`<span>Gewogen waarde <b>${eur2(w*k/100)}</b></span><span class="muted">${k}% kans</span>`;
+  } else el.hidden=true;
+}
+function readForm(){
+  const sc=SCHEMA[editing.c], out={};
+  for(const f of sc.fields){ const e=$("#f-"+f.k); let v=e?e.value.trim():"";
+    if((f.t==="number"||f.t==="money") && v!=="") v=+v;
+    out[f.k]=v; }
+  return out;
+}
+async function saveForm(){
+  if(!db){ toast("Opslag niet beschikbaar"); return; }
+  const {c,id}=editing; const data=readForm(); const now=new Date().toISOString();
+  if(c==="invoices" && data.status==="Betaald" && !data.betaaldOp) data.betaaldOp=TODAY();
+  try{
+    if(id){ const old=S[c].find(r=>r.id===id)||{}; const {id:_,example:__,...rest}=old; await db.collection(c).doc(id).set({...rest,...data,updatedAt:now}); }
+    else await db.collection(c).add({...data,createdAt:now});
+    $("#dlg").close(); toast(id?"Opgeslagen":SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)+" toegevoegd");
+  }catch(e){ toast(e&&e.code==="quota_exceeded"?"Opslag is vol: verwijder oude regels":"Opslaan mislukt, probeer het opnieuw"); }
+}
+async function delForm(btn){
+  if(!armed){ armed=true; btn.classList.add("armed"); btn.textContent="Klik nogmaals om te verwijderen"; return; }
+  try{ await db.collection(editing.c).doc(editing.id).delete(); $("#dlg").close(); toast("Verwijderd"); }catch{ toast("Verwijderen mislukt"); }
+}
+async function patch(c,id,data){
+  const old=S[c].find(r=>r.id===id); if(!old||!db) return;
+  const {id:_,...rest}=old;
+  try{ await db.collection(c).doc(id).set({...rest,...data,updatedAt:new Date().toISOString()}); }catch{ toast("Opslaan mislukt"); }
+}
+
+// ---------- timer ----------
+let tick=null;
+function renderTimer(){
+  const t=store.get("ploeg.timer"), el=$("#timer");
+  const running=!!(t&&t.start);
+  el.className="timer"+(running?" running":"");
+  const secs=running?Math.floor((Date.now()-t.start)/1000):0;
+  const clock=`${pad(Math.floor(secs/3600))}:${pad(Math.floor(secs/60)%60)}:${pad(secs%60)}`;
+  const opts=S.projects.filter(p=>p.status!=="Afgerond").map(p=>`<option value="${esc(p.id)}" ${running&&t.project===p.id?"selected":""}>${esc(p.naam)}</option>`).join("");
+  el.innerHTML=`<span class="lab">Timer</span><span class="clock" id="clock">${clock}</span>
+    <select id="timerProj" aria-label="Project voor timer" ${running?"disabled":""}><option value="">Geen project</option>${opts}</select>
+    <button class="btn ${running?"":"pri"} sm" data-act="timer">${running?"Stop & log":"Start"}</button>`;
+  clearInterval(tick);
+  if(running) tick=setInterval(()=>{const c=$("#clock"); if(!c) return; const s=Math.floor((Date.now()-t.start)/1000); c.textContent=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`;},1000);
+}
+function toggleTimer(){
+  const t=store.get("ploeg.timer");
+  if(t&&t.start){
+    const h=Math.max(.25,Math.round((Date.now()-t.start)/36e5*4)/4);
+    store.set("ploeg.timer",null); renderTimer();
+    openForm("hours",null,{uren:h,project:t.project||"",datum:TODAY()});
+  } else { const sel=$("#timerProj"); store.set("ploeg.timer",{start:Date.now(),project:sel?sel.value:""}); renderTimer(); toast("Timer loopt"); }
+}
+
+// ---------- export ----------
+async function exportCsv(c){
+  if(!downloads){ toast("Downloaden kan niet in deze weergave"); return; }
+  const n=v=>typeof v==="number"?String(v).replace(".",","):v;
+  let cols, rows;
+  if(c==="invoices"){ cols=["Nummer","Klant","Omschrijving","Datum","Vervaldatum","Excl","Btw%","Btw","Incl","Status","Betaald op"]; rows=S.invoices.map(i=>[i.nr,i.klant,i.omschrijving,i.datum,invDue(i),+i.bedrag||0,i.btw,+invBtw(i).toFixed(2),+invIncl(i).toFixed(2),invState(i),i.betaaldOp]); }
+  else if(c==="hours"){ cols=["Datum","Uren","Project","Omschrijving","Declarabel","Waarde"]; rows=S.hours.map(h=>[h.datum,+h.uren||0,(projById(h.project)||{}).naam,h.omschrijving,h.declarabel,h.declarabel==="Nee"?0:+(h.uren*rateFor(h)).toFixed(2)]); }
+  else if(c==="expenses"){ cols=["Datum","Omschrijving","Categorie","Excl","Btw%","Btw"]; rows=S.expenses.map(e=>[e.datum,e.omschrijving,e.categorie,+e.bedrag||0,e.btw,+((+e.bedrag||0)*(+e.btw||0)/100).toFixed(2)]); }
+  else { const fs=SCHEMA[c].fields; cols=fs.map(f=>f.l); rows=S[c].map(r=>fs.map(f=>r[f.k])); }
+  const cell=v=>{v=n(v??""); v=String(v); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  const csv="﻿"+[cols,...rows].map(r=>r.map(cell).join(";")).join("\r\n");
+  try{ await downloads.save({filename:`${c}-${TODAY()}.csv`,data:csv}); }catch(e){ if(e&&e.code!=="declined") toast("Export mislukt"); }
+}
+
+// ---------- events ----------
+document.addEventListener("click", async e=>{
+  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-istate],[data-touch],[data-export],[data-hrange],[data-istat],[data-csort]");
+  if(!t) return;
+  const d=t.dataset;
+  if(d.stage||d.istate||d.touch){ e.stopPropagation(); }
+  if(d.new) return openForm(d.new);
+  if(d.stage){ const [id,dir]=d.stage.split(":"); const deal=S.deals.find(x=>x.id===id); if(!deal) return;
+    const i=Math.max(0,Math.min(STAGES.length-1,STAGES.indexOf(deal.fase)+ +dir)); return patch("deals",id,{fase:STAGES[i],kans:""}); }
+  if(d.istate){ const [id,st]=d.istate.split(":"); return patch("invoices",id,st==="Betaald"?{status:st,betaaldOp:TODAY()}:{status:st}).then(()=>toast(st==="Betaald"?"Gemarkeerd als betaald":"Gemarkeerd als verstuurd")); }
+  if(d.touch){ return patch("contacts",d.touch,{laatsteContact:TODAY()}).then(()=>toast("Laatste contact: vandaag")); }
+  if(d.edit){ const [c,id]=d.edit.split(":"); return openForm(c,id); }
+  if(d.export) return exportCsv(d.export);
+  if(d.hrange){ F.hoursRange=d.hrange; return render(); }
+  if(d.istat){ F.invStatus=d.istat; return render(); }
+  if(d.csort){ F.contactSort=d.csort; return render(); }
+  if(d.act==="close") return $("#dlg").close();
+  if(d.act==="del") return delForm(t);
+  if(d.act==="timer") return toggleTimer();
+  if(d.act==="clear-ex") return clearExamples(t);
+  if(d.act==="save-set") return saveSettings();
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Enter"){ const c=e.target.closest(".card[data-edit],.pcard[data-edit]"); if(c){ const [k,id]=c.dataset.edit.split(":"); openForm(k,id);} } });
+document.addEventListener("input", e=>{
+  const q=e.target.dataset.q; if(q){ F.q[q]=e.target.value; renderList(q); }
+  if(e.target.closest("#dlgForm")) updateCalc();
+});
+$("#dlgForm").addEventListener("submit", e=>{ e.preventDefault(); saveForm(); });
+$("#dlg").addEventListener("close", ()=>{ editing=null; schedule(); });
+window.addEventListener("hashchange", ()=>{ render(); window.scrollTo(0,0); });
+
+let clearArmed=false;
+async function clearExamples(btn){
+  if(!clearArmed){ clearArmed=true; btn.textContent="Zeker? Klik nogmaals"; btn.classList.add("armed"); return; }
+  clearArmed=false; if(!db) return;
+  let n=0;
+  for(const c of COLLS) for(const r of S[c].filter(x=>x.example)){ try{ await db.collection(c).doc(r.id).delete(); n++; }catch{} }
+  toast(n+" voorbeeldregels gewist");
+}
+async function saveSettings(){
+  if(!db) return toast("Opslag niet beschikbaar");
+  const next={...S.settings};
+  document.querySelectorAll("[data-set]").forEach(i=>{ const k=i.dataset.set; next[k]= i.type==="number"? (i.value===""?"":+i.value) : i.value.trim(); });
+  try{ await db.doc("settings/main").set(next); toast("Instellingen opgeslagen"); }catch{ toast("Opslaan mislukt"); }
+}
+
+// ---------- boot ----------
+let raf=0; const schedule=()=>{ cancelAnimationFrame(raf); raf=requestAnimationFrame(()=>{ if(editing) { renderMenu(); return; } const a=document.activeElement, id=a&&a.id, pos=a&&a.selectionStart; render(); if(id){ const n=document.getElementById(id); if(n){ n.focus(); try{ if(pos!=null) n.setSelectionRange(pos,pos);}catch{} } } }); };
+render();
+(async()=>{
+  const timeout=setTimeout(()=>{ if(loading()){ S.err="Je gegevens zijn nog niet bereikbaar. Controleer je verbinding; de pagina probeert het automatisch opnieuw."; schedule(); } },10000);
+  try{ downloads = await window.claude?.use?.("downloads"); }catch{}
+  try{ db = await window.claude?.use?.("db"); }catch{ db=null; }
+  if(!db){ clearTimeout(timeout); S.nodb=true; render(); return; }
+  const done=()=>{ if(!loading()){ clearTimeout(timeout); S.err=null; } schedule(); };
+  COLLS.forEach(c=>{
+    db.collection(c).onSnapshot(snap=>{ S[c]=snap.docs.map(d=>({id:d.id,...d.data()})); if(!snap.metadata.fromCache) S.loaded[c]=true; done(); },
+      err=>{ S.loaded[c]=true; S.err="Een deel van je gegevens kon niet geladen worden ("+err.code+")."; schedule(); });
+  });
+  db.doc("settings/main").onSnapshot(s=>{ S.settings={...S_DEF,...(s.exists?s.data():{})}; schedule(); }, ()=>{});
+})();
+})();
+</script>

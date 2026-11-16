@@ -5,13 +5,15 @@ This file provides guidance for AI assistants (Claude, etc.) working in this rep
 ## Repository Overview
 
 - **Repository**: `jonkersven-ux/claude`
-- **Status**: New / empty repository — no application code has been added yet.
+- **Status**: Contains `dashboard/` — "De Ploegleider", a single-file freelancer dashboard published as a claude.ai Artifact (https://claude.ai/artifact/9ds3VAkoftHkmzcimXmaDw).
 
 ## Project Structure
 
 ```
 .
 ├── CLAUDE.md          # AI assistant guidance (this file)
+└── dashboard/
+    └── index.html     # De Ploegleider: vanilla HTML/CSS/JS, data via Artifact `db` capability
 ```
 
 This repository is in its initial state. Update this section as the project grows.
