@@ -1,96 +1,67 @@
 # CLAUDE.md
 
-This file provides guidance for AI assistants (Claude, etc.) working in this repository.
+Guidance for AI assistants working in this repository.
 
 ## Repository Overview
 
 - **Repository**: `jonkersven-ux/claude`
-- **Status**: New / empty repository — no application code has been added yet.
+- **Project**: NoTrophy.com — static site with live counters showing how long football clubs and national teams have gone without a trophy. Built for sharing (WhatsApp previews per club and per derby).
 
 ## Project Structure
 
 ```
-.
-├── CLAUDE.md          # AI assistant guidance (this file)
+data/teams.json          # all teams + last win per competition (source of truth)
+data/competitions.json   # competition ids, category (league/cup/leaguecup/super/intl/major), NL/EN names
+data/upcoming.json       # agenda of finals that must be processed; validate warns when a date passes
+scripts/config.mjs       # SITE_URL, REPORT_EMAIL, VERIFIED_AT, featured RIVALRIES
+scripts/validate.mjs     # data checks (exit 1 on errors), --todo lists unverified entries
+scripts/build.mjs        # generates dist/: home, /{id}/, /{a}-vs-{b}/, /vs/, /regels/, sitemap
+scripts/og.mjs           # Playwright: 1200x630 preview images to dist/og/
+src/assets/core.mjs      # pure logic shared by browser and Node (dates, modes, ranking, share text)
+src/assets/i18n.mjs      # all NL/EN copy
+src/assets/app.mjs       # client rendering (vanilla JS modules, no framework)
+src/assets/style.css     # design tokens + styles (light + dark)
+tests/core.test.mjs      # node:test unit tests
+DATA.md                  # data rules and update process (read before touching data)
 ```
-
-This repository is in its initial state. Update this section as the project grows.
 
 ## Development Setup
 
-_No dependencies or build tools configured yet._
-
-When the project is initialized, document:
-- Language and runtime versions
-- Package manager (`npm`, `yarn`, `pnpm`, etc.)
-- Install command (e.g., `npm install`)
-- Environment variables (`.env` files, required keys)
+- Node >= 20, no runtime dependencies. Playwright (with Chromium) only for `scripts/og.mjs`.
+- No env vars required; `SITE_URL` and `REPORT_EMAIL` can override config.
 
 ## Common Commands
 
-_No scripts configured yet._ Add entries here as the project develops:
-
 ```bash
-# Build
-# npm run build
-
-# Test
-# npm test
-
-# Lint
-# npm run lint
-
-# Format
-# npm run format
-
-# Dev server
-# npm run dev
+npm run validate      # data validation
+npm test              # unit tests
+npm run build:fast    # build dist/ without OG images
+npm run build         # validate + build + OG images
+npm run dev           # build and serve dist/ on :8080
 ```
 
 ## Code Conventions
 
-When code is added to this repository, document the following:
-- Language style guide (e.g., Airbnb, Google, StandardJS)
-- Naming conventions (files, variables, functions, classes)
-- Import ordering
-- Error handling patterns
-- Logging conventions
+- Plain ES modules, 2-space indent, single quotes. Comments and UI copy in Dutch; identifiers in English.
+- All user-facing text goes in `src/assets/i18n.mjs` (both `nl` and `en`).
+- Logic that both build and browser need belongs in `core.mjs` and must stay DOM-free.
+- Dates are `YYYY-MM-DD` strings parsed as local dates via `parseDate` (never `new Date('YYYY-MM-DD')`, which is UTC).
 
-## Architecture
+## Data Rules
 
-_Not yet defined._ Document the high-level architecture here once the project takes shape:
-- Monorepo vs single package
-- Frontend / backend / fullstack
-- Key directories and their responsibilities
-- Data flow and state management
-- External service integrations
-
-## Testing
-
-_No test framework configured yet._ When tests are added, document:
-- Test framework (Jest, Vitest, Mocha, pytest, etc.)
-- How to run tests (`npm test`, `pytest`, etc.)
-- Test file naming and location conventions
-- Coverage requirements
+- Only the **latest** win per competition per team. Replace, don't append.
+- `v: "web"` only when checked against a reliable source; otherwise `"mem"`.
+- After any data change: bump `VERIFIED_AT`, run `npm run validate` and `npm test`.
+- See DATA.md for what counts as a trophy.
 
 ## CI/CD
 
-_No CI/CD pipeline configured yet._ When added, document:
-- Pipeline tool (GitHub Actions, GitLab CI, etc.)
-- Required checks before merge
-- Deployment process
-
-## Git Conventions
-
-- Use clear, descriptive commit messages
-- Keep commits focused on a single change
-- Branch naming: `feature/`, `fix/`, `chore/` prefixes recommended
+- GitHub Actions (`.github/workflows/ci.yml`): validate, test, build on push/PR and daily (the daily run surfaces finals due in `data/upcoming.json`).
+- Deploy: static hosting of `dist/`; `netlify.toml` included.
 
 ## AI Assistant Guidelines
 
-- Read existing code before proposing changes
-- Do not over-engineer; keep solutions minimal and focused
-- Avoid introducing security vulnerabilities (OWASP Top 10)
-- Do not add features, refactoring, or comments beyond what is requested
-- Run tests and linters after making changes
-- Update this CLAUDE.md when new tools, conventions, or architecture decisions are established
+- Read existing code before proposing changes; keep solutions minimal.
+- Never invent trophy dates. If unsure, mark `v: "mem"` or `approx: true` and say so.
+- Run `npm run validate` and `npm test` after changes.
+- Update this file when tools, conventions, or architecture change.

@@ -1,0 +1,9 @@
+# Netlify: bouwt de site inclusief WhatsApp-previewafbeeldingen.
+[build]
+  command = "npm i --no-save playwright@1.48.2 && npx playwright install chromium && npm run build"
+  publish = "dist"
+
+[[headers]]
+  for = "/og/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

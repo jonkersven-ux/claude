@@ -1,0 +1,456 @@
+[
+  {"id": "ajax", "name": "Ajax", "country": "NL", "colors": ["#D2122E", "#FFFFFF"], "founded": "1900", "rivals": ["feyenoord", "psv"], "wins": [
+      {"c": "nl-league", "d": "2022-05-11", "s": "2021/22", "m": "Ajax 5-0 sc Heerenveen", "v": "web"},
+      {"c": "nl-cup", "d": "2021-04-18", "s": "2020/21", "m": "Ajax 2-1 Vitesse", "v": "mem"},
+      {"c": "nl-super", "d": "2019-07-27", "m": "Ajax 2-0 PSV", "v": "mem"},
+      {"c": "ucl", "d": "1995-05-24", "m": "Ajax 1-0 AC Milan", "v": "mem"},
+      {"c": "uel", "d": "1992-05-13", "m": "Ajax-Torino 0-0 (2e duel)", "v": "mem"},
+      {"c": "intercont", "d": "1995-11-28", "m": "Ajax 0-0 Grêmio, 4-3 pen.", "v": "mem"}
+    ] },
+  {"id": "psv", "name": "PSV", "country": "NL", "colors": ["#ED1C24", "#FFFFFF"], "founded": "1913", "rivals": ["ajax", "feyenoord"], "wins": [
+      {"c": "nl-league", "d": "2026-04-05", "s": "2025/26", "m": "Titel zeker na Volendam-Feyenoord 0-0", "v": "web"},
+      {"c": "nl-cup", "d": "2023-04-30", "s": "2022/23", "m": "PSV 1-1 Ajax, 3-2 pen.", "v": "mem"},
+      {"c": "nl-super", "d": "2025-08-03", "m": "PSV 2-1 Go Ahead Eagles", "v": "web"},
+      {"c": "ucl", "d": "1988-05-25", "m": "PSV 0-0 Benfica, 6-5 pen.", "v": "mem"},
+      {"c": "uel", "d": "1978-05-09", "m": "PSV 3-0 SC Bastia (2e duel)", "v": "mem"}
+    ] },
+  {"id": "feyenoord", "name": "Feyenoord", "country": "NL", "colors": ["#E30613", "#FFFFFF"], "founded": "1908", "rivals": ["ajax", "psv", "sparta"], "wins": [
+      {"c": "nl-league", "d": "2023-05-14", "s": "2022/23", "m": "Feyenoord 3-0 Go Ahead Eagles", "v": "mem"},
+      {"c": "nl-cup", "d": "2024-04-21", "s": "2023/24", "m": "Feyenoord 1-0 NEC", "v": "mem"},
+      {"c": "nl-super", "d": "2018-08-04", "m": "Feyenoord 0-0 PSV, 6-5 pen.", "v": "mem"},
+      {"c": "ucl", "d": "1970-05-06", "m": "Feyenoord 2-1 Celtic (n.v.)", "v": "mem"},
+      {"c": "uel", "d": "2002-05-08", "m": "Feyenoord 3-2 Borussia Dortmund", "v": "mem"}
+    ] },
+  {"id": "az", "name": "AZ", "country": "NL", "colors": ["#DB0021", "#FFFFFF"], "founded": "1967", "rivals": ["ajax"], "wins": [
+      {"c": "nl-league", "d": "2009-04-19", "s": "2008/09", "m": "Titel beslist op speelronde 31", "v": "mem"},
+      {"c": "nl-cup", "d": "2026-04-19", "s": "2025/26", "m": "AZ 5-1 NEC", "v": "web"},
+      {"c": "nl-super", "d": "2026-08-02", "m": "PSV 0-4 AZ", "v": "web"}
+    ] },
+  {"id": "twente", "name": "FC Twente", "country": "NL", "colors": ["#E2001A", "#FFFFFF"], "founded": "1965", "rivals": ["heracles", "go-ahead-eagles"], "wins": [
+      {"c": "nl-league", "d": "2010-05-02", "s": "2009/10", "m": "NAC 0-2 FC Twente", "v": "mem"},
+      {"c": "nl-cup", "d": "2011-05-08", "s": "2010/11", "m": "FC Twente 3-2 Ajax (n.v.)", "v": "mem"},
+      {"c": "nl-super", "d": "2011-07-30", "m": "Ajax 1-2 FC Twente", "v": "web"}
+    ] },
+  {"id": "utrecht", "name": "FC Utrecht", "country": "NL", "colors": ["#E3001B", "#FFFFFF"], "founded": "1970", "rivals": ["ajax"], "wins": [
+      {"c": "nl-cup", "d": "2004-05-23", "s": "2003/04", "m": "FC Utrecht 1-0 FC Twente", "v": "mem"},
+      {"c": "nl-super", "d": "2004-08-08", "m": "Ajax 2-4 FC Utrecht", "v": "web"}
+    ] },
+  {"id": "go-ahead-eagles", "name": "Go Ahead Eagles", "country": "NL", "colors": ["#E30613", "#FFD200"], "founded": "1902", "rivals": ["twente", "pec-zwolle", "heracles"], "wins": [
+      {"c": "nl-league", "d": "1933-06-01", "s": "1932/33", "m": "Landskampioen 1933", "v": "mem", "approx": true},
+      {"c": "nl-cup", "d": "2025-04-21", "s": "2024/25", "m": "Go Ahead Eagles 1-1 AZ, 4-2 pen.", "v": "mem"}
+    ] },
+  {"id": "heerenveen", "name": "sc Heerenveen", "country": "NL", "colors": ["#0057A8", "#FFFFFF"], "founded": "1920", "rivals": ["groningen"], "wins": [
+      {"c": "nl-cup", "d": "2009-05-17", "s": "2008/09", "m": "sc Heerenveen 2-2 FC Twente, 5-4 pen.", "v": "mem"}
+    ] },
+  {"id": "groningen", "name": "FC Groningen", "country": "NL", "colors": ["#00A650", "#FFFFFF"], "founded": "1971", "rivals": ["heerenveen"], "wins": [
+      {"c": "nl-cup", "d": "2015-05-03", "s": "2014/15", "m": "FC Groningen 2-0 PEC Zwolle", "v": "mem"}
+    ] },
+  {"id": "pec-zwolle", "name": "PEC Zwolle", "country": "NL", "colors": ["#0057B8", "#FFFFFF"], "founded": "1910", "rivals": ["go-ahead-eagles"], "wins": [
+      {"c": "nl-cup", "d": "2014-04-20", "s": "2013/14", "m": "PEC Zwolle 5-1 Ajax", "v": "mem"},
+      {"c": "nl-super", "d": "2014-08-03", "m": "Ajax 0-1 PEC Zwolle", "v": "mem"}
+    ] },
+  {"id": "vitesse", "name": "Vitesse", "country": "NL", "colors": ["#FFD200", "#111111"], "founded": "1892", "rivals": ["nec"], "wins": [
+      {"c": "nl-cup", "d": "2017-04-30", "s": "2016/17", "m": "AZ 0-2 Vitesse", "v": "mem"}
+    ] },
+  {"id": "nec", "name": "NEC", "country": "NL", "colors": ["#E2001A", "#00A650"], "founded": "1900-11-15", "rivals": ["vitesse"], "wins": [] },
+  {"id": "sparta", "name": "Sparta Rotterdam", "country": "NL", "colors": ["#E2001A", "#FFFFFF"], "founded": "1888", "rivals": ["feyenoord", "excelsior"], "wins": [
+      {"c": "nl-league", "d": "1959-05-31", "s": "1958/59", "m": "Landskampioen 1959", "v": "mem", "approx": true},
+      {"c": "nl-cup", "d": "1966-05-25", "s": "1965/66", "m": "Sparta 1-0 ADO", "v": "web"}
+    ] },
+  {"id": "excelsior", "name": "Excelsior", "country": "NL", "colors": ["#E2001A", "#111111"], "founded": "1902-07-23", "rivals": ["sparta", "feyenoord"], "wins": [] },
+  {"id": "heracles", "name": "Heracles Almelo", "country": "NL", "colors": ["#111111", "#FFFFFF"], "founded": "1903", "rivals": ["twente"], "wins": [
+      {"c": "nl-league", "d": "1941-06-01", "s": "1940/41", "m": "Heracles 6-1 PSV (kampioenscompetitie)", "v": "web", "approx": true}
+    ] },
+  {"id": "nac", "name": "NAC Breda", "country": "NL", "colors": ["#FFD200", "#111111"], "founded": "1912", "rivals": ["willem-ii"], "wins": [
+      {"c": "nl-cup", "d": "1973-06-01", "s": "1972/73", "m": "NAC 2-0 NEC", "v": "web", "approx": true}
+    ] },
+  {"id": "willem-ii", "name": "Willem II", "country": "NL", "colors": ["#E2001A", "#1D3C8F"], "founded": "1896", "rivals": ["nac"], "wins": [
+      {"c": "nl-league", "d": "1955-06-01", "s": "1954/55", "m": "Landskampioen 1955", "v": "mem", "approx": true},
+      {"c": "nl-cup", "d": "1963-06-01", "s": "1962/63", "m": "Bekerwinnaar 1963", "v": "mem", "approx": true}
+    ] },
+  {"id": "roda", "name": "Roda JC", "country": "NL", "colors": ["#FFD200", "#111111"], "founded": "1962", "rivals": [], "wins": [
+      {"c": "nl-cup", "d": "2000-05-21", "s": "1999/2000", "m": "Roda JC 2-0 NEC", "v": "web"}
+    ] },
+  {"id": "ado", "name": "ADO Den Haag", "country": "NL", "colors": ["#00A650", "#FFD200"], "founded": "1905", "rivals": ["ajax", "feyenoord"], "wins": [
+      {"c": "nl-cup", "d": "1975-05-15", "s": "1974/75", "m": "FC Den Haag 1-0 FC Twente", "v": "web"}
+    ] },
+  {"id": "volendam", "name": "FC Volendam", "country": "NL", "colors": ["#F47920", "#FFFFFF"], "founded": "1920", "rivals": ["ajax"], "wins": [] },
+  {"id": "telstar", "name": "Telstar", "country": "NL", "colors": ["#FFFFFF", "#0072BC"], "founded": "1963", "rivals": [], "wins": [] },
+  {"id": "arsenal", "name": "Arsenal", "country": "ENG", "colors": ["#EF0107", "#FFFFFF"], "founded": "1886", "rivals": ["tottenham", "chelsea", "man-utd"], "wins": [
+      {"c": "en-league", "d": "2026-05-19", "s": "2025/26", "m": "Titel zeker na Bournemouth-Man City 1-1", "v": "web"},
+      {"c": "en-cup", "d": "2020-08-01", "s": "2019/20", "m": "Arsenal 2-1 Chelsea", "v": "mem"},
+      {"c": "en-lcup", "d": "1993-04-18", "s": "1992/93", "m": "Arsenal 2-1 Sheffield Wednesday", "v": "mem"},
+      {"c": "en-super", "d": "2026-08-16", "m": "Arsenal 3-0 Man City", "v": "web"},
+      {"c": "cwc", "d": "1994-05-04", "m": "Arsenal 1-0 Parma", "v": "mem"}
+    ] },
+  {"id": "tottenham", "name": "Tottenham Hotspur", "short": "Spurs", "country": "ENG", "colors": ["#132257", "#FFFFFF"], "founded": "1882", "rivals": ["arsenal", "chelsea", "west-ham"], "wins": [
+      {"c": "en-league", "d": "1961-04-17", "s": "1960/61", "m": "Spurs 2-1 Sheffield Wednesday", "v": "mem"},
+      {"c": "en-cup", "d": "1991-05-18", "s": "1990/91", "m": "Spurs 2-1 Nottingham Forest (n.v.)", "v": "mem"},
+      {"c": "en-lcup", "d": "2008-02-24", "s": "2007/08", "m": "Spurs 2-1 Chelsea (n.v.)", "v": "mem"},
+      {"c": "uel", "d": "2025-05-21", "s": "2024/25", "m": "Spurs 1-0 Man United", "v": "mem"}
+    ] },
+  {"id": "chelsea", "name": "Chelsea", "country": "ENG", "colors": ["#034694", "#FFFFFF"], "founded": "1905", "rivals": ["tottenham", "arsenal"], "wins": [
+      {"c": "en-league", "d": "2017-05-12", "s": "2016/17", "m": "West Brom 0-1 Chelsea", "v": "mem"},
+      {"c": "en-cup", "d": "2018-05-19", "s": "2017/18", "m": "Chelsea 1-0 Man United", "v": "mem"},
+      {"c": "en-lcup", "d": "2015-03-01", "s": "2014/15", "m": "Chelsea 2-0 Spurs", "v": "mem"},
+      {"c": "en-super", "d": "2009-08-09", "m": "Chelsea 2-2 Man United, 4-1 pen.", "v": "mem"},
+      {"c": "ucl", "d": "2021-05-29", "m": "Man City 0-1 Chelsea", "v": "mem"},
+      {"c": "uel", "d": "2019-05-29", "m": "Chelsea 4-1 Arsenal", "v": "mem"},
+      {"c": "uecl", "d": "2025-05-28", "m": "Real Betis 1-4 Chelsea", "v": "mem"},
+      {"c": "usc", "d": "2021-08-11", "m": "Chelsea 1-1 Villarreal, 6-5 pen.", "v": "mem"},
+      {"c": "fcwc", "d": "2025-07-13", "m": "Chelsea 3-0 PSG", "v": "mem"}
+    ] },
+  {"id": "man-utd", "name": "Manchester United", "short": "Man United", "country": "ENG", "colors": ["#DA291C", "#FBE122"], "founded": "1878", "rivals": ["man-city", "liverpool", "leeds"], "wins": [
+      {"c": "en-league", "d": "2013-04-22", "s": "2012/13", "m": "Man United 3-0 Aston Villa", "v": "mem"},
+      {"c": "en-cup", "d": "2024-05-25", "s": "2023/24", "m": "Man City 1-2 Man United", "v": "mem"},
+      {"c": "en-lcup", "d": "2023-02-26", "s": "2022/23", "m": "Man United 2-0 Newcastle", "v": "mem"},
+      {"c": "en-super", "d": "2016-08-07", "m": "Leicester 1-2 Man United", "v": "mem"},
+      {"c": "ucl", "d": "2008-05-21", "m": "Man United 1-1 Chelsea, 6-5 pen.", "v": "mem"},
+      {"c": "uel", "d": "2017-05-24", "m": "Ajax 0-2 Man United", "v": "mem"},
+      {"c": "fcwc", "d": "2008-12-21", "m": "Man United 1-0 LDU Quito", "v": "mem"}
+    ] },
+  {"id": "man-city", "name": "Manchester City", "short": "Man City", "country": "ENG", "colors": ["#6CABDD", "#1C2C5B"], "founded": "1880", "rivals": ["man-utd", "liverpool"], "wins": [
+      {"c": "en-league", "d": "2024-05-19", "s": "2023/24", "m": "Man City 3-1 West Ham", "v": "mem"},
+      {"c": "en-cup", "d": "2026-05-16", "s": "2025/26", "m": "Man City 1-0 Chelsea", "v": "web"},
+      {"c": "en-lcup", "d": "2026-03-22", "s": "2025/26", "m": "Arsenal 0-2 Man City", "v": "web"},
+      {"c": "en-super", "d": "2024-08-10", "m": "Man City 1-1 Man United, 7-6 pen.", "v": "mem"},
+      {"c": "ucl", "d": "2023-06-10", "m": "Man City 1-0 Inter", "v": "mem"},
+      {"c": "usc", "d": "2023-08-16", "m": "Man City 1-1 Sevilla, 5-4 pen.", "v": "mem"},
+      {"c": "fcwc", "d": "2023-12-22", "m": "Man City 4-0 Fluminense", "v": "mem"}
+    ] },
+  {"id": "liverpool", "name": "Liverpool", "country": "ENG", "colors": ["#C8102E", "#00B2A9"], "founded": "1892", "rivals": ["everton", "man-utd"], "wins": [
+      {"c": "en-league", "d": "2025-04-27", "s": "2024/25", "m": "Liverpool 5-1 Spurs", "v": "mem"},
+      {"c": "en-cup", "d": "2022-05-14", "s": "2021/22", "m": "Chelsea 0-0 Liverpool, 5-6 pen.", "v": "mem"},
+      {"c": "en-lcup", "d": "2024-02-25", "s": "2023/24", "m": "Chelsea 0-1 Liverpool (n.v.)", "v": "mem"},
+      {"c": "en-super", "d": "2022-07-30", "m": "Liverpool 3-1 Man City", "v": "mem"},
+      {"c": "ucl", "d": "2019-06-01", "m": "Spurs 0-2 Liverpool", "v": "mem"},
+      {"c": "usc", "d": "2019-08-14", "m": "Liverpool 2-2 Chelsea, 5-4 pen.", "v": "mem"},
+      {"c": "fcwc", "d": "2019-12-21", "m": "Liverpool 1-0 Flamengo (n.v.)", "v": "mem"}
+    ] },
+  {"id": "everton", "name": "Everton", "country": "ENG", "colors": ["#003399", "#FFFFFF"], "founded": "1878", "rivals": ["liverpool"], "wins": [
+      {"c": "en-league", "d": "1987-05-04", "s": "1986/87", "m": "Norwich 0-1 Everton", "v": "mem"},
+      {"c": "en-cup", "d": "1995-05-20", "s": "1994/95", "m": "Everton 1-0 Man United", "v": "mem"},
+      {"c": "en-super", "d": "1995-08-13", "m": "Everton 1-0 Blackburn", "v": "mem"},
+      {"c": "cwc", "d": "1985-05-15", "m": "Everton 3-1 Rapid Wien", "v": "mem"}
+    ] },
+  {"id": "newcastle", "name": "Newcastle United", "short": "Newcastle", "country": "ENG", "colors": ["#241F20", "#FFFFFF"], "founded": "1892", "rivals": ["sunderland"], "wins": [
+      {"c": "en-league", "d": "1927-05-01", "s": "1926/27", "m": "Landskampioen 1927", "v": "mem", "approx": true},
+      {"c": "en-cup", "d": "1955-05-07", "s": "1954/55", "m": "Newcastle 3-1 Man City", "v": "mem"},
+      {"c": "en-lcup", "d": "2025-03-16", "s": "2024/25", "m": "Liverpool 1-2 Newcastle", "v": "mem"},
+      {"c": "fairs", "d": "1969-06-11", "m": "Újpest 2-3 Newcastle (2e duel)", "v": "mem"}
+    ] },
+  {"id": "sunderland", "name": "Sunderland", "country": "ENG", "colors": ["#EB172B", "#FFFFFF"], "founded": "1879", "rivals": ["newcastle"], "wins": [
+      {"c": "en-league", "d": "1936-05-01", "s": "1935/36", "m": "Landskampioen 1936", "v": "mem", "approx": true},
+      {"c": "en-cup", "d": "1973-05-05", "s": "1972/73", "m": "Sunderland 1-0 Leeds", "v": "mem"}
+    ] },
+  {"id": "aston-villa", "name": "Aston Villa", "country": "ENG", "colors": ["#670E36", "#95BFE5"], "founded": "1874", "rivals": [], "wins": [
+      {"c": "en-league", "d": "1981-05-02", "s": "1980/81", "m": "Titel zeker op de laatste speeldag", "v": "mem"},
+      {"c": "en-cup", "d": "1957-05-04", "s": "1956/57", "m": "Aston Villa 2-1 Man United", "v": "mem"},
+      {"c": "en-lcup", "d": "1996-03-24", "s": "1995/96", "m": "Aston Villa 3-0 Leeds", "v": "mem"},
+      {"c": "ucl", "d": "1982-05-26", "m": "Bayern 0-1 Aston Villa", "v": "mem"},
+      {"c": "uel", "d": "2026-05-20", "s": "2025/26", "m": "Aston Villa 3-0 SC Freiburg", "v": "web"}
+    ] },
+  {"id": "crystal-palace", "name": "Crystal Palace", "country": "ENG", "colors": ["#1B458F", "#C4122E"], "founded": "1905", "rivals": ["brighton"], "wins": [
+      {"c": "en-cup", "d": "2025-05-17", "s": "2024/25", "m": "Crystal Palace 1-0 Man City", "v": "mem"},
+      {"c": "en-super", "d": "2025-08-10", "m": "Crystal Palace 2-2 Liverpool, 3-2 pen.", "v": "web"},
+      {"c": "uecl", "d": "2026-05-27", "s": "2025/26", "m": "Crystal Palace 1-0 Rayo Vallecano", "v": "web"}
+    ] },
+  {"id": "brighton", "name": "Brighton & Hove Albion", "short": "Brighton", "country": "ENG", "colors": ["#0057B8", "#FFFFFF"], "founded": "1901-06-24", "rivals": ["crystal-palace"], "wins": [] },
+  {"id": "west-ham", "name": "West Ham United", "short": "West Ham", "country": "ENG", "colors": ["#7A263A", "#1BB1E7"], "founded": "1895", "rivals": ["tottenham"], "wins": [
+      {"c": "en-cup", "d": "1980-05-10", "s": "1979/80", "m": "West Ham 1-0 Arsenal", "v": "mem"},
+      {"c": "cwc", "d": "1965-05-19", "m": "West Ham 2-0 1860 München", "v": "mem"},
+      {"c": "uecl", "d": "2023-06-07", "s": "2022/23", "m": "Fiorentina 1-2 West Ham", "v": "mem"}
+    ] },
+  {"id": "leicester", "name": "Leicester City", "short": "Leicester", "country": "ENG", "colors": ["#003090", "#FDBE11"], "founded": "1884", "rivals": ["forest"], "wins": [
+      {"c": "en-league", "d": "2016-05-02", "s": "2015/16", "m": "Titel zeker na Chelsea-Spurs 2-2", "v": "mem"},
+      {"c": "en-cup", "d": "2021-05-15", "s": "2020/21", "m": "Chelsea 0-1 Leicester", "v": "mem"},
+      {"c": "en-lcup", "d": "2000-02-27", "s": "1999/2000", "m": "Leicester 2-1 Tranmere", "v": "mem"},
+      {"c": "en-super", "d": "2021-08-07", "m": "Leicester 1-0 Man City", "v": "mem"}
+    ] },
+  {"id": "leeds", "name": "Leeds United", "short": "Leeds", "country": "ENG", "colors": ["#FFFFFF", "#1D428A"], "founded": "1919", "rivals": ["man-utd"], "wins": [
+      {"c": "en-league", "d": "1992-04-26", "s": "1991/92", "m": "Sheffield United 2-3 Leeds", "v": "mem"},
+      {"c": "en-super", "d": "1992-08-08", "m": "Leeds 4-3 Liverpool", "v": "mem"}
+    ] },
+  {"id": "forest", "name": "Nottingham Forest", "short": "Forest", "country": "ENG", "colors": ["#DD0000", "#FFFFFF"], "founded": "1865", "rivals": ["leicester"], "wins": [
+      {"c": "en-league", "d": "1978-04-22", "s": "1977/78", "m": "Landskampioen 1978", "v": "mem", "approx": true},
+      {"c": "en-lcup", "d": "1990-04-29", "s": "1989/90", "m": "Forest 1-0 Oldham", "v": "mem"},
+      {"c": "ucl", "d": "1980-05-28", "m": "Forest 1-0 Hamburger SV", "v": "mem"}
+    ] },
+  {"id": "fulham", "name": "Fulham", "country": "ENG", "colors": ["#FFFFFF", "#111111"], "founded": "1879", "rivals": ["chelsea"], "wins": [] },
+  {"id": "brentford", "name": "Brentford", "country": "ENG", "colors": ["#E30613", "#FFFFFF"], "founded": "1889-10-10", "rivals": ["fulham"], "wins": [] },
+  {"id": "bournemouth", "name": "AFC Bournemouth", "short": "Bournemouth", "country": "ENG", "colors": ["#DA291C", "#111111"], "founded": "1899", "rivals": [], "wins": [] },
+  {"id": "barcelona", "name": "FC Barcelona", "short": "Barça", "country": "ESP", "colors": ["#A50044", "#004D98"], "founded": "1899", "rivals": ["real-madrid"], "wins": [
+      {"c": "es-league", "d": "2026-05-10", "s": "2025/26", "m": "Barça 2-0 Real Madrid", "v": "web"},
+      {"c": "es-cup", "d": "2025-04-26", "s": "2024/25", "m": "Barça 3-2 Real Madrid (n.v.)", "v": "mem"},
+      {"c": "es-super", "d": "2026-01-11", "m": "Barça 3-2 Real Madrid", "v": "web"},
+      {"c": "ucl", "d": "2015-06-06", "m": "Juventus 1-3 Barça", "v": "mem"},
+      {"c": "fcwc", "d": "2015-12-20", "m": "Barça 3-0 River Plate", "v": "mem"}
+    ] },
+  {"id": "real-madrid", "name": "Real Madrid", "country": "ESP", "colors": ["#FFFFFF", "#FEBE10"], "founded": "1902", "rivals": ["barcelona", "atletico"], "wins": [
+      {"c": "es-league", "d": "2024-05-04", "s": "2023/24", "m": "Real Madrid 3-0 Cádiz", "v": "mem"},
+      {"c": "es-cup", "d": "2023-05-06", "s": "2022/23", "m": "Real Madrid 2-1 Osasuna", "v": "mem"},
+      {"c": "es-super", "d": "2024-01-14", "m": "Real Madrid 4-1 Barça", "v": "mem"},
+      {"c": "ucl", "d": "2024-06-01", "m": "Dortmund 0-2 Real Madrid", "v": "mem"},
+      {"c": "usc", "d": "2024-08-14", "m": "Real Madrid 2-0 Atalanta", "v": "mem"},
+      {"c": "intercont", "d": "2024-12-18", "m": "Real Madrid 3-0 Pachuca", "v": "mem"}
+    ] },
+  {"id": "atletico", "name": "Atlético Madrid", "short": "Atlético", "country": "ESP", "colors": ["#CB3524", "#272E61"], "founded": "1903", "rivals": ["real-madrid"], "wins": [
+      {"c": "es-league", "d": "2021-05-22", "s": "2020/21", "m": "Valladolid 1-2 Atlético", "v": "mem"},
+      {"c": "es-cup", "d": "2013-05-17", "s": "2012/13", "m": "Real Madrid 1-2 Atlético (n.v.)", "v": "mem"},
+      {"c": "es-super", "d": "2014-08-22", "m": "Atlético 1-0 Real Madrid (2e duel)", "v": "mem"},
+      {"c": "uel", "d": "2018-05-16", "m": "Marseille 0-3 Atlético", "v": "mem"},
+      {"c": "usc", "d": "2018-08-15", "m": "Real Madrid 2-4 Atlético (n.v.)", "v": "mem"}
+    ] },
+  {"id": "sevilla", "name": "Sevilla", "country": "ESP", "colors": ["#D71920", "#FFFFFF"], "founded": "1890", "rivals": ["betis"], "wins": [
+      {"c": "es-league", "d": "1946-03-31", "s": "1945/46", "m": "Landskampioen 1946", "v": "mem", "approx": true},
+      {"c": "es-cup", "d": "2010-05-19", "s": "2009/10", "m": "Atlético 0-2 Sevilla", "v": "mem"},
+      {"c": "uel", "d": "2023-05-31", "s": "2022/23", "m": "Sevilla 1-1 Roma, 4-1 pen.", "v": "mem"}
+    ] },
+  {"id": "betis", "name": "Real Betis", "short": "Betis", "country": "ESP", "colors": ["#00954C", "#FFFFFF"], "founded": "1907", "rivals": ["sevilla"], "wins": [
+      {"c": "es-league", "d": "1935-04-28", "s": "1934/35", "m": "Landskampioen 1935", "v": "mem", "approx": true},
+      {"c": "es-cup", "d": "2022-04-23", "s": "2021/22", "m": "Betis 1-1 Valencia, 5-4 pen.", "v": "mem"}
+    ] },
+  {"id": "real-sociedad", "name": "Real Sociedad", "country": "ESP", "colors": ["#0067B1", "#FFFFFF"], "founded": "1909", "rivals": ["athletic"], "wins": [
+      {"c": "es-league", "d": "1982-04-25", "s": "1981/82", "m": "Landskampioen 1982", "v": "mem", "approx": true},
+      {"c": "es-cup", "d": "2026-04-18", "s": "2025/26", "m": "Atlético 2-2 Real Sociedad, 3-4 pen.", "v": "web"}
+    ] },
+  {"id": "athletic", "name": "Athletic Club", "country": "ESP", "colors": ["#EE2523", "#FFFFFF"], "founded": "1898", "rivals": ["real-sociedad"], "wins": [
+      {"c": "es-league", "d": "1984-04-29", "s": "1983/84", "m": "Landskampioen 1984", "v": "mem", "approx": true},
+      {"c": "es-cup", "d": "2024-04-06", "s": "2023/24", "m": "Athletic 1-1 Mallorca, 4-2 pen.", "v": "mem"},
+      {"c": "es-super", "d": "2021-01-17", "m": "Athletic 3-2 Barça (n.v.)", "v": "mem"}
+    ] },
+  {"id": "valencia", "name": "Valencia", "country": "ESP", "colors": ["#F18E00", "#111111"], "founded": "1919", "rivals": ["villarreal"], "wins": [
+      {"c": "es-league", "d": "2004-05-09", "s": "2003/04", "m": "Landskampioen 2004", "v": "mem", "approx": true},
+      {"c": "es-cup", "d": "2019-05-25", "s": "2018/19", "m": "Barça 1-2 Valencia", "v": "mem"},
+      {"c": "uel", "d": "2004-05-19", "m": "Valencia 2-0 Marseille", "v": "mem"}
+    ] },
+  {"id": "villarreal", "name": "Villarreal", "country": "ESP", "colors": ["#FFE667", "#005187"], "founded": "1923", "rivals": ["valencia"], "wins": [
+      {"c": "uel", "d": "2021-05-26", "s": "2020/21", "m": "Villarreal 1-1 Man United, 11-10 pen.", "v": "mem"}
+    ] },
+  {"id": "inter", "name": "Inter", "country": "ITA", "colors": ["#010E80", "#111111"], "founded": "1908", "rivals": ["milan", "juventus"], "wins": [
+      {"c": "it-league", "d": "2026-05-03", "s": "2025/26", "m": "Inter 2-0 Parma", "v": "web"},
+      {"c": "it-cup", "d": "2026-05-13", "s": "2025/26", "m": "Lazio 0-2 Inter", "v": "web"},
+      {"c": "it-super", "d": "2024-01-22", "m": "Napoli 0-1 Inter", "v": "mem"},
+      {"c": "ucl", "d": "2010-05-22", "m": "Bayern 0-2 Inter", "v": "mem"}
+    ] },
+  {"id": "milan", "name": "AC Milan", "country": "ITA", "colors": ["#FB090B", "#111111"], "founded": "1899", "rivals": ["inter", "juventus"], "wins": [
+      {"c": "it-league", "d": "2022-05-22", "s": "2021/22", "m": "Sassuolo 0-3 Milan", "v": "mem"},
+      {"c": "it-cup", "d": "2003-05-31", "s": "2002/03", "m": "Milan 2-2 Roma (2e duel)", "v": "mem"},
+      {"c": "it-super", "d": "2025-01-06", "m": "Inter 2-3 Milan", "v": "mem"},
+      {"c": "ucl", "d": "2007-05-23", "m": "Milan 2-1 Liverpool", "v": "mem"}
+    ] },
+  {"id": "juventus", "name": "Juventus", "country": "ITA", "colors": ["#111111", "#FFFFFF"], "founded": "1897", "rivals": ["inter", "milan"], "wins": [
+      {"c": "it-league", "d": "2020-07-26", "s": "2019/20", "m": "Juventus 2-0 Sampdoria", "v": "mem"},
+      {"c": "it-cup", "d": "2024-05-15", "s": "2023/24", "m": "Atalanta 0-1 Juventus", "v": "mem"},
+      {"c": "it-super", "d": "2021-01-20", "m": "Juventus 2-0 Napoli", "v": "mem"},
+      {"c": "ucl", "d": "1996-05-22", "m": "Juventus 1-1 Ajax, 4-2 pen.", "v": "mem"}
+    ] },
+  {"id": "napoli", "name": "Napoli", "country": "ITA", "colors": ["#12A0D7", "#FFFFFF"], "founded": "1926", "rivals": ["juventus", "roma"], "wins": [
+      {"c": "it-league", "d": "2025-05-23", "s": "2024/25", "m": "Napoli 2-0 Cagliari", "v": "mem"},
+      {"c": "it-cup", "d": "2020-06-17", "s": "2019/20", "m": "Napoli 0-0 Juventus, 4-2 pen.", "v": "mem"},
+      {"c": "it-super", "d": "2025-12-22", "m": "Napoli 2-0 Bologna", "v": "web"}
+    ] },
+  {"id": "roma", "name": "AS Roma", "short": "Roma", "country": "ITA", "colors": ["#8E1F2F", "#F0BC42"], "founded": "1927", "rivals": ["lazio"], "wins": [
+      {"c": "it-league", "d": "2001-06-17", "s": "2000/01", "m": "Roma 3-1 Parma", "v": "mem"},
+      {"c": "it-cup", "d": "2008-05-24", "s": "2007/08", "m": "Roma 2-1 Inter", "v": "mem"},
+      {"c": "it-super", "d": "2007-08-19", "m": "Inter 0-1 Roma", "v": "mem"},
+      {"c": "uecl", "d": "2022-05-25", "s": "2021/22", "m": "Roma 1-0 Feyenoord", "v": "mem"}
+    ] },
+  {"id": "lazio", "name": "Lazio", "country": "ITA", "colors": ["#87D8F7", "#FFFFFF"], "founded": "1900", "rivals": ["roma"], "wins": [
+      {"c": "it-league", "d": "2000-05-14", "s": "1999/2000", "m": "Lazio 3-0 Reggina", "v": "mem"},
+      {"c": "it-cup", "d": "2019-05-15", "s": "2018/19", "m": "Atalanta 0-2 Lazio", "v": "mem"},
+      {"c": "it-super", "d": "2019-12-22", "m": "Juventus 1-3 Lazio", "v": "mem"}
+    ] },
+  {"id": "atalanta", "name": "Atalanta", "country": "ITA", "colors": ["#1E71B8", "#111111"], "founded": "1907", "rivals": [], "wins": [
+      {"c": "it-cup", "d": "1963-06-02", "s": "1962/63", "m": "Atalanta 3-1 Torino", "v": "mem", "approx": true},
+      {"c": "uel", "d": "2024-05-22", "s": "2023/24", "m": "Atalanta 3-0 Leverkusen", "v": "mem"}
+    ] },
+  {"id": "fiorentina", "name": "Fiorentina", "country": "ITA", "colors": ["#482E92", "#FFFFFF"], "founded": "1926", "rivals": ["juventus"], "wins": [
+      {"c": "it-league", "d": "1969-05-18", "s": "1968/69", "m": "Landskampioen 1969", "v": "mem", "approx": true},
+      {"c": "it-cup", "d": "2001-06-13", "s": "2000/01", "m": "Fiorentina 1-1 Parma (2e duel)", "v": "web"},
+      {"c": "it-super", "d": "1996-08-25", "m": "Milan 1-2 Fiorentina", "v": "mem"}
+    ] },
+  {"id": "bologna", "name": "Bologna", "country": "ITA", "colors": ["#1A2F48", "#A21C26"], "founded": "1909", "rivals": [], "wins": [
+      {"c": "it-cup", "d": "2025-05-14", "s": "2024/25", "m": "Milan 0-1 Bologna", "v": "mem"}
+    ] },
+  {"id": "bayern", "name": "Bayern München", "short": "Bayern", "country": "GER", "colors": ["#DC052D", "#FFFFFF"], "founded": "1900", "rivals": ["dortmund"], "wins": [
+      {"c": "de-league", "d": "2026-04-19", "s": "2025/26", "m": "Bayern 4-2 Stuttgart", "v": "web"},
+      {"c": "de-cup", "d": "2026-05-23", "s": "2025/26", "m": "Bayern 3-0 Stuttgart", "v": "web"},
+      {"c": "de-super", "d": "2026-08-22", "m": "Dortmund 1-2 Bayern", "v": "web"},
+      {"c": "ucl", "d": "2020-08-23", "m": "PSG 0-1 Bayern", "v": "mem"},
+      {"c": "fcwc", "d": "2021-02-11", "m": "Bayern 1-0 Tigres", "v": "mem"}
+    ] },
+  {"id": "dortmund", "name": "Borussia Dortmund", "short": "Dortmund", "country": "GER", "colors": ["#FDE100", "#111111"], "founded": "1909", "rivals": ["bayern", "schalke"], "wins": [
+      {"c": "de-league", "d": "2012-04-21", "s": "2011/12", "m": "Dortmund 2-0 Gladbach", "v": "mem"},
+      {"c": "de-cup", "d": "2021-05-13", "s": "2020/21", "m": "Leipzig 1-4 Dortmund", "v": "mem"},
+      {"c": "de-super", "d": "2019-08-03", "m": "Dortmund 2-0 Bayern", "v": "mem"},
+      {"c": "ucl", "d": "1997-05-28", "m": "Dortmund 3-1 Juventus", "v": "mem"}
+    ] },
+  {"id": "leverkusen", "name": "Bayer Leverkusen", "short": "Leverkusen", "country": "GER", "colors": ["#E32221", "#111111"], "founded": "1904", "rivals": ["koln"], "wins": [
+      {"c": "de-league", "d": "2024-04-14", "s": "2023/24", "m": "Leverkusen 5-0 Werder", "v": "mem"},
+      {"c": "de-cup", "d": "2024-05-25", "s": "2023/24", "m": "Kaiserslautern 0-1 Leverkusen", "v": "mem"},
+      {"c": "de-super", "d": "2024-08-17", "m": "Leverkusen 2-2 Stuttgart, 4-3 pen.", "v": "web"},
+      {"c": "uel", "d": "1988-05-18", "m": "Leverkusen 3-0 Espanyol, 3-2 pen. (2e duel)", "v": "mem"}
+    ] },
+  {"id": "stuttgart", "name": "VfB Stuttgart", "short": "Stuttgart", "country": "GER", "colors": ["#E32219", "#FFFFFF"], "founded": "1893", "rivals": [], "wins": [
+      {"c": "de-league", "d": "2007-05-19", "s": "2006/07", "m": "Stuttgart 2-1 Energie Cottbus", "v": "mem"},
+      {"c": "de-cup", "d": "2025-05-24", "s": "2024/25", "m": "Arminia 2-4 Stuttgart", "v": "web"}
+    ] },
+  {"id": "leipzig", "name": "RB Leipzig", "short": "Leipzig", "country": "GER", "colors": ["#DD0741", "#FFFFFF"], "founded": "2009", "rivals": [], "wins": [
+      {"c": "de-cup", "d": "2023-06-03", "s": "2022/23", "m": "Leipzig 2-0 Frankfurt", "v": "mem"},
+      {"c": "de-super", "d": "2023-08-12", "m": "Bayern 0-3 Leipzig", "v": "mem"}
+    ] },
+  {"id": "frankfurt", "name": "Eintracht Frankfurt", "short": "Frankfurt", "country": "GER", "colors": ["#E1000F", "#111111"], "founded": "1899", "rivals": [], "wins": [
+      {"c": "de-league", "d": "1959-06-28", "s": "1958/59", "m": "Frankfurt 5-3 Kickers Offenbach (finale)", "v": "mem", "approx": true},
+      {"c": "de-cup", "d": "2018-05-19", "s": "2017/18", "m": "Bayern 1-3 Frankfurt", "v": "mem"},
+      {"c": "uel", "d": "2022-05-18", "s": "2021/22", "m": "Frankfurt 1-1 Rangers, 5-4 pen.", "v": "mem"}
+    ] },
+  {"id": "schalke", "name": "Schalke 04", "country": "GER", "colors": ["#004D9D", "#FFFFFF"], "founded": "1904", "rivals": ["dortmund"], "wins": [
+      {"c": "de-league", "d": "1958-05-18", "s": "1957/58", "m": "Schalke 3-0 Hamburger SV (finale)", "v": "mem"},
+      {"c": "de-cup", "d": "2011-05-21", "s": "2010/11", "m": "Schalke 5-0 MSV Duisburg", "v": "mem"},
+      {"c": "de-super", "d": "2011-07-23", "m": "Dortmund 0-0 Schalke, 3-4 pen.", "v": "mem"},
+      {"c": "uel", "d": "1997-05-21", "m": "Inter 1-0 Schalke, 1-4 pen. (2e duel)", "v": "mem"}
+    ] },
+  {"id": "hsv", "name": "Hamburger SV", "short": "HSV", "country": "GER", "colors": ["#0A3F86", "#FFFFFF"], "founded": "1887", "rivals": ["werder"], "wins": [
+      {"c": "de-league", "d": "1983-06-04", "s": "1982/83", "m": "Landskampioen 1983", "v": "mem", "approx": true},
+      {"c": "de-cup", "d": "1987-06-20", "s": "1986/87", "m": "HSV 3-1 Stuttgarter Kickers", "v": "mem"},
+      {"c": "de-lcup", "d": "2003-07-28", "m": "HSV 4-2 Dortmund", "v": "web"},
+      {"c": "ucl", "d": "1983-05-25", "m": "HSV 1-0 Juventus", "v": "mem"}
+    ] },
+  {"id": "werder", "name": "Werder Bremen", "short": "Werder", "country": "GER", "colors": ["#1D9053", "#FFFFFF"], "founded": "1899", "rivals": ["hsv"], "wins": [
+      {"c": "de-league", "d": "2004-05-08", "s": "2003/04", "m": "Bayern 1-3 Werder", "v": "mem"},
+      {"c": "de-cup", "d": "2009-05-30", "s": "2008/09", "m": "Leverkusen 0-1 Werder", "v": "mem"},
+      {"c": "de-lcup", "d": "2006-08-05", "m": "Werder 2-0 Bayern", "v": "mem", "approx": true}
+    ] },
+  {"id": "wolfsburg", "name": "VfL Wolfsburg", "short": "Wolfsburg", "country": "GER", "colors": ["#65B32E", "#FFFFFF"], "founded": "1945", "rivals": [], "wins": [
+      {"c": "de-league", "d": "2009-05-23", "s": "2008/09", "m": "Wolfsburg 5-1 Werder", "v": "mem"},
+      {"c": "de-cup", "d": "2015-05-30", "s": "2014/15", "m": "Dortmund 1-3 Wolfsburg", "v": "mem"},
+      {"c": "de-super", "d": "2015-08-01", "m": "Wolfsburg 1-1 Bayern, 5-4 pen.", "v": "mem"}
+    ] },
+  {"id": "koln", "name": "1. FC Köln", "short": "Köln", "country": "GER", "colors": ["#ED1C24", "#FFFFFF"], "founded": "1948", "rivals": ["leverkusen", "gladbach"], "wins": [
+      {"c": "de-league", "d": "1978-04-29", "s": "1977/78", "m": "St. Pauli 0-5 Köln", "v": "mem"},
+      {"c": "de-cup", "d": "1983-06-11", "s": "1982/83", "m": "Köln 1-0 Fortuna Köln", "v": "mem"}
+    ] },
+  {"id": "gladbach", "name": "Borussia Mönchengladbach", "short": "Gladbach", "country": "GER", "colors": ["#111111", "#FFFFFF"], "founded": "1900", "rivals": ["koln"], "wins": [
+      {"c": "de-league", "d": "1977-05-21", "s": "1976/77", "m": "Landskampioen 1977", "v": "mem", "approx": true},
+      {"c": "de-cup", "d": "1995-06-24", "s": "1994/95", "m": "Gladbach 3-0 Wolfsburg", "v": "mem"}
+    ] },
+  {"id": "psg", "name": "Paris Saint-Germain", "short": "PSG", "country": "FRA", "colors": ["#004170", "#DA291C"], "founded": "1970", "rivals": ["marseille"], "wins": [
+      {"c": "fr-league", "d": "2026-05-13", "s": "2025/26", "m": "Lens 0-2 PSG", "v": "web"},
+      {"c": "fr-cup", "d": "2025-05-24", "s": "2024/25", "m": "Reims 0-3 PSG", "v": "mem"},
+      {"c": "fr-super", "d": "2026-01-08", "m": "PSG 2-2 Marseille, 4-1 pen.", "v": "web"},
+      {"c": "ucl", "d": "2026-05-30", "s": "2025/26", "m": "PSG 1-1 Arsenal, 4-3 pen.", "v": "web"},
+      {"c": "usc", "d": "2026-08-12", "m": "PSG 2-1 Aston Villa", "v": "web"},
+      {"c": "intercont", "d": "2025-12-17", "m": "PSG 1-1 Flamengo, 2-1 pen.", "v": "web"}
+    ] },
+  {"id": "marseille", "name": "Olympique de Marseille", "short": "OM", "country": "FRA", "colors": ["#2FAEE0", "#FFFFFF"], "founded": "1899", "rivals": ["psg", "lyon"], "wins": [
+      {"c": "fr-league", "d": "2010-05-05", "s": "2009/10", "m": "Marseille 3-1 Rennes", "v": "mem"},
+      {"c": "fr-cup", "d": "1989-06-10", "s": "1988/89", "m": "Marseille 4-3 Monaco", "v": "mem"},
+      {"c": "fr-lcup", "d": "2012-04-14", "s": "2011/12", "m": "Marseille 1-0 Lyon (n.v.)", "v": "mem"},
+      {"c": "fr-super", "d": "2011-07-27", "m": "Marseille 5-4 Lille", "v": "mem"},
+      {"c": "ucl", "d": "1993-05-26", "m": "Marseille 1-0 AC Milan", "v": "mem"}
+    ] },
+  {"id": "lyon", "name": "Olympique Lyonnais", "short": "Lyon", "country": "FRA", "colors": ["#DA0812", "#14387F"], "founded": "1950", "rivals": ["saint-etienne", "marseille"], "wins": [
+      {"c": "fr-league", "d": "2008-05-17", "s": "2007/08", "m": "Auxerre 1-3 Lyon", "v": "mem", "approx": true},
+      {"c": "fr-cup", "d": "2012-04-28", "s": "2011/12", "m": "Lyon 1-0 Quevilly", "v": "mem"},
+      {"c": "fr-super", "d": "2012-07-28", "m": "Lyon 2-2 Montpellier, 4-2 pen.", "v": "mem"}
+    ] },
+  {"id": "saint-etienne", "name": "AS Saint-Étienne", "short": "Saint-Étienne", "country": "FRA", "colors": ["#009639", "#FFFFFF"], "founded": "1919", "rivals": ["lyon"], "wins": [
+      {"c": "fr-league", "d": "1981-05-30", "s": "1980/81", "m": "Landskampioen 1981", "v": "mem", "approx": true},
+      {"c": "fr-lcup", "d": "2013-04-20", "s": "2012/13", "m": "Saint-Étienne 1-0 Rennes", "v": "mem"}
+    ] },
+  {"id": "lille", "name": "LOSC Lille", "short": "Lille", "country": "FRA", "colors": ["#E01E13", "#FFFFFF"], "founded": "1944", "rivals": ["lens"], "wins": [
+      {"c": "fr-league", "d": "2021-05-23", "s": "2020/21", "m": "Angers 1-2 Lille", "v": "mem"},
+      {"c": "fr-cup", "d": "2011-05-14", "s": "2010/11", "m": "Lille 1-0 PSG", "v": "mem"},
+      {"c": "fr-super", "d": "2021-08-01", "m": "Lille 1-0 PSG", "v": "mem"}
+    ] },
+  {"id": "lens", "name": "RC Lens", "short": "Lens", "country": "FRA", "colors": ["#FFD200", "#E30613"], "founded": "1906", "rivals": ["lille"], "wins": [
+      {"c": "fr-league", "d": "1998-05-09", "s": "1997/98", "m": "Auxerre 1-1 Lens", "v": "mem", "approx": true},
+      {"c": "fr-cup", "d": "2026-05-22", "s": "2025/26", "m": "Lens 3-1 Nice", "v": "web"},
+      {"c": "fr-super", "d": "2026-08-16", "m": "Lens 1-0 PSG", "v": "web"}
+    ] },
+  {"id": "monaco", "name": "AS Monaco", "short": "Monaco", "country": "FRA", "colors": ["#E7302A", "#FFFFFF"], "founded": "1924", "rivals": ["nice"], "wins": [
+      {"c": "fr-league", "d": "2017-05-17", "s": "2016/17", "m": "Monaco 2-0 Saint-Étienne", "v": "mem"}
+    ] },
+  {"id": "nice", "name": "OGC Nice", "short": "Nice", "country": "FRA", "colors": ["#E30613", "#111111"], "founded": "1904", "rivals": ["monaco"], "wins": [
+      {"c": "fr-league", "d": "1959-05-31", "s": "1958/59", "m": "Landskampioen 1959", "v": "mem", "approx": true},
+      {"c": "fr-cup", "d": "1997-05-10", "s": "1996/97", "m": "Nice 1-1 Guingamp, 4-3 pen.", "v": "mem"}
+    ] },
+  {"id": "celtic", "name": "Celtic", "country": "SCO", "colors": ["#018749", "#FFFFFF"], "founded": "1887", "rivals": ["rangers"], "wins": [
+      {"c": "sc-league", "d": "2026-05-16", "s": "2025/26", "m": "Celtic 3-1 Hearts", "v": "web"},
+      {"c": "sc-cup", "d": "2026-05-23", "s": "2025/26", "m": "Celtic 3-1 Dunfermline", "v": "web"},
+      {"c": "sc-lcup", "d": "2025-03-16", "s": "2024/25", "m": "Celtic 3-3 Rangers, 5-4 pen.", "v": "web"},
+      {"c": "ucl", "d": "1967-05-25", "m": "Celtic 2-1 Inter", "v": "mem"}
+    ] },
+  {"id": "rangers", "name": "Rangers", "country": "SCO", "colors": ["#1B458F", "#FFFFFF"], "founded": "1872", "rivals": ["celtic"], "wins": [
+      {"c": "sc-league", "d": "2021-03-07", "s": "2020/21", "m": "Titel zeker na Dundee United-Celtic 0-0", "v": "mem"},
+      {"c": "sc-cup", "d": "2022-05-21", "s": "2021/22", "m": "Rangers 2-0 Hearts (n.v.)", "v": "mem"},
+      {"c": "sc-lcup", "d": "2023-12-17", "s": "2023/24", "m": "Rangers 1-0 Aberdeen", "v": "web"},
+      {"c": "cwc", "d": "1972-05-24", "m": "Rangers 3-2 Dinamo Moskou", "v": "mem"}
+    ] },
+  {"id": "aberdeen", "name": "Aberdeen", "country": "SCO", "colors": ["#E2001A", "#FFFFFF"], "founded": "1903", "rivals": ["rangers"], "wins": [
+      {"c": "sc-league", "d": "1985-04-27", "s": "1984/85", "m": "Landskampioen 1985", "v": "mem", "approx": true},
+      {"c": "sc-cup", "d": "2025-05-24", "s": "2024/25", "m": "Celtic 1-1 Aberdeen, 3-4 pen.", "v": "mem"},
+      {"c": "sc-lcup", "d": "2014-03-16", "s": "2013/14", "m": "Aberdeen 0-0 Inverness, 4-2 pen.", "v": "mem"},
+      {"c": "cwc", "d": "1983-05-11", "m": "Aberdeen 2-1 Real Madrid (n.v.)", "v": "mem"}
+    ] },
+  {"id": "hearts", "name": "Heart of Midlothian", "short": "Hearts", "country": "SCO", "colors": ["#8E1F2F", "#FFFFFF"], "founded": "1874", "rivals": ["hibs"], "wins": [
+      {"c": "sc-league", "d": "1960-04-30", "s": "1959/60", "m": "Landskampioen 1960", "v": "mem", "approx": true},
+      {"c": "sc-cup", "d": "2012-05-19", "s": "2011/12", "m": "Hearts 5-1 Hibs", "v": "mem"}
+    ] },
+  {"id": "hibs", "name": "Hibernian", "short": "Hibs", "country": "SCO", "colors": ["#005C2B", "#FFFFFF"], "founded": "1875", "rivals": ["hearts"], "wins": [
+      {"c": "sc-league", "d": "1952-04-30", "s": "1951/52", "m": "Landskampioen 1952", "v": "mem", "approx": true},
+      {"c": "sc-cup", "d": "2016-05-21", "s": "2015/16", "m": "Rangers 2-3 Hibs", "v": "mem"},
+      {"c": "sc-lcup", "d": "2007-03-18", "s": "2006/07", "m": "Hibs 5-1 Kilmarnock", "v": "mem"}
+    ] },
+  {"id": "st-mirren", "name": "St Mirren", "country": "SCO", "colors": ["#111111", "#FFFFFF"], "founded": "1877", "rivals": [], "wins": [
+      {"c": "sc-lcup", "d": "2025-12-14", "s": "2025/26", "m": "St Mirren 3-1 Celtic", "v": "web"}
+    ] },
+  {"id": "nederland", "name": "Nederland", "type": "nation", "country": "INT", "colors": ["#F36C21", "#FFFFFF"], "founded": "1905", "rivals": ["duitsland", "belgie"], "wins": [
+      {"c": "euro", "d": "1988-06-25", "m": "Sovjet-Unie 0-2 Nederland", "v": "mem"}
+    ] },
+  {"id": "belgie", "name": "België", "type": "nation", "country": "INT", "colors": ["#ED2939", "#FAE042"], "founded": "1904", "rivals": ["nederland", "frankrijk"], "wins": [
+      {"c": "olympic", "d": "1920-09-02", "m": "België-Tsjecho-Slowakije 2-0 (gestaakt)", "v": "mem"}
+    ] },
+  {"id": "engeland", "name": "Engeland", "type": "nation", "country": "INT", "colors": ["#FFFFFF", "#CE1124"], "founded": "1872", "rivals": ["duitsland", "schotland", "argentinie"], "wins": [
+      {"c": "wc", "d": "1966-07-30", "m": "Engeland 4-2 West-Duitsland (n.v.)", "v": "mem"}
+    ] },
+  {"id": "duitsland", "name": "Duitsland", "type": "nation", "country": "INT", "colors": ["#111111", "#DD0000"], "founded": "1908", "rivals": ["nederland", "engeland"], "wins": [
+      {"c": "wc", "d": "2014-07-13", "m": "Duitsland 1-0 Argentinië (n.v.)", "v": "mem"},
+      {"c": "euro", "d": "1996-06-30", "m": "Duitsland 2-1 Tsjechië (golden goal)", "v": "mem"},
+      {"c": "confed", "d": "2017-07-02", "m": "Chili 0-1 Duitsland", "v": "mem"}
+    ] },
+  {"id": "frankrijk", "name": "Frankrijk", "type": "nation", "country": "INT", "colors": ["#002395", "#ED2939"], "founded": "1904", "rivals": ["belgie", "italie"], "wins": [
+      {"c": "wc", "d": "2018-07-15", "m": "Frankrijk 4-2 Kroatië", "v": "mem"},
+      {"c": "euro", "d": "2000-07-02", "m": "Frankrijk 2-1 Italië (golden goal)", "v": "mem"},
+      {"c": "nations", "d": "2021-10-10", "m": "Spanje 1-2 Frankrijk", "v": "mem"}
+    ] },
+  {"id": "spanje", "name": "Spanje", "type": "nation", "country": "INT", "colors": ["#AA151B", "#F1BF00"], "founded": "1920", "rivals": ["portugal"], "wins": [
+      {"c": "wc", "d": "2026-07-19", "m": "Spanje 1-0 Argentinië (n.v.)", "v": "web"},
+      {"c": "euro", "d": "2024-07-14", "m": "Spanje 2-1 Engeland", "v": "mem"},
+      {"c": "nations", "d": "2023-06-18", "m": "Kroatië 0-0 Spanje, 4-5 pen.", "v": "mem"}
+    ] },
+  {"id": "portugal", "name": "Portugal", "type": "nation", "country": "INT", "colors": ["#006600", "#FF0000"], "founded": "1921", "rivals": ["spanje"], "wins": [
+      {"c": "euro", "d": "2016-07-10", "m": "Portugal 1-0 Frankrijk (n.v.)", "v": "mem"},
+      {"c": "nations", "d": "2025-06-08", "m": "Portugal 2-2 Spanje, 5-3 pen.", "v": "mem"}
+    ] },
+  {"id": "italie", "name": "Italië", "type": "nation", "country": "INT", "colors": ["#1F4FA3", "#FFFFFF"], "founded": "1910", "rivals": ["frankrijk"], "wins": [
+      {"c": "wc", "d": "2006-07-09", "m": "Italië 1-1 Frankrijk, 5-3 pen.", "v": "mem"},
+      {"c": "euro", "d": "2021-07-11", "m": "Italië 1-1 Engeland, 3-2 pen.", "v": "mem"}
+    ] },
+  {"id": "argentinie", "name": "Argentinië", "type": "nation", "country": "INT", "colors": ["#75AADB", "#FFFFFF"], "founded": "1901", "rivals": ["brazilie", "engeland"], "wins": [
+      {"c": "wc", "d": "2022-12-18", "m": "Argentinië 3-3 Frankrijk, 4-2 pen.", "v": "mem"},
+      {"c": "copa", "d": "2024-07-14", "m": "Argentinië 1-0 Colombia (n.v.)", "v": "mem"},
+      {"c": "finalissima", "d": "2022-06-01", "m": "Italië 0-3 Argentinië", "v": "mem"}
+    ] },
+  {"id": "brazilie", "name": "Brazilië", "type": "nation", "country": "INT", "colors": ["#FEDD00", "#009C3B"], "founded": "1914", "rivals": ["argentinie"], "wins": [
+      {"c": "wc", "d": "2002-06-30", "m": "Brazilië 2-0 Duitsland", "v": "mem"},
+      {"c": "copa", "d": "2019-07-07", "m": "Brazilië 3-1 Peru", "v": "mem"},
+      {"c": "confed", "d": "2013-06-30", "m": "Brazilië 3-0 Spanje", "v": "mem"}
+    ] },
+  {"id": "denemarken", "name": "Denemarken", "type": "nation", "country": "INT", "colors": ["#C60C30", "#FFFFFF"], "founded": "1908", "rivals": [], "wins": [
+      {"c": "euro", "d": "1992-06-26", "m": "Denemarken 2-0 Duitsland", "v": "mem"},
+      {"c": "confed", "d": "1995-01-13", "m": "Denemarken 2-0 Argentinië", "v": "mem"}
+    ] },
+  {"id": "schotland", "name": "Schotland", "type": "nation", "country": "INT", "colors": ["#0065BF", "#FFFFFF"], "founded": "1872-11-30", "rivals": ["engeland"], "wins": [] }
+]

@@ -1,0 +1,9 @@
+[
+  { "check": "2026-12-15", "what": "Scottish League Cup finale 2026/27", "teams": ["celtic", "rangers", "aberdeen", "hearts", "hibs", "st-mirren"] },
+  { "check": "2026-12-20", "what": "FIFA Intercontinental Cup 2026 (PSG speelt mee)", "teams": ["psg"] },
+  { "check": "2026-12-23", "what": "Supercoppa Italiana 2026/27", "teams": ["inter", "napoli", "milan", "juventus", "lazio", "roma", "bologna", "atalanta", "fiorentina"] },
+  { "check": "2027-01-15", "what": "Supercopa de España 2027", "teams": ["barcelona", "real-madrid", "atletico", "real-sociedad", "athletic"] },
+  { "check": "2027-03-01", "what": "League Cup finale 2026/27", "teams": ["arsenal", "man-city", "liverpool", "chelsea", "man-utd", "tottenham", "newcastle"] },
+  { "check": "2027-04-20", "what": "KNVB Beker finale 2026/27", "teams": ["ajax", "psv", "feyenoord", "az", "twente", "utrecht"] },
+  { "check": "2027-05-01", "what": "Landstitels en bekerfinales 2026/27 (alle landen) — wekelijks checken t/m eind mei", "teams": [] }
+]
