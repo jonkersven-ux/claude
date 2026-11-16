@@ -1,16 +1,17 @@
 # NoTrophy.com
 
-Live tellers die laten zien hoe lang een club of land al zonder prijs zit. Gemaakt om door te sturen: elke club heeft een eigen link (`notrophy.com/ajax`) met een WhatsApp-preview, en derby's hebben een vergelijkingspagina (`notrophy.com/ajax-vs-feyenoord`).
+Internationale site (Engelstalig) met live tellers die laten zien hoe lang een club al zonder prijs zit. Gemaakt om door te sturen: elke club heeft een eigen link (`notrophy.com/tottenham`) met een WhatsApp-preview, en derby's hebben een vergelijkingspagina (`notrophy.com/real-madrid-vs-barcelona`).
 
 ## Wat zit erin
 
-- **96 teams**: Eredivisie en bekende NL-clubs, Premier League-top, top van Spanje, Italië, Duitsland, Frankrijk, Schotland en 12 landenteams.
+- **114 clubs**: alle clubs uit de Premier League, La Liga, Serie A, Bundesliga, Ligue 1 en Eredivisie van seizoen 2026/27. `npm run validate` controleert dat elke competitie compleet is.
+- **Homepage** opent met de clubs met de grootste aanhang wereldwijd (lijst in `scripts/config.mjs`, `FANBASES`).
 - **Teller per team** in jaren, dagen, uren, minuten en seconden, met vier modi: alle prijzen, zonder supercups, alleen landstitel, alleen Europees.
-- **Vergelijken**: twee teams naast elkaar, met een uitspraak wie het langst wacht. 20 vaste derby's hebben een eigen link en preview.
+- **Vergelijken**: twee clubs naast elkaar, met een uitspraak wie het langst wacht. 20 vaste derby's (El Clásico, North London derby, De Klassieker, ...) hebben een eigen link en preview.
 - **Hall of Shame**, "nog nooit iets gewonnen" en "net gewonnen" op de homepage.
 - **Delen**: WhatsApp (grote knop), X, Telegram, Facebook, link kopiëren en de deelfunctie van de telefoon. De deeltekst rekent het aantal dagen uit op het moment van delen.
 - **Preview-afbeeldingen** (1200×630) per team en per derby. Er staat alleen de datum van de laatste prijs op, dus ze verouderen niet.
-- NL en EN, licht en donker thema, werkt op mobiel.
+- Alle teksten in het Engels (`src/assets/i18n.mjs`), licht en donker thema, werkt op mobiel.
 
 ## Commando's
 
@@ -32,7 +33,7 @@ Het is een statische site. Netlify werkt direct met `netlify.toml`; Cloudflare P
 
 Voor livegang in `scripts/config.mjs`:
 1. `SITE_URL` op het echte domein zetten (de deellinks en previews gebruiken dit).
-2. `REPORT_EMAIL` op een mailadres zetten dat je echt leest.
+2. `REPORT_EMAIL` op een mailadres zetten dat je echt leest (nu `hello@notrophy.com`).
 
 ## Automatisch bijwerken
 
@@ -55,3 +56,7 @@ Lokaal: `API_FOOTBALL_KEY=... npm run sync -- --dry-run --all` laat zien wat er 
 ## Data correct houden
 
 Zie [DATA.md](DATA.md). Kort: alle prijzen staan in `data/teams.json`, `npm run validate` vangt fouten, en `data/upcoming.json` is de reserve-agenda als de API iets mist.
+
+## Nieuw seizoen
+
+Na elke zomer wisselen er clubs van competitie. Pas dan `data/teams.json` aan (gedegradeerde clubs eruit, gepromoveerde erin) en draai `npm run validate`: die controleert of elke competitie het juiste aantal clubs heeft.

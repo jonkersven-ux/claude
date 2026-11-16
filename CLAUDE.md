@@ -5,7 +5,7 @@ Guidance for AI assistants working in this repository.
 ## Repository Overview
 
 - **Repository**: `jonkersven-ux/claude`
-- **Project**: NoTrophy.com — static site with live counters showing how long football clubs and national teams have gone without a trophy. Built for sharing (WhatsApp previews per club and per derby).
+- **Project**: NoTrophy.com — international (English-only) static site with live counters showing how long football clubs have gone without a trophy. Scope: every club in the 2026/27 Premier League, La Liga, Serie A, Bundesliga, Ligue 1 and Eredivisie (114). Built for sharing (WhatsApp previews per club and per derby).
 
 ## Project Structure
 
@@ -20,12 +20,12 @@ data/api-map.json        # written by sync: verified league ids and api team id 
 data/changelog.json      # written by sync: automatic trophy updates
 scripts/sync.mjs         # API-Football sync (needs API_FOOTBALL_KEY); --all, --dry-run, --only=, --today=
 scripts/sync/lib.mjs     # pure sync logic (final detection, title clinch, team matching, teams.json formatter)
-scripts/config.mjs       # SITE_URL, REPORT_EMAIL, featured RIVALRIES; reads VERIFIED_AT from data/meta.json
+scripts/config.mjs       # SITE_URL, REPORT_EMAIL, featured RIVALRIES, FANBASES (homepage); reads VERIFIED_AT from data/meta.json
 scripts/validate.mjs     # data checks (exit 1 on errors), --todo lists unverified entries
 scripts/build.mjs        # generates dist/: home, /{id}/, /{a}-vs-{b}/, /vs/, /regels/, sitemap
 scripts/og.mjs           # Playwright: 1200x630 preview images to dist/og/
 src/assets/core.mjs      # pure logic shared by browser and Node (dates, modes, ranking, share text)
-src/assets/i18n.mjs      # all NL/EN copy
+src/assets/i18n.mjs      # all site copy (English only)
 src/assets/app.mjs       # client rendering (vanilla JS modules, no framework)
 src/assets/style.css     # design tokens + styles (light + dark)
 tests/*.test.mjs         # node:test unit tests (core logic + sync with fake API)
@@ -49,8 +49,8 @@ npm run dev           # build and serve dist/ on :8080
 
 ## Code Conventions
 
-- Plain ES modules, 2-space indent, single quotes. Comments and UI copy in Dutch; identifiers in English.
-- All user-facing text goes in `src/assets/i18n.mjs` (both `nl` and `en`).
+- Plain ES modules, 2-space indent, single quotes. The site is English-only; some internal comments and CLI output are Dutch.
+- All user-facing text goes in `src/assets/i18n.mjs`. Match notes (`m`) in data are English.
 - Logic that both build and browser need belongs in `core.mjs` and must stay DOM-free.
 - Dates are `YYYY-MM-DD` strings parsed as local dates via `parseDate` (never `new Date('YYYY-MM-DD')`, which is UTC).
 
@@ -61,6 +61,7 @@ npm run dev           # build and serve dist/ on :8080
 - After any data change: bump `verifiedAt` in data/meta.json, run `npm run validate` and `npm test`.
 - Keep data/teams.json in the `formatTeams` layout (scripts/sync/lib.mjs); the sync rewrites it that way.
 - `v`: `api` (sync), `web` (checked manually), `mem` (unverified).
+- Each league must have its full 2026/27 roster (validate checks counts: 20/20/20/18/18/18).
 - See DATA.md for what counts as a trophy.
 
 ## CI/CD

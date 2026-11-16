@@ -1,30 +1,36 @@
-// Centrale instellingen. Pas SITE_URL en REPORT_EMAIL aan vóór livegang.
+// Central settings. Set SITE_URL and REPORT_EMAIL before going live.
 export const SITE_URL = process.env.SITE_URL || 'https://notrophy.com';
-export const REPORT_EMAIL = process.env.REPORT_EMAIL || 'fouten@notrophy.com';
-// Datum van de laatste data-update. Staat in data/meta.json zodat de automatische sync hem kan bijwerken.
+export const REPORT_EMAIL = process.env.REPORT_EMAIL || 'hello@notrophy.com';
+// Date of the last data update. Lives in data/meta.json so the automatic sync can update it.
 import { readFileSync } from 'node:fs';
 export const VERIFIED_AT = JSON.parse(readFileSync(new URL('../data/meta.json', import.meta.url), 'utf8')).verifiedAt;
 
-// Uitgelichte rivaliteiten: krijgen een eigen deelbare pagina /{a}-vs-{b}/ met preview-afbeelding.
+// Featured derbies: each gets its own shareable page /{a}-vs-{b}/ with a preview image.
 export const RIVALRIES = [
-  { a: 'ajax', b: 'feyenoord', nl: 'De Klassieker', en: 'De Klassieker' },
-  { a: 'psv', b: 'ajax', nl: 'De Topper', en: 'De Topper' },
-  { a: 'twente', b: 'heracles', nl: 'Twentse derby', en: 'Twente derby' },
-  { a: 'feyenoord', b: 'sparta', nl: 'Rotterdamse derby', en: 'Rotterdam derby' },
-  { a: 'groningen', b: 'heerenveen', nl: 'Derby van het Noorden', en: 'Derby of the North' },
-  { a: 'nac', b: 'willem-ii', nl: 'Brabantse derby', en: 'Brabant derby' },
-  { a: 'arsenal', b: 'tottenham', nl: 'North London derby', en: 'North London derby' },
-  { a: 'man-utd', b: 'man-city', nl: 'Manchester derby', en: 'Manchester derby' },
-  { a: 'liverpool', b: 'everton', nl: 'Merseyside derby', en: 'Merseyside derby' },
-  { a: 'newcastle', b: 'sunderland', nl: 'Tyne-Wear derby', en: 'Tyne-Wear derby' },
-  { a: 'celtic', b: 'rangers', nl: 'Old Firm', en: 'Old Firm' },
-  { a: 'barcelona', b: 'real-madrid', nl: 'El Clásico', en: 'El Clásico' },
-  { a: 'sevilla', b: 'betis', nl: 'El Gran Derbi', en: 'El Gran Derbi' },
-  { a: 'inter', b: 'milan', nl: 'Derby della Madonnina', en: 'Derby della Madonnina' },
-  { a: 'roma', b: 'lazio', nl: 'Derby della Capitale', en: 'Derby della Capitale' },
-  { a: 'dortmund', b: 'schalke', nl: 'Revierderby', en: 'Revierderby' },
-  { a: 'psg', b: 'marseille', nl: 'Le Classique', en: 'Le Classique' },
-  { a: 'nederland', b: 'duitsland', nl: 'Oranje vs Die Mannschaft', en: 'Oranje vs Die Mannschaft' },
-  { a: 'nederland', b: 'belgie', nl: 'Lage Landen-derby', en: 'Low Countries derby' },
-  { a: 'engeland', b: 'schotland', nl: 'The Auld Enemy', en: 'The Auld Enemy' },
+  { a: 'real-madrid', b: 'barcelona', name: 'El Clásico' },
+  { a: 'man-utd', b: 'liverpool', name: 'North West derby' },
+  { a: 'arsenal', b: 'tottenham', name: 'North London derby' },
+  { a: 'man-utd', b: 'man-city', name: 'Manchester derby' },
+  { a: 'inter', b: 'milan', name: 'Derby della Madonnina' },
+  { a: 'bayern', b: 'dortmund', name: 'Der Klassiker' },
+  { a: 'psg', b: 'marseille', name: 'Le Classique' },
+  { a: 'ajax', b: 'feyenoord', name: 'De Klassieker' },
+  { a: 'inter', b: 'juventus', name: "Derby d'Italia" },
+  { a: 'real-madrid', b: 'atletico', name: 'Madrid derby' },
+  { a: 'liverpool', b: 'everton', name: 'Merseyside derby' },
+  { a: 'chelsea', b: 'arsenal', name: 'London derby' },
+  { a: 'roma', b: 'lazio', name: 'Derby della Capitale' },
+  { a: 'dortmund', b: 'schalke', name: 'Revierderby' },
+  { a: 'sevilla', b: 'betis', name: 'El Gran Derbi' },
+  { a: 'newcastle', b: 'sunderland', name: 'Tyne-Wear derby' },
+  { a: 'juventus', b: 'torino', name: 'Derby della Mole' },
+  { a: 'athletic', b: 'real-sociedad', name: 'Basque derby' },
+  { a: 'lille', b: 'lens', name: 'Derby du Nord' },
+  { a: 'psv', b: 'ajax', name: 'De Topper' },
+];
+
+// Clubs with the biggest fanbases worldwide, shown first on the homepage (curated, biggest first).
+export const FANBASES = [
+  'real-madrid', 'barcelona', 'man-utd', 'liverpool', 'bayern', 'psg', 'juventus', 'chelsea',
+  'arsenal', 'man-city', 'milan', 'inter', 'dortmund', 'atletico', 'tottenham', 'ajax',
 ];

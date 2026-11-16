@@ -7,11 +7,10 @@ De site staat of valt met correcte datums. Eén fout bij een grote club en het h
 | Telt | Telt niet |
 |---|---|
 | Landstitel hoogste divisie | Titels in lagere divisies |
-| Nationale beker, ligabeker | Intertoto, Eredivisie Cup |
+| Nationale beker, ligabeker (ook de Oost-Duitse FDGB-Pokal voor Union Berlin) | Intertoto, Eredivisie Cup |
 | Nationale supercup, UEFA Super Cup* | Jeugd, vrouwen (apart, later) |
 | Champions League / Europacup I, Europa League / UEFA Cup, Conference League, Europacup II, Jaarbeursstedenbeker | Oefen- en zomertoernooien |
 | WK voor clubs, Intercontinental Cup* | |
-| Landen: WK, EK, Copa América; Nations League*, Confed Cup*, Finalissima*, Olympisch goud* | |
 
 \* "bijprijs": in de modus **Zonder supercups** tellen deze niet mee. Regel: een prijs die je in één wedstrijd wint, is een bijprijs.
 
@@ -34,12 +33,17 @@ De site staat of valt met correcte datums. Eén fout bij een grote club en het h
 
 Teams die nooit iets wonnen hebben `"wins": []` en tellen vanaf `founded`.
 
+## Dekking
+
+Alle clubs van de Premier League, La Liga, Serie A, Bundesliga, Ligue 1 en Eredivisie in 2026/27 (114). Promoties en degradaties van zomer 2026 zijn via het web gecontroleerd. Afspraak bij fusieclubs: Fortuna Sittard krijgt de beker van Fortuna '54 (1964), en telt vanaf 1954.
+
 ## Stand bij oplevering (16 november 2026)
 
 - Alle prijzen van seizoen 2025/26 en de supercups van augustus 2026 zijn via het web gecontroleerd (`v: "web"`).
 - De meest gedeelde tellers zijn extra gecontroleerd: Ajax (11 mei 2022), Real Madrid (laatste prijs 18 dec 2024, 2025/26 prijsloos), Rangers (17 dec 2023), PSV, Crystal Palace, Stuttgart, Marseille (supercup jan 2026 verloren).
-- Oudere prijzen komen grotendeels uit parate kennis en staan op `mem`. `node scripts/validate.mjs --todo` geeft de lijst. Werk die af voor livegang, te beginnen bij de **hoofdteller** (de laatste prijs in "Alle prijzen") van de grote clubs.
-- 27 oude titels hebben alleen een seizoen (`approx`).
+- Oudere prijzen, en de prijzen van de 18 nieuw toegevoegde clubs, komen grotendeels uit parate kennis en staan op `mem`. `node scripts/validate.mjs --todo` geeft de lijst. Werk die af voor livegang, te beginnen bij de **hoofdteller** (de laatste prijs in "Alle prijzen") van de grote clubs.
+- 36 oude titels hebben alleen een seizoen (`approx`). De site toont daar alleen het jaartal en een teller in hele jaren.
+- Clubs die nooit iets wonnen tellen vanaf het oprichtingsjaar; met alleen een jaartal toont de site ook alleen hele jaren.
 
 ## Automatische sync
 

@@ -106,6 +106,21 @@ main.wrap { padding-block: 8px 48px; display: grid; gap: 32px; }
 .counter-xl .cell-years, .counter-xl .cell-days { grid-column: span 1; }
 .counter-md .num { font-size: clamp(26px, 5vw, 46px); }
 .counter-md { gap: 4px; }
+.counter-years { grid-template-columns: minmax(0, 1fr) !important; }
+.counter-years .cell { justify-items: start; padding: 12px 20px 10px; }
+.counter-years .cell-years { grid-column: auto !important; }
+
+/* biggest fanbases */
+.fans { display: grid; gap: 12px; }
+.fan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 8px; }
+.fan { position: relative; display: grid; gap: 4px; align-content: start; padding: 0 14px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; overflow: hidden; }
+.fan:hover { border-color: var(--ink); }
+.fan-band { height: 12px; margin: 0 -14px 8px; background: repeating-linear-gradient(90deg, var(--c1) 0 14px, var(--c2) 14px 28px); box-shadow: inset 0 -1px 0 rgb(0 0 0 / .1); }
+.fan-name { font: 900 24px/1.05 var(--f-display); text-transform: uppercase; }
+.fan-days { font: 900 46px/1 var(--f-display); font-variant-numeric: tabular-nums; color: var(--red); }
+.fan-days small { font: 800 13px var(--f-body); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+.fan-meta { font-size: 13px; color: var(--muted); min-height: 1.4em; }
+.fan .chip { justify-self: start; margin-top: 4px; }
 
 .status-line { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip { display: inline-block; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 4px 10px; border-radius: 3px; border: 1.5px solid var(--ink); }

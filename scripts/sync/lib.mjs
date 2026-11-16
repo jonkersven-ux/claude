@@ -57,8 +57,8 @@ export function matchLabel(fx, secondLeg = false) {
   const st = fx.fixture.status.short;
   let s = `${fx.teams.home.name} ${fx.goals.home}-${fx.goals.away} ${fx.teams.away.name}`;
   if (st === 'PEN' && fx.score?.penalty) s += `, ${fx.score.penalty.home}-${fx.score.penalty.away} pen.`;
-  else if (st === 'AET') s += ' (n.v.)';
-  if (secondLeg) s += ' (2e duel)';
+  else if (st === 'AET') s += ' (aet)';
+  if (secondLeg) s += ' (2nd leg)';
   return s;
 }
 
@@ -99,10 +99,10 @@ export function leagueChampion(fixtures, { games, adjust = {}, standingsLeader =
 
 // Koppelt een API-team aan een NoTrophy-team: eerst op opgeslagen id, dan op naam/alias.
 export const norm = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\b(fc|afc|cf|ac|sc|as|ss|ssc|rc|ogc|losc|vfb|vfl|sv|bv|1\.)\b/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
-export function resolveTeam(apiTeam, teams, { idMap = {}, aliases = {}, nationEn = {} } = {}) {
+export function resolveTeam(apiTeam, teams, { idMap = {}, aliases = {} } = {}) {
   if (idMap[apiTeam.id]) return idMap[apiTeam.id];
   const n = norm(apiTeam.name);
-  const hits = teams.filter((t) => [t.name, t.short, nationEn[t.id], ...(aliases[t.id] || [])].filter(Boolean).some((x) => norm(x) === n));
+  const hits = teams.filter((t) => [t.name, t.short, ...(aliases[t.id] || [])].filter(Boolean).some((x) => norm(x) === n));
   return hits.length === 1 ? hits[0].id : null;
 }
 

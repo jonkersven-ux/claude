@@ -1,4 +1,4 @@
-// Pure rekenlogica, gedeeld door de browser en de build-scripts.
+// Pure logic shared by the browser and the build scripts.
 const DAY = 86400000;
 
 // Datums van WK-finales (mannen), voor de "sindsdien"-feitjes.
@@ -9,16 +9,13 @@ const WORLD_CUP_FINALS = [
   '2022-12-18', '2026-07-19',
 ];
 
-export const CLUB_MODES = ['all', 'real', 'league', 'intl'];
-export const NATION_MODES = ['all', 'real'];
+export const MODES = ['all', 'real', 'league', 'intl'];
 
 export function parseDate(s) {
   const [y, m = 1, d = 1] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
 
-export const isNation = (team) => team.type === 'nation';
-export const modesFor = (team) => (isNation(team) ? NATION_MODES : CLUB_MODES);
 
 function allowed(cat, mode) {
   if (mode === 'real') return cat !== 'super';
@@ -70,19 +67,16 @@ export function statusKey(ref, now = new Date()) {
   return 'ancient';
 }
 
-export function teamName(team, lang, NATION_EN = {}) {
-  if (lang === 'en' && isNation(team) && NATION_EN[team.id]) return NATION_EN[team.id];
-  return team.name;
-}
-export const shortName = (team, lang, NATION_EN) => (team.short && !isNation(team) ? team.short : teamName(team, lang, NATION_EN));
+export const shortName = (team) => team.short || team.name;
+export const compName = (comps, w) => comps[w.c].name;
 
-export function fmtNum(n, lang) {
-  return new Intl.NumberFormat(lang === 'nl' ? 'nl-NL' : 'en-GB').format(n);
+export function fmtNum(n) {
+  return new Intl.NumberFormat('en-GB').format(n);
 }
-export function fmtDate(s, lang, approx = false) {
+export function fmtDate(s, approx = false) {
   const d = parseDate(s);
   if (approx) return String(d.getFullYear());
-  return d.toLocaleDateString(lang === 'nl' ? 'nl-NL' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
 export function fill(str, vars) {
@@ -92,25 +86,24 @@ export function fill(str, vars) {
 // Ranglijst: langste droogte eerst (nooit gewonnen telt vanaf oprichting en staat bovenaan).
 export function ranking(teams, mode, comps, now = new Date()) {
   return teams
-    .filter((t) => modesFor(t).includes(mode))
     .map((t) => { const ref = reference(t, mode, comps); return { team: t, ref, days: diffParts(ref.date, now).totalDays }; })
     .sort((a, b) => (b.ref.never - a.ref.never) || (b.days - a.days));
 }
 
 // "Sindsdien"-feitjes, puur uit de datum berekend.
 export function facts(ref, team, ctx) {
-  const { t, lang, comps, teams, now = new Date(), NATION_EN } = ctx;
+  const { t, comps, teams, now = new Date() } = ctx;
   const out = [];
   const p = diffParts(ref.date, now);
-  const name = shortName(team, lang, NATION_EN);
+  const name = shortName(team);
   if (p.years < 1) {
     const months = Math.max(1, Math.floor(p.totalDays / 30.44));
     out.push(fill(t.facts.kidBaby, { months, name }));
   } else {
     const y = p.years;
     let school = '';
-    if (y >= 4 && y <= 11) school = fill(t.school.g, { g: Math.min(8, y - 3) });
-    else if (y >= 12 && y <= 17) school = t.school.vo;
+    if (y >= 5 && y <= 11) school = t.school.primary;
+    else if (y >= 12 && y <= 17) school = t.school.secondary;
     else if (y >= 18 && y < 30) school = t.school.vote;
     else if (y >= 30) school = t.school.adult;
     out.push(fill(t.facts.kid, { years: y, school }));
@@ -120,10 +113,10 @@ export function facts(ref, team, ctx) {
     const x = new Date(y, 11, 25);
     if (x > ref.date && x <= now) xmas++;
   }
-  if (xmas > 0) out.push(fill(t.facts.xmas, { n: fmtNum(xmas, lang) }));
+  if (xmas > 0) out.push(fill(t.facts.xmas, { n: fmtNum(xmas) }));
   const wc = WORLD_CUP_FINALS.filter((d) => parseDate(d) > ref.date && parseDate(d) <= now).length;
-  if (wc > 0) out.push(fill(t.facts.worldcups, { n: fmtNum(wc, lang) }));
-  out.push(fill(t.facts.heart, { n: fmtNum(Math.round(p.totalDays * 24 * 60 * 75), lang) }));
+  if (wc > 0) out.push(fill(t.facts.worldcups, { n: fmtNum(wc) }));
+  out.push(fill(t.facts.heart, { n: fmtNum(Math.round(p.totalDays * 24 * 60 * 75)) }));
 
   // Rivaal die in die periode wel iets won.
   for (const rid of team.rivals || []) {
@@ -131,7 +124,7 @@ export function facts(ref, team, ctx) {
     if (!rival) continue;
     const rw = lastWin(rival, 'all', comps);
     if (rw && parseDate(rw.d) > ref.date) {
-      out.push(fill(t.facts.rivalWon, { rival: shortName(rival, lang, NATION_EN), comp: comps[rw.c][lang], date: fmtDate(rw.d, lang, rw.approx) }));
+      out.push(fill(t.facts.rivalWon, { rival: shortName(rival), comp: compName(comps, rw), date: fmtDate(rw.d, rw.approx) }));
       break;
     }
   }
@@ -139,10 +132,10 @@ export function facts(ref, team, ctx) {
 }
 
 export function shareText(team, mode, ctx, url) {
-  const { t, lang, comps, now = new Date(), NATION_EN } = ctx;
+  const { t, comps, now = new Date() } = ctx;
   const ref = reference(team, mode, comps);
   const p = diffParts(ref.date, now);
-  const name = teamName(team, lang, NATION_EN);
+  const name = team.name;
   const key = statusKey(ref, now);
   const roastList = t.roast[key];
   const roast = roastList[Math.floor(Math.random() * roastList.length)];
@@ -152,24 +145,24 @@ export function shareText(team, mode, ctx, url) {
   else if (p.years >= 15) tpl = t.share.long;
   else tpl = t.share.normal;
   const vars = {
-    name, url, years: fmtNum(p.years, lang), days: fmtNum(p.totalDays, lang),
-    comp: ref.win ? comps[ref.win.c][lang] : '', date: ref.win ? fmtDate(ref.win.d, lang, ref.win.approx) : '',
+    name, url, years: fmtNum(p.years), days: fmtNum(p.totalDays),
+    comp: ref.win ? compName(comps, ref.win) : '', date: ref.win ? fmtDate(ref.win.d, ref.win.approx) : '',
   };
   return `${fill(tpl, vars)}\n${roast}`;
 }
 
 export function compareLine(a, b, mode, ctx) {
-  const { t, lang, comps, now = new Date(), NATION_EN } = ctx;
+  const { t, comps, now = new Date() } = ctx;
   const ra = reference(a, mode, comps), rb = reference(b, mode, comps);
   const da = diffParts(ra.date, now).totalDays, db = diffParts(rb.date, now).totalDays;
   // Nooit gewonnen is altijd erger.
   const aWorse = (ra.never && !rb.never) || (ra.never === rb.never && da > db);
   if (!ra.never && !rb.never && da === db) return { line: t.sameLine, worse: null, ra, rb, da, db };
   const worse = aWorse ? a : b, better = aWorse ? b : a;
-  const diff = fmtNum(Math.abs(da - db), lang);
+  const diff = fmtNum(Math.abs(da - db));
   return {
-    line: fill(t.diffLine, { a: shortName(worse, lang, NATION_EN), b: shortName(better, lang, NATION_EN), diff }),
-    verdict: fill(t.verdict, { a: shortName(worse, lang, NATION_EN) }),
+    line: fill(t.diffLine, { a: shortName(worse), b: shortName(better), diff }),
+    verdict: fill(t.verdict, { a: shortName(worse) }),
     worse, ra, rb, da, db,
   };
 }

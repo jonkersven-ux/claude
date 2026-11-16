@@ -4,7 +4,6 @@ import { createServer } from 'node:http';
 import { execFile } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { findFinal, leagueChampion, resolveTeam, applyWin, seasonFor, localDate, formatTeams } from '../scripts/sync/lib.mjs';
-import { NATION_EN } from '../src/assets/i18n.mjs';
 
 const TEAMS = JSON.parse(readFileSync(new URL('../data/teams.json', import.meta.url)));
 const aliases = JSON.parse(readFileSync(new URL('../data/api-aliases.json', import.meta.url)));
@@ -56,7 +55,7 @@ test('tweeluik: totaalscore beslist', () => {
   ];
   const f = findFinal(list, 'cup');
   assert.equal(f.winner.id, 194);
-  assert.match(f.label, /2e duel/);
+  assert.match(f.label, /2nd leg/);
 });
 
 test('landstitel: datum waarop het wiskundig zeker is', () => {
@@ -82,14 +81,15 @@ test('landstitel nog niet beslist geeft niets', () => {
   assert.equal(leagueChampion(list, { games: 2 }), null);
 });
 
-test('teams koppelen op naam, alias en Engelse landnaam', () => {
-  const o = { aliases, nationEn: NATION_EN };
+test('teams koppelen op naam en alias', () => {
+  const o = { aliases };
   assert.equal(resolveTeam({ id: 197, name: 'PSV Eindhoven' }, TEAMS, o), 'psv');
   assert.equal(resolveTeam({ id: 42, name: 'Arsenal' }, TEAMS, o), 'arsenal');
   assert.equal(resolveTeam({ id: 85, name: 'Paris Saint Germain' }, TEAMS, o), 'psg');
   assert.equal(resolveTeam({ id: 165, name: 'Borussia Dortmund' }, TEAMS, o), 'dortmund');
-  assert.equal(resolveTeam({ id: 1118, name: 'Netherlands' }, TEAMS, o), 'nederland');
+  assert.equal(resolveTeam({ id: 543, name: 'Real Betis' }, TEAMS, o), 'betis');
   assert.equal(resolveTeam({ id: 999, name: 'Kaiserslautern' }, TEAMS, o), null);
+  assert.equal(resolveTeam({ id: 500, name: 'Bologna' }, TEAMS, o), 'bologna');
   assert.equal(resolveTeam({ id: 999, name: 'Whatever' }, TEAMS, { idMap: { 999: 'ajax' } }), 'ajax');
 });
 

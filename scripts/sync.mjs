@@ -10,7 +10,6 @@ import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findFinal, leagueChampion, pointsFromFixtures, formatTeams, resolveTeam, applyWin, inWindow, seasonFor, seasonLabel, localDate } from './sync/lib.mjs';
-import { NATION_EN } from '../src/assets/i18n.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (f) => JSON.parse(readFileSync(join(ROOT, f), 'utf8'));
@@ -20,7 +19,7 @@ const BASE = process.env.API_FOOTBALL_BASE || 'https://v3.football.api-sports.io
 const today = args.today || localDate(new Date().toISOString());
 const DRY = !!args['dry-run'];
 
-const COUNTRY = { nl: 'Netherlands', en: 'England', es: 'Spain', it: 'Italy', de: 'Germany', fr: 'France', sc: 'Scotland' };
+const COUNTRY = { nl: 'Netherlands', en: 'England', es: 'Spain', it: 'Italy', de: 'Germany', fr: 'France' };
 
 if (!KEY) {
   console.log('Geen API_FOOTBALL_KEY ingesteld: sync overgeslagen.');
@@ -72,7 +71,7 @@ async function detect(comp, cfg) {
     const res = leagueChampion(fixtures, { games: cfg.games, adjust, standingsLeader: table[0]?.team });
     if (!res) return null;
     if (table[0] && table[0].team.id !== res.winner.id) { report.problems.push(`${comp}: berekende kampioen ${res.winner.name} ≠ koploper stand ${table[0].team.name}. Niets aangepast.`); return null; }
-    return { team: res.winner, d: res.date, s: seasonLabel(season, false), m: res.how === 'clinched' ? `Titel wiskundig zeker (${res.date})` : 'Kampioen op de laatste speeldag' };
+    return { team: res.winner, d: res.date, s: seasonLabel(season, false), m: res.how === 'clinched' ? 'Title mathematically sealed' : 'Champions on the final day' };
   }
   let fixtures = await api(`/fixtures?league=${cfg.league}&season=${season}`);
   let fin = findFinal(fixtures, cfg.type);
@@ -100,7 +99,7 @@ for (const [comp, cfg] of Object.entries(cfgAll)) {
     // Prijzen ouder dan ~13 maanden negeren: dan is er iets mis met seizoen of data.
     const age = (new Date(today) - new Date(hit.d)) / 86400000;
     if (age > 400 || age < 0) { report.problems.push(`${comp}: verdachte datum ${hit.d}, overgeslagen.`); continue; }
-    const id = resolveTeam(hit.team, teams, { idMap: map.teams, aliases, nationEn: NATION_EN });
+    const id = resolveTeam(hit.team, teams, { idMap: map.teams, aliases });
     if (!id) { report.unknown.push(`${comp}: winnaar "${hit.team.name}" (api-id ${hit.team.id}) staat niet op NoTrophy.`); continue; }
     map.teams[hit.team.id] = id;
     const change = applyWin(teams, id, { c: comp, d: hit.d, s: hit.s, m: hit.m, v: 'api' }, today);

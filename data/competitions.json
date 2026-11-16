@@ -1,50 +1,123 @@
 {
-  "_comment": "cat: league | cup | leaguecup | super | intl | major. 'super' = prijzen die je in één wedstrijd wint (supercups) en bijprijzen voor landen.",
-  "nl-league": { "cat": "league", "nl": "Landstitel", "en": "Dutch league title" },
-  "nl-cup": { "cat": "cup", "nl": "KNVB Beker", "en": "KNVB Cup" },
-  "nl-super": { "cat": "super", "nl": "Johan Cruijff Schaal", "en": "Johan Cruyff Shield" },
-
-  "en-league": { "cat": "league", "nl": "Engelse landstitel", "en": "League title" },
-  "en-cup": { "cat": "cup", "nl": "FA Cup", "en": "FA Cup" },
-  "en-lcup": { "cat": "leaguecup", "nl": "League Cup", "en": "League Cup" },
-  "en-super": { "cat": "super", "nl": "Community Shield", "en": "Community Shield" },
-
-  "es-league": { "cat": "league", "nl": "Spaanse landstitel", "en": "La Liga title" },
-  "es-cup": { "cat": "cup", "nl": "Copa del Rey", "en": "Copa del Rey" },
-  "es-super": { "cat": "super", "nl": "Supercopa", "en": "Supercopa" },
-
-  "it-league": { "cat": "league", "nl": "Scudetto", "en": "Serie A title" },
-  "it-cup": { "cat": "cup", "nl": "Coppa Italia", "en": "Coppa Italia" },
-  "it-super": { "cat": "super", "nl": "Supercoppa", "en": "Supercoppa" },
-
-  "de-league": { "cat": "league", "nl": "Duitse landstitel", "en": "Bundesliga title" },
-  "de-cup": { "cat": "cup", "nl": "DFB-Pokal", "en": "DFB-Pokal" },
-  "de-lcup": { "cat": "leaguecup", "nl": "DFB-Ligapokal", "en": "DFB-Ligapokal" },
-  "de-super": { "cat": "super", "nl": "DFL-Supercup", "en": "DFL-Supercup" },
-
-  "fr-league": { "cat": "league", "nl": "Franse landstitel", "en": "Ligue 1 title" },
-  "fr-cup": { "cat": "cup", "nl": "Coupe de France", "en": "Coupe de France" },
-  "fr-lcup": { "cat": "leaguecup", "nl": "Coupe de la Ligue", "en": "Coupe de la Ligue" },
-  "fr-super": { "cat": "super", "nl": "Trophée des Champions", "en": "Trophée des Champions" },
-
-  "sc-league": { "cat": "league", "nl": "Schotse landstitel", "en": "Scottish title" },
-  "sc-cup": { "cat": "cup", "nl": "Scottish Cup", "en": "Scottish Cup" },
-  "sc-lcup": { "cat": "leaguecup", "nl": "Scottish League Cup", "en": "Scottish League Cup" },
-
-  "ucl": { "cat": "intl", "nl": "Champions League / Europacup I", "en": "Champions League / European Cup" },
-  "uel": { "cat": "intl", "nl": "Europa League / UEFA Cup", "en": "Europa League / UEFA Cup" },
-  "uecl": { "cat": "intl", "nl": "Conference League", "en": "Conference League" },
-  "cwc": { "cat": "intl", "nl": "Europacup II", "en": "Cup Winners' Cup" },
-  "fairs": { "cat": "intl", "nl": "Jaarbeursstedenbeker", "en": "Inter-Cities Fairs Cup" },
-  "fcwc": { "cat": "intl", "nl": "WK voor clubs", "en": "Club World Cup" },
-  "usc": { "cat": "super", "nl": "UEFA Super Cup", "en": "UEFA Super Cup" },
-  "intercont": { "cat": "super", "nl": "Intercontinental Cup", "en": "Intercontinental Cup" },
-
-  "wc": { "cat": "major", "nl": "WK", "en": "World Cup" },
-  "euro": { "cat": "major", "nl": "EK", "en": "EURO" },
-  "copa": { "cat": "major", "nl": "Copa América", "en": "Copa América" },
-  "nations": { "cat": "super", "nl": "Nations League", "en": "Nations League" },
-  "confed": { "cat": "super", "nl": "Confederations Cup", "en": "Confederations Cup" },
-  "finalissima": { "cat": "super", "nl": "Finalissima", "en": "Finalissima" },
-  "olympic": { "cat": "super", "nl": "Olympisch goud", "en": "Olympic gold" }
+  "_comment": "cat: league | cup | leaguecup | super | intl. 'super' = trophies won in a single match (super cups); excluded in the 'No super cups' mode.",
+  "nl-league": {
+    "cat": "league",
+    "name": "Dutch league title"
+  },
+  "nl-cup": {
+    "cat": "cup",
+    "name": "KNVB Cup"
+  },
+  "nl-super": {
+    "cat": "super",
+    "name": "Johan Cruyff Shield"
+  },
+  "en-league": {
+    "cat": "league",
+    "name": "English league title"
+  },
+  "en-cup": {
+    "cat": "cup",
+    "name": "FA Cup"
+  },
+  "en-lcup": {
+    "cat": "leaguecup",
+    "name": "League Cup"
+  },
+  "en-super": {
+    "cat": "super",
+    "name": "Community Shield"
+  },
+  "es-league": {
+    "cat": "league",
+    "name": "Spanish league title"
+  },
+  "es-cup": {
+    "cat": "cup",
+    "name": "Copa del Rey"
+  },
+  "es-super": {
+    "cat": "super",
+    "name": "Supercopa"
+  },
+  "it-league": {
+    "cat": "league",
+    "name": "Italian league title"
+  },
+  "it-cup": {
+    "cat": "cup",
+    "name": "Coppa Italia"
+  },
+  "it-super": {
+    "cat": "super",
+    "name": "Supercoppa"
+  },
+  "de-league": {
+    "cat": "league",
+    "name": "German league title"
+  },
+  "de-cup": {
+    "cat": "cup",
+    "name": "DFB-Pokal"
+  },
+  "ddr-cup": {
+    "cat": "cup",
+    "name": "FDGB-Pokal (East German Cup)"
+  },
+  "de-lcup": {
+    "cat": "leaguecup",
+    "name": "DFB-Ligapokal"
+  },
+  "de-super": {
+    "cat": "super",
+    "name": "DFL-Supercup"
+  },
+  "fr-league": {
+    "cat": "league",
+    "name": "French league title"
+  },
+  "fr-cup": {
+    "cat": "cup",
+    "name": "Coupe de France"
+  },
+  "fr-lcup": {
+    "cat": "leaguecup",
+    "name": "Coupe de la Ligue"
+  },
+  "fr-super": {
+    "cat": "super",
+    "name": "Trophée des Champions"
+  },
+  "ucl": {
+    "cat": "intl",
+    "name": "Champions League / European Cup"
+  },
+  "uel": {
+    "cat": "intl",
+    "name": "Europa League / UEFA Cup"
+  },
+  "uecl": {
+    "cat": "intl",
+    "name": "Conference League"
+  },
+  "cwc": {
+    "cat": "intl",
+    "name": "Cup Winners' Cup"
+  },
+  "fairs": {
+    "cat": "intl",
+    "name": "Inter-Cities Fairs Cup"
+  },
+  "fcwc": {
+    "cat": "intl",
+    "name": "Club World Cup"
+  },
+  "usc": {
+    "cat": "super",
+    "name": "UEFA Super Cup"
+  },
+  "intercont": {
+    "cat": "super",
+    "name": "Intercontinental Cup"
+  }
 }

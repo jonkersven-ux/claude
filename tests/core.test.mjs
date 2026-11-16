@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { reference, diffParts, lastWin, ranking, compareLine } from '../src/assets/core.mjs';
 import { T } from '../src/assets/i18n.mjs';
+import { FANBASES, RIVALRIES } from '../scripts/config.mjs';
 
 const TEAMS = JSON.parse(readFileSync(new URL('../data/teams.json', import.meta.url)));
 const COMPS = JSON.parse(readFileSync(new URL('../data/competitions.json', import.meta.url)));
@@ -41,7 +42,16 @@ test('ranglijst zet nooit-winnaars bovenaan, daarna langste droogte', () => {
 });
 
 test('vergelijking wijst de langste wachter aan', () => {
-  const res = compareLine(team('ajax'), team('feyenoord'), 'all', { t: T.nl, lang: 'nl', comps: COMPS, now: new Date(2026, 10, 16) });
+  const res = compareLine(team('ajax'), team('feyenoord'), 'all', { t: T, comps: COMPS, now: new Date(2026, 10, 16) });
   assert.equal(res.worse.id, 'ajax');
-  assert.match(res.line, /711 dagen/);
+  assert.match(res.line, /711 days/);
+});
+
+test('fanbase list and derbies point at existing clubs', () => {
+  for (const id of FANBASES) assert.ok(team(id), id);
+  for (const r of RIVALRIES) { assert.ok(team(r.a), r.a); assert.ok(team(r.b), r.b); }
+});
+
+test('Real Madrid: last trophy in December 2024, none in 2025/26', () => {
+  assert.equal(lastWin(team('real-madrid'), 'all', COMPS).d, '2024-12-18');
 });

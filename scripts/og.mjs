@@ -5,8 +5,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { RIVALRIES } from './config.mjs';
-import { reference, fmtDate, teamName, shortName } from '../src/assets/core.mjs';
-import { NATION_EN } from '../src/assets/i18n.mjs';
+import { reference, fmtDate, shortName, compName } from '../src/assets/core.mjs';
 
 // Playwright: lokaal geïnstalleerd (npm i -D playwright) of globaal beschikbaar.
 const require = createRequire(import.meta.url);
@@ -18,7 +17,6 @@ mkdirSync(OUT, { recursive: true });
 const TEAMS = JSON.parse(readFileSync(join(ROOT, 'data/teams.json'), 'utf8'));
 const COMPS = JSON.parse(readFileSync(join(ROOT, 'data/competitions.json'), 'utf8'));
 const byId = Object.fromEntries(TEAMS.map((t) => [t.id, t]));
-const ogLang = (t) => (t.country === 'NL' || ['nederland', 'belgie'].includes(t.id) ? 'nl' : 'en');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 function lum(hex) {
@@ -50,16 +48,13 @@ body{width:1200px;height:630px;background:#12161C;color:#F4F6F8;font-family:Arch
 .vs .m{font-size:24px}
 </style>`;
 
-function teamBlock(t, lang) {
+function teamBlock(t) {
   const ref = reference(t, 'all', COMPS);
-  const nl = lang === 'nl';
-  const k = ref.never ? (nl ? 'Nog nooit een prijs' : 'Never won a trophy') : (nl ? 'Geen prijs sinds' : 'No trophy since');
-  const big = ref.never ? (nl ? `Sinds ${t.founded.slice(0, 4)}` : `Since ${t.founded.slice(0, 4)}`) : fmtDate(ref.win.d, lang, ref.win.approx);
-  const m = ref.never ? (nl ? 'Helemaal niks. Nul.' : 'Nothing. Zero.') : COMPS[ref.win.c][lang];
-  return { k, big, m };
+  if (ref.never) return { k: 'Never won a trophy', big: `Since ${t.founded.slice(0, 4)}`, m: 'Nothing. Zero.' };
+  return { k: 'No trophy since', big: fmtDate(ref.win.d, ref.win.approx), m: compName(COMPS, ref.win) };
 }
 
-const footer = (lang) => `<div class="bar"><div><span class="no">No</span>Trophy.com</div><span>${lang === 'nl' ? 'Kijk de teller tikken →' : 'Watch the clock tick →'}</span></div>`;
+const footer = () => '<div class="bar"><div><span class="no">No</span>Trophy.com</div><span>Watch the clock tick →</span></div>';
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
@@ -70,20 +65,18 @@ async function shot(file, html) {
 }
 
 for (const t of TEAMS) {
-  const lang = ogLang(t);
-  const b = teamBlock(t, lang);
-  await shot(t.id, `<div class="scarf" style="--c1:${t.colors[0]};--c2:${t.colors[1]};--fg:${fgFor(t.colors)}"><b>${esc(shortName(t, lang, NATION_EN))}</b></div>
-    <div class="main"><div class="k">${esc(b.k)}</div><div class="big">${esc(b.big)}</div><div class="m">${esc(b.m)}</div></div>${footer(lang)}`);
+  const b = teamBlock(t);
+  await shot(t.id, `<div class="scarf" style="--c1:${t.colors[0]};--c2:${t.colors[1]};--fg:${fgFor(t.colors)}"><b>${esc(shortName(t))}</b></div>
+    <div class="main"><div class="k">${esc(b.k)}</div><div class="big">${esc(b.big)}</div><div class="m">${esc(b.m)}</div></div>${footer()}`);
 }
 for (const r of RIVALRIES) {
   const a = byId[r.a], c = byId[r.b];
-  const lang = ogLang(a);
-  const side = (t) => { const b = teamBlock(t, lang); return `<div><div class="scarf" style="--c1:${t.colors[0]};--c2:${t.colors[1]};--fg:${fgFor(t.colors)}"><b>${esc(shortName(t, lang, NATION_EN))}</b></div>
+  const side = (t) => { const b = teamBlock(t); return `<div><div class="scarf" style="--c1:${t.colors[0]};--c2:${t.colors[1]};--fg:${fgFor(t.colors)}"><b>${esc(shortName(t))}</b></div>
     <div class="main"><div class="k">${esc(b.k)}</div><div class="big">${esc(b.big)}</div><div class="m">${esc(b.m)}</div></div></div>`; };
-  await shot(`${r.a}-vs-${r.b}`, `<div class="vs">${side(a)}${side(c)}</div>${footer(lang)}`);
+  await shot(`${r.a}-vs-${r.b}`, `<div class="vs">${side(a)}${side(c)}</div>${footer()}`);
 }
 await shot('home', `<div class="scarf" style="--c1:#12161C;--c2:#F2C200;--fg:#F2C200"><b><span class="no">No</span>Trophy</b></div>
-  <div class="main"><div class="k">Hoe lang wacht jouw rivaal al op een prijs?</div><div class="big">Ajax · Spurs · Real</div><div class="m">Live tellers voor ruim 90 clubs en landen. Zoek, lach, stuur door.</div></div>${footer('nl')}`);
+  <div class="main"><div class="k">How long has your rival gone without a trophy?</div><div class="big">Spurs · Real · Juve</div><div class="m">Live clocks for every club in Europe's six biggest leagues.</div></div>${footer()}`);
 
 await browser.close();
-console.log(`OG-afbeeldingen: ${TEAMS.length + RIVALRIES.length + 1} → dist/og/`);
+console.log(`Preview images: ${TEAMS.length + RIVALRIES.length + 1} → dist/og/`);
