@@ -60,7 +60,7 @@ export const T = {
     filterAll: 'Alles',
     rulesLink: 'Wat telt als prijs?',
     reportLink: 'Klopt er iets niet? Meld het',
-    dataNote: 'Data bijgewerkt t/m {date}. Elke prijs staat erin met datum en wedstrijd.',
+    dataNote: 'Laatste data-update: {date}. Nieuwe prijzen worden automatisch verwerkt.',
     backHome: 'Alle teams',
     lang: 'EN',
     status: {
@@ -152,7 +152,7 @@ export const T = {
     filterAll: 'All',
     rulesLink: 'What counts as a trophy?',
     reportLink: 'Something wrong? Report it',
-    dataNote: 'Data updated to {date}. Every trophy is listed with its date and match.',
+    dataNote: 'Last data update: {date}. New trophies are added automatically.',
     backHome: 'All teams',
     lang: 'NL',
     status: {

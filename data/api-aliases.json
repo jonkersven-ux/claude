@@ -1,0 +1,15 @@
+{
+  "_comment": "Extra namen waaronder de API een team kan noemen. Naam, korte naam en Engelse landnaam worden al automatisch geprobeerd.",
+  "psv": ["PSV Eindhoven"],
+  "az": ["AZ Alkmaar"],
+  "nec": ["NEC Nijmegen"],
+  "heracles": ["Heracles"],
+  "roda": ["Roda", "Roda JC Kerkrade"],
+  "tottenham": ["Tottenham"],
+  "marseille": ["Marseille"],
+  "koln": ["FC Koln", "1. FC Koln", "1.FC Köln"],
+  "atletico": ["Atletico Madrid"],
+  "bayern": ["Bayern Munich"],
+  "inter": ["Inter Milan", "Internazionale"],
+  "psg": ["Paris Saint Germain", "Paris SG"]
+}

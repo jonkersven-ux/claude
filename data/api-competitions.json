@@ -1,0 +1,42 @@
+{
+  "_comment": "Koppeling NoTrophy-competitie → API-Football league-id. 'expect' = woord dat in de API-naam moet staan (veiligheidscheck). 'months' = maanden waarin de prijs beslist kan worden; buiten die maanden slaat de dagelijkse sync de competitie over (de wekelijkse volledige run niet). 'calendar' = seizoen loopt per kalenderjaar.",
+  "nl-league": { "league": 88, "expect": "Eredivisie", "type": "league", "games": 34, "months": [3, 4, 5, 6] },
+  "nl-cup": { "league": 90, "expect": "KNVB", "type": "cup", "months": [3, 4, 5] },
+  "nl-super": { "league": 543, "expect": "Super Cup", "type": "super", "months": [7, 8] },
+
+  "en-league": { "league": 39, "expect": "Premier League", "type": "league", "games": 38, "months": [3, 4, 5, 6] },
+  "en-cup": { "league": 45, "expect": "FA Cup", "type": "cup", "months": [5, 6] },
+  "en-lcup": { "league": 48, "expect": "League Cup", "type": "cup", "months": [2, 3] },
+  "en-super": { "league": 528, "expect": "Community Shield", "type": "super", "months": [7, 8] },
+
+  "es-league": { "league": 140, "expect": "La Liga", "type": "league", "games": 38, "months": [3, 4, 5, 6] },
+  "es-cup": { "league": 143, "expect": "Copa del Rey", "type": "cup", "months": [4, 5] },
+  "es-super": { "league": 556, "expect": "Super Cup", "type": "super", "months": [1, 2] },
+
+  "it-league": { "league": 135, "expect": "Serie A", "type": "league", "games": 38, "months": [3, 4, 5, 6] },
+  "it-cup": { "league": 137, "expect": "Coppa Italia", "type": "cup", "months": [5, 6] },
+  "it-super": { "league": 547, "expect": "Super Cup", "type": "super", "months": [12, 1] },
+
+  "de-league": { "league": 78, "expect": "Bundesliga", "type": "league", "games": 34, "months": [3, 4, 5, 6] },
+  "de-cup": { "league": 81, "expect": "DFB Pokal", "type": "cup", "months": [5, 6] },
+  "de-super": { "league": 529, "expect": "Super Cup", "type": "super", "months": [7, 8] },
+
+  "fr-league": { "league": 61, "expect": "Ligue 1", "type": "league", "games": 34, "months": [3, 4, 5, 6] },
+  "fr-cup": { "league": 66, "expect": "Coupe de France", "type": "cup", "months": [4, 5] },
+  "fr-super": { "league": 526, "expect": "Trophée des Champions", "type": "super", "months": [1, 7, 8] },
+
+  "sc-league": { "league": 179, "expect": "Premiership", "type": "league", "games": 38, "months": [3, 4, 5, 6] },
+  "sc-cup": { "league": 181, "expect": "FA Cup", "type": "cup", "months": [5, 6] },
+  "sc-lcup": { "league": 185, "expect": "League Cup", "type": "cup", "months": [11, 12, 3] },
+
+  "ucl": { "league": 2, "expect": "Champions League", "type": "cup", "months": [5, 6] },
+  "uel": { "league": 3, "expect": "Europa League", "type": "cup", "months": [5, 6] },
+  "uecl": { "league": 848, "expect": "Conference League", "type": "cup", "months": [5, 6] },
+  "usc": { "league": 531, "expect": "Super Cup", "type": "super", "months": [8] },
+  "fcwc": { "league": 15, "expect": "Club World Cup", "type": "cup", "months": [6, 7, 12], "calendar": true },
+
+  "wc": { "league": 1, "expect": "World Cup", "type": "cup", "months": [6, 7, 12], "calendar": true },
+  "euro": { "league": 4, "expect": "Euro", "type": "cup", "months": [6, 7], "calendar": true },
+  "copa": { "league": 9, "expect": "Copa America", "type": "cup", "months": [6, 7], "calendar": true },
+  "nations": { "league": 5, "expect": "Nations League", "type": "cup", "months": [6], "calendar": false }
+}

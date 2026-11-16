@@ -19,12 +19,14 @@ const byId = Object.fromEntries(TEAMS.map((t) => [t.id, t]));
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const ogLang = (t) => (t.country === 'NL' || ['nederland', 'belgie'].includes(t.id) ? 'nl' : 'en');
+const latest = (t) => t.wins.reduce((m, w) => (w.d > m ? w.d : m), t.founded.length === 4 ? `${t.founded}-01-01` : t.founded);
 const hasOg = existsSync(join(DIST, 'og')) || process.env.OG === '1';
 
-function page({ depth, kind, id = '', title, desc, path, ogImage, body, lang = 'nl', extraData = '' }) {
+function page({ depth, kind, id = '', title, desc, path, ogImage, body, lang = 'nl', extraData = '', ogVersion = VERIFIED_AT }) {
   const pre = depth === 0 ? './' : '../'.repeat(depth);
   const url = `${SITE_URL}/${path}`;
-  const img = `${SITE_URL}/og/${ogImage}.png`;
+  // ?v= verandert zodra er een nieuwe prijs is, zodat WhatsApp de oude preview niet uit de cache blijft tonen.
+  const img = `${SITE_URL}/og/${ogImage}.png?v=${ogVersion.replace(/-/g, '')}`;
   return `<!doctype html>
 <html lang="${lang}">
 <head>
@@ -112,7 +114,7 @@ for (const t of TEAMS) {
     desc = lang === 'nl' ? `Laatste prijs: ${comp}. Kijk de teller tikken en stuur 'm naar een ${name}-fan.` : `Last trophy: ${comp}. Watch the clock tick and send it to a ${name} fan.`;
   }
   write(`${t.id}/index.html`, page({
-    depth: 1, kind: 'team', id: t.id, path: t.id, ogImage: t.id, title, desc, lang,
+    depth: 1, kind: 'team', id: t.id, path: t.id, ogImage: t.id, title, desc, lang, ogVersion: latest(t),
     body: `<noscript><h1>${esc(title)}</h1><p>${esc(desc)}</p></noscript>`,
   }));
 }
@@ -131,7 +133,7 @@ for (const r of RIVALRIES) {
   write(`${r.a}-vs-${r.b}/index.html`, page({
     depth: 1, kind: 'compare', path: `${r.a}-vs-${r.b}`, ogImage: `${r.a}-vs-${r.b}`, lang, title,
     desc: lang === 'nl' ? `${r.nl}. Live tellers, één winnaar van de schaamte. Stuur 'm door.` : `${r.en}. Live clocks, one winner of shame. Send it on.`,
-    body: '', extraData: ` data-a="${r.a}" data-b="${r.b}"`,
+    body: '', extraData: ` data-a="${r.a}" data-b="${r.b}"`, ogVersion: [latest(a), latest(b)].sort().pop(),
   }));
 }
 

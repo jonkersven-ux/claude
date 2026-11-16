@@ -43,7 +43,7 @@ for (const t of TEAMS) {
     if (seenComp.has(w.c)) errors.push(`${ww}: competitie staat dubbel, bewaar alleen de laatste winst`);
     seenComp.add(w.c);
     if (!w.m) errors.push(`${ww}: wedstrijd/omschrijving (m) ontbreekt`);
-    if (!['web', 'mem'].includes(w.v)) errors.push(`${ww}: v moet "web" of "mem" zijn`);
+    if (!['web', 'mem', 'api'].includes(w.v)) errors.push(`${ww}: v moet "web", "api" of "mem" zijn`);
     if (isNation && !NATION_COMPS.includes(w.c)) errors.push(`${ww}: clubprijs bij een landenteam`);
     if (!isNation && NATION_COMPS.includes(w.c)) errors.push(`${ww}: landenprijs bij een club`);
     const pre = COUNTRY_PREFIX[t.country];

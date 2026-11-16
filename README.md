@@ -34,6 +34,24 @@ Voor livegang in `scripts/config.mjs`:
 1. `SITE_URL` op het echte domein zetten (de deellinks en previews gebruiken dit).
 2. `REPORT_EMAIL` op een mailadres zetten dat je echt leest.
 
+## Automatisch bijwerken
+
+Nieuwe prijzen komen er vanzelf in via [API-Football](https://www.api-football.com) (`scripts/sync.mjs`, workflow `.github/workflows/sync.yml`):
+
+1. Twee keer per dag checkt de sync de competities die op dat moment beslist kunnen worden (bekerfinales in het voorjaar, supercups in de zomer, enz.). Op maandag checkt hij alles.
+2. Is er een finale gespeeld of een titel wiskundig zeker, dan zoekt hij de winnaar op en past `data/teams.json` aan (`v: "api"`).
+3. Daarna draaien de data-controle en de tests. Pas als die slagen wordt er gecommit.
+4. De commit zet een nieuwe build in gang bij de hosting. De teampagina, derbypagina's en preview-afbeelding zijn dan bijgewerkt.
+5. Ziet de sync iets vreemds (onbekende competitie, berekende kampioen ≠ koploper, rare datum), dan past hij niets aan en maakt hij een GitHub-issue.
+
+Instellen (eenmalig):
+1. Account aanmaken op api-football.com (gratis: 100 calls per dag, de sync gebruikt er ruim minder).
+2. In GitHub: Settings → Secrets and variables → Actions → `API_FOOTBALL_KEY` toevoegen.
+3. Netlify koppelen aan de standaardbranch, zodat elke commit live gaat.
+4. Eén keer de workflow "Prijzen-sync" handmatig starten met "Alle competities". Die controleert de league-id's en legt de koppeling met de teams vast in `data/api-map.json`.
+
+Lokaal: `API_FOOTBALL_KEY=... npm run sync -- --dry-run --all` laat zien wat er zou veranderen.
+
 ## Data correct houden
 
-Zie [DATA.md](DATA.md). Kort: alle prijzen staan in `data/teams.json`, `npm run validate` vangt fouten, en `data/upcoming.json` zegt wanneer er een finale gespeeld is die verwerkt moet worden. De CI draait dat dagelijks.
+Zie [DATA.md](DATA.md). Kort: alle prijzen staan in `data/teams.json`, `npm run validate` vangt fouten, en `data/upcoming.json` is de reserve-agenda als de API iets mist.

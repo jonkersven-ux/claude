@@ -1,8 +1,9 @@
 // Centrale instellingen. Pas SITE_URL en REPORT_EMAIL aan vóór livegang.
 export const SITE_URL = process.env.SITE_URL || 'https://notrophy.com';
 export const REPORT_EMAIL = process.env.REPORT_EMAIL || 'fouten@notrophy.com';
-// Datum t/m wanneer alle prijzen zijn nagelopen. Bijwerken bij elke data-update.
-export const VERIFIED_AT = '2026-11-16';
+// Datum van de laatste data-update. Staat in data/meta.json zodat de automatische sync hem kan bijwerken.
+import { readFileSync } from 'node:fs';
+export const VERIFIED_AT = JSON.parse(readFileSync(new URL('../data/meta.json', import.meta.url), 'utf8')).verifiedAt;
 
 // Uitgelichte rivaliteiten: krijgen een eigen deelbare pagina /{a}-vs-{b}/ met preview-afbeelding.
 export const RIVALRIES = [

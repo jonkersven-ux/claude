@@ -29,7 +29,7 @@ De site staat of valt met correcte datums. Eén fout bij een grote club en het h
 - `d`: datum `YYYY-MM-DD`
 - `s`: seizoen (optioneel)
 - `m`: wedstrijd of omschrijving, staat op de site
-- `v`: bronstatus. `web` = deze sessie gecontroleerd tegen nieuwsbronnen; `mem` = nog tegen een tweede bron checken
+- `v`: bronstatus. `api` = automatisch uit API-Football; `web` = handmatig gecontroleerd tegen nieuwsbronnen; `mem` = nog tegen een tweede bron checken
 - `approx: true`: alleen het seizoen bekend, de site toont dan alleen het jaartal
 
 Teams die nooit iets wonnen hebben `"wins": []` en tellen vanaf `founded`.
@@ -41,11 +41,23 @@ Teams die nooit iets wonnen hebben `"wins": []` en tellen vanaf `founded`.
 - Oudere prijzen komen grotendeels uit parate kennis en staan op `mem`. `node scripts/validate.mjs --todo` geeft de lijst. Werk die af voor livegang, te beginnen bij de **hoofdteller** (de laatste prijs in "Alle prijzen") van de grote clubs.
 - 27 oude titels hebben alleen een seizoen (`approx`).
 
-## Werkwijze bij een nieuwe prijs
+## Automatische sync
+
+Nieuwe prijzen komen binnen via `scripts/sync.mjs` (zie README). Veiligheidsregels in de code:
+- League-id's worden eerst gecontroleerd op naam en land (`data/api-competitions.json`, veld `expect`).
+- Een landstitel telt pas als niemand de koploper nog kan inhalen (strikt meer punten dan het maximum van de rest). Gelijk op punten wordt pas aan het eind van het seizoen beslist, met de officiële stand.
+- Puntenaftrek wordt verrekend via de officiële stand. Wijkt de berekende kampioen af van de koploper, dan gebeurt er niets en komt er een issue.
+- Een prijs wordt alleen vervangen door een nieuwere, nooit door een datum in de toekomst of ouder dan ~13 maanden.
+- Winnaars die niet op NoTrophy staan worden genoteerd, niet toegevoegd.
+- Elke wijziging komt in `data/changelog.json`.
+
+Een team toevoegen dat de API anders noemt: zet de API-naam in `data/api-aliases.json`.
+
+## Handmatig: werkwijze bij een nieuwe prijs
 
 1. Pas in `data/teams.json` de regel van die competitie aan (oude winst vervangen, niet toevoegen).
 2. Zet `v: "web"` alleen als je het in minstens één betrouwbare bron hebt gecheckt (bond, club, NOS, BBC, Reuters).
-3. Zet `VERIFIED_AT` in `scripts/config.mjs` op vandaag.
+3. Zet `verifiedAt` in `data/meta.json` op vandaag.
 4. Verwijder het item uit `data/upcoming.json` en zet de volgende finale erin.
 5. `npm run build` en deployen. De preview-afbeelding van dat team wordt opnieuw gemaakt.
 
