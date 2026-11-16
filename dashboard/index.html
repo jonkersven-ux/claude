@@ -229,6 +229,7 @@ const parse = s => { if(!s) return null; const [y,m,d]=s.split("-").map(Number);
 const addDays = (s,n) => { const d=parse(s); if(!d) return ""; d.setDate(d.getDate()+n); return iso(d); };
 const fmtD = s => { const d=parse(s); return d ? d.toLocaleDateString("nl-NL",{day:"numeric",month:"short"}) : "—"; };
 const fmtDY = s => { const d=parse(s); return d ? d.toLocaleDateString("nl-NL",{day:"numeric",month:"short",year:"numeric"}) : "—"; };
+const fmtM = s => { if(!s) return ""; const [y,m]=s.split("-").map(Number); return new Date(y,m-1,1).toLocaleDateString("nl-NL",{month:"short",year:"numeric"}).replace(".",""); };
 const daysBetween = (a,b) => Math.round((parse(b)-parse(a))/864e5);
 const YEAR = () => new Date().getFullYear();
 const inYear = (s,y=YEAR()) => !!s && s.slice(0,4)===String(y);
@@ -256,6 +257,7 @@ const SCHEMA = {
     {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
     {k:"volgendeStap",l:"Volgende stap",t:"text",full:1,ph:"Bijv. voorstel sturen, koffie in Enschede"},
     {k:"stapDatum",l:"Datum volgende stap",t:"date"},
+    {k:"uitvoering",l:"Verwachte uitvoering (maand)",t:"month",ph:"2027-03",hint:"Wanneer lever je het werk? Bepaalt in welk jaar de omzet valt."},
     {k:"bron",l:"Bron",t:"select",o:["Netwerk","Referral","LinkedIn","Event","Inbound","Eigen pitch"]},
     {k:"notitie",l:"Notitie",t:"textarea",full:1}]},
   contacts:{one:"contact", fields:[
@@ -316,7 +318,7 @@ const COLLS = Object.keys(SCHEMA);
 // ---------- state ----------
 const S = {settings:{...S_DEF}, loaded:{}, err:null, nodb:false};
 COLLS.forEach(c=>S[c]=[]);
-const F = {q:{}, invStatus:"Alle", hoursRange:"maand", contactSort:"followUp"};
+const F = {q:{}, invStatus:"Alle", hoursRange:"maand", contactSort:"followUp", dealYear:"Alle"};
 let db=null, downloads=null;
 
 // ---------- derived ----------
@@ -355,11 +357,12 @@ function kpis(){
   const openDeals = S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
   const pipeW = sum(openDeals,d=>(+d.waarde||0)*dealProb(d)/100);
   const pipeT = sum(openDeals,d=>d.waarde);
+  const pipeLater = sum(openDeals.filter(d=>d.uitvoering&&d.uitvoering.slice(0,4)>String(y)),d=>(+d.waarde||0)*dealProb(d)/100);
   const dayOfYear = Math.floor((parse(t)-new Date(y,0,1))/864e5)+1;
   const doel = +S.settings.urenDoel||1225;
   const pace = doel*dayOfYear/(y%4===0?366:365);
   return {omzet,kosten,winst:omzet-kosten,open,late,openSum:sum(open,invIncl),lateSum:sum(late,invIncl),btwOut,btwIn,btwNet:btwOut-btwIn,q,
-    urenY,urenM,declM,unbilled,openDeals,pipeW,pipeT,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
+    urenY,urenM,declM,unbilled,openDeals,pipeW,pipeT,pipeLater,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
     reserve: Math.max(0,(omzet-kosten))*(+S.settings.reservePct||0)/100};
 }
 function todos(){
@@ -432,7 +435,7 @@ function vOverview(){
   `<div class="tiles">
     <div class="tile"><span class="lab">Omzet ${YEAR()}</span><b>${eur(k.omzet)}</b><span class="sub">${S.settings.jaardoel?`${Math.round(doelPct)}% van doel ${eur(S.settings.jaardoel)}`:"excl. btw, gefactureerd"}</span><div class="meter"><i style="width:${doelPct}%"></i></div></div>
     <div class="tile"><span class="lab">Openstaand</span><b>${eur(k.openSum)}</b><span class="sub">${k.open.length} facturen${k.late.length?` · <span style="color:var(--bad);font-weight:600">${k.late.length} verlopen (${eur(k.lateSum)})</span>`:" · niets verlopen"}</span></div>
-    <div class="tile"><span class="lab">Pipeline gewogen</span><b>${eur(k.pipeW)}</b><span class="sub">${k.openDeals.length} open deals · totaal ${eur(k.pipeT)}</span></div>
+    <div class="tile"><span class="lab">Pipeline gewogen</span><b>${eur(k.pipeW)}</b><span class="sub">${k.openDeals.length} open deals · waarvan ${eur(k.pipeLater)} voor ${YEAR()+1} en later</span></div>
     <div class="tile"><span class="lab">Nog te factureren</span><b>${eur(k.unbilled)}</b><span class="sub">declarabele uren × tarief</span></div>
     <div class="tile"><span class="lab">Effectief uurtarief</span><b>${k.effRate?eur(k.effRate):"—"}</b><span class="sub">omzet ÷ declarabele uren ${YEAR()}</span></div>
     <div class="tile"><span class="lab">Zet apart</span><b>${eur(k.reserve+Math.max(0,k.btwNet))}</b><span class="sub">${eur(k.reserve)} IB-reserve (${S.settings.reservePct}%) + ${eur(Math.max(0,k.btwNet))} btw Q${k.q}</span></div>
@@ -451,6 +454,7 @@ function vOverview(){
     </div>
     <div class="panel"><h3>Pipeline <small><a href="#pipeline" style="color:var(--accent)">Bekijk bord</a></small></h3>${pipeSummary()}</div>
   </div>
+  <div class="panel"><h3>Vooruitblik <small>komende 6 kwartalen · excl. btw</small></h3>${forecast()}</div>
   <div class="panel"><h3>Recent gelogd <small><a href="#uren" style="color:var(--accent)">Alle uren</a></small></h3>${recentHours()}</div>`;
 }
 
@@ -488,6 +492,30 @@ function pipeSummary(){
   <div class="legend">${OPEN_STAGES.map((s,i)=>`<span><i style="background:${cols[i]}"></i>${s} ${eur(sum(open.filter(d=>d.fase===s),d=>d.waarde))}</span>`).join("")}</div>
   <ul class="todo">${top.map(d=>`<li><span class="sev ok"></span><div class="t">${esc(d.naam)}<span>${esc(d.organisatie||"")} · ${d.fase} · ${dealProb(d)}%</span></div><b class="num">${eur(d.waarde)}</b></li>`).join("")}</ul>`;
 }
+function forecast(){
+  const now=new Date(), t=TODAY(), thisM=t.slice(0,7), ny=YEAR()+1, qs=[], yr={};
+  for(let i=0;i<6;i++){ const d=new Date(now.getFullYear(),(curQ()-1+i)*3,1); qs.push({y:d.getFullYear(),q:Math.floor(d.getMonth()/3)+1,booked:0,pipe:0}); }
+  const add=(m,k,v)=>{ if(m<thisM) m=thisM; const y=+m.slice(0,4), q=Math.floor((+m.slice(5,7)-1)/3)+1;
+    const b=qs.find(x=>x.y===y&&x.q===q); if(b) b[k]+=v; yr[y]=yr[y]||{booked:0,pipe:0}; yr[y][k]+=v; };
+  S.projects.filter(p=>["Gepland","Lopend"].includes(p.status)&&+p.budget).forEach(p=>{
+    const rest=Math.max(0,+p.budget-sum(S.invoices.filter(i=>i.project===p.id&&i.status!=="Concept"),i=>i.bedrag));
+    if(rest) add((p.eind||p.start||t).slice(0,7),"booked",rest); });
+  let undated=0;
+  S.deals.filter(d=>OPEN_STAGES.includes(d.fase)).forEach(d=>{ const w=(+d.waarde||0)*dealProb(d)/100; if(!d.uitvoering) undated+=w; else add(d.uitvoering,"pipe",w); });
+  const max=Math.max(1,...qs.map(x=>x.booked+x.pipe));
+  const W=640,H=190,L=8,R=8,T=22,B=26, cw=(W-L-R)/6, bw=Math.min(54,cw*.5);
+  const h=v=>(H-T-B)*v/max;
+  let g=`<line class="gl" x1="${L}" x2="${W-R}" y1="${H-B}" y2="${H-B}"/>`;
+  qs.forEach((x,i)=>{ const cx=L+cw*i+cw/2, hb=h(x.booked), hp=h(x.pipe), base=H-B;
+    g+=`<rect x="${cx-bw/2}" y="${base-hb}" width="${bw}" height="${hb}" fill="var(--accent)"><title>Geboekt ${eur(x.booked)}</title></rect>`;
+    g+=`<rect x="${cx-bw/2}" y="${base-hb-hp}" width="${bw}" height="${hp}" fill="var(--jersey)" opacity=".75"><title>Gewogen pipeline ${eur(x.pipe)}</title></rect>`;
+    if(x.booked+x.pipe) g+=`<text class="ax" x="${cx}" y="${base-hb-hp-6}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${eur(x.booked+x.pipe)}</text>`;
+    g+=`<text class="ax" x="${cx}" y="${H-8}" text-anchor="middle" ${x.y>YEAR()?'style="fill:var(--fg)"':""}>Q${x.q} '${String(x.y).slice(2)}</text>`; });
+  const n=yr[ny]||{booked:0,pipe:0}, doel=+S.settings.jaardoel||0;
+  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Verwachte omzet per kwartaal">${g}</svg></div>
+  <div class="legend"><span><i style="background:var(--accent)"></i>Geboekt (projecten, nog te factureren)</span><span><i style="background:var(--jersey)"></i>Pipeline × kans</span>${undated?`<span>${eur(undated)} gewogen zonder uitvoeringsdatum: <a href="#pipeline" style="color:var(--accent)">plan ze in</a></span>`:""}</div>
+  <div class="trackkey"><span><b style="color:var(--fg)">${ny}:</b> ${eur(n.booked)} geboekt + ${eur(n.pipe)} gewogen pipeline${doel?` = <b style="color:var(--fg)">${Math.round((n.booked+n.pipe)/doel*100)}%</b> van een doel van ${eur(doel)}`:""}</span></div>`;
+}
 function recentHours(){
   const r=[...S.hours].sort((a,b)=>(b.datum||"").localeCompare(a.datum||"")).slice(0,5);
   if(!r.length) return `<div class="empty">Nog geen uren. Start de timer links of log met + Uren.</div>`;
@@ -497,7 +525,8 @@ function recentHours(){
 function vPipeline(){
   const k=kpis();
   return head("Pipeline",`${k.openDeals.length} open · ${eur(k.pipeT)} totaal · ${eur(k.pipeW)} gewogen`,newBtn("deals","Deal",1)) +
-    `<div class="toolbar"><input type="search" id="q-deals" placeholder="Zoek deal of organisatie" data-q="deals" value="${esc(F.q.deals||"")}"></div><div id="list-deals"></div>`;
+    `<div class="toolbar"><input type="search" id="q-deals" placeholder="Zoek deal of organisatie" data-q="deals" value="${esc(F.q.deals||"")}">
+    <div class="seg" role="group" aria-label="Uitvoering">${["Alle",String(YEAR()),String(YEAR()+1),"Zonder datum"].map(v=>`<button type="button" data-dyear="${v}" aria-pressed="${F.dealYear===v}">${v}</button>`).join("")}</div></div><div id="list-deals"></div>`;
 }
 function vContacts(){
   return head("Netwerk",`${S.contacts.length} contacten · ${S.contacts.filter(c=>c.warmte==="Warm").length} warm`,newBtn("contacts","Contact",1)) +
@@ -557,15 +586,18 @@ function renderList(c){
 function emptyState(c,txt){ return `<div class="panel"><div class="empty">${txt}<br><br><button class="btn pri" data-new="${c}">+ ${SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)} toevoegen</button></div></div>`; }
 
 function lDeals(q){
-  const rows=S.deals.filter(d=>match(d,q,["naam","organisatie","contact","type"]));
+  const yf=F.dealYear;
+  const rows=S.deals.filter(d=>match(d,q,["naam","organisatie","contact","type"]) && (yf==="Alle" || (yf==="Zonder datum"?!d.uitvoering:(d.uitvoering||"").startsWith(yf))));
   if(!S.deals.length) return emptyState("deals","Zet elke kans hier, ook als het nog een koffie-gesprek is.");
   return `<div class="board">${STAGES.map(s=>{
     const ds=rows.filter(d=>d.fase===s).sort((a,b)=>(+b.waarde||0)-(+a.waarde||0));
     return `<div class="col"><h4>${s}<span>${ds.length} · ${eur(sum(ds,d=>d.waarde))}</span></h4>
     ${ds.map(d=>{const due=d.stapDatum&&d.stapDatum<=TODAY()&&OPEN_STAGES.includes(s);return `<div class="card" data-edit="deals:${d.id}" tabindex="0">
       <div class="ttl">${esc(d.naam)}${exPill(d)}</div>
+      ${d.uitvoering?`<div><span class="pill ${d.uitvoering.slice(0,4)>String(YEAR())?"acc":""}">Uitvoering ${fmtM(d.uitvoering)}</span></div>`:""}
       <div class="meta"><span>${esc(d.organisatie||"")}</span><b class="num" style="color:var(--fg)">${eur(d.waarde)}</b></div>
       ${d.volgendeStap&&OPEN_STAGES.includes(s)?`<div class="meta"><span>→ ${esc(d.volgendeStap)}</span>${d.stapDatum?`<span class="pill ${due?"warn":""}">${fmtD(d.stapDatum)}</span>`:""}</div>`:""}
+      ${s==="Gewonnen"&&!S.projects.some(p=>p.deal===d.id)?`<button class="btn sm" data-mkproj="${d.id}">Maak project</button>`:""}
       <div class="mv"><button class="btn sm ghost" data-stage="${d.id}:-1" ${s==="Lead"?"disabled":""} aria-label="Fase terug">←</button><span class="muted" style="font-size:12px">${dealProb(d)}% kans</span><button class="btn sm ghost" data-stage="${d.id}:1" ${s==="Verloren"?"disabled":""} aria-label="Volgende fase">→</button></div>
     </div>`}).join("")||`<div class="muted" style="font-size:12px;padding:6px 2px">Leeg</div>`}</div>`;}).join("")}</div>`;
 }
@@ -657,7 +689,7 @@ let editing=null, armed=false;
 function openForm(c,id,preset={}){
   const sc=SCHEMA[c], row=id?S[c].find(r=>r.id===id):null;
   if(id && !row) return;
-  editing={c,id}; armed=false;
+  editing={c,id,extra:preset.deal?{deal:preset.deal}:{}}; armed=false;
   const orgs=[...new Set([...S.contacts.map(x=>x.organisatie),...S.projects.map(x=>x.klant),...S.deals.map(x=>x.organisatie),...S.invoices.map(x=>x.klant)].filter(Boolean))].sort();
   const people=[...new Set(S.contacts.map(x=>x.naam).filter(Boolean))].sort();
   const val=f=>{ if(row) return row[f.k]??""; if(preset[f.k]!=null) return preset[f.k]; return typeof f.def==="function"?f.def():(f.def??""); };
@@ -700,11 +732,11 @@ function readForm(){
 }
 async function saveForm(){
   if(!db){ toast("Opslag niet beschikbaar"); return; }
-  const {c,id}=editing; const data=readForm(); const now=new Date().toISOString();
+  const {c,id,extra}=editing; const data=readForm(); const now=new Date().toISOString();
   if(c==="invoices" && data.status==="Betaald" && !data.betaaldOp) data.betaaldOp=TODAY();
   try{
     if(id){ const old=S[c].find(r=>r.id===id)||{}; const {id:_,example:__,...rest}=old; await db.collection(c).doc(id).set({...rest,...data,updatedAt:now}); }
-    else await db.collection(c).add({...data,createdAt:now});
+    else await db.collection(c).add({...extra,...data,createdAt:now});
     $("#dlg").close(); toast(id?"Opgeslagen":SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)+" toegevoegd");
   }catch(e){ toast(e&&e.code==="quota_exceeded"?"Opslag is vol: verwijder oude regels":"Opslaan mislukt, probeer het opnieuw"); }
 }
@@ -758,11 +790,14 @@ async function exportCsv(c){
 
 // ---------- events ----------
 document.addEventListener("click", async e=>{
-  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-istate],[data-touch],[data-export],[data-hrange],[data-istat],[data-csort]");
+  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-istate],[data-touch],[data-export],[data-hrange],[data-istat],[data-csort],[data-mkproj],[data-dyear]");
   if(!t) return;
   const d=t.dataset;
   if(d.stage||d.istate||d.touch){ e.stopPropagation(); }
   if(d.new) return openForm(d.new);
+  if(d.dyear){ F.dealYear=d.dyear; return render(); }
+  if(d.mkproj){ const x=S.deals.find(r=>r.id===d.mkproj); if(!x) return;
+    return openForm("projects",null,{naam:x.naam,klant:x.organisatie,budget:x.waarde,type:x.type,status:"Gepland",start:x.uitvoering?x.uitvoering+"-01":"",deal:x.id}); }
   if(d.stage){ const [id,dir]=d.stage.split(":"); const deal=S.deals.find(x=>x.id===id); if(!deal) return;
     const i=Math.max(0,Math.min(STAGES.length-1,STAGES.indexOf(deal.fase)+ +dir)); return patch("deals",id,{fase:STAGES[i],kans:""}); }
   if(d.istate){ const [id,st]=d.istate.split(":"); return patch("invoices",id,st==="Betaald"?{status:st,betaaldOp:TODAY()}:{status:st}).then(()=>toast(st==="Betaald"?"Gemarkeerd als betaald":"Gemarkeerd als verstuurd")); }
