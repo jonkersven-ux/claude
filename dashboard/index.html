@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
 <style>
-/* Layout: sidebar-cockpit (nav + timer) left, working area right; collapses to sticky top bar on phones. */
+/* Layout: sidebar (brand + nav) left, working area right; collapses to sticky top bar on phones. */
 :root{
   --bg:#EDF1EF; --surface:#FFFFFF; --surface-2:#F5F8F6; --line:#D5DED9; --fg:#13201B; --muted:#5A6A63;
   --accent:#0B6477; --accent-ink:#FFFFFF; --accent-soft:#D5EBEF;
@@ -50,11 +50,6 @@ nav.menu a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)
 nav.menu a .cnt{font-size:11px;font-variant-numeric:tabular-nums;opacity:.75}
 nav.menu a .dot{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;display:inline-grid;place-items:center;font-weight:600}
 
-.timer{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px}
-.timer .lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.timer .clock{font-family:var(--f-display);font-size:30px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
-.timer.running{border-color:var(--jersey);background:var(--jersey-soft)}
-.timer select{width:100%}
 
 main{min-width:0;display:flex;flex-direction:column;gap:22px}
 .head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
@@ -105,13 +100,6 @@ main{min-width:0;display:flex;flex-direction:column;gap:22px}
 .chart .gl{stroke:var(--line);stroke-width:1}
 .legend{display:flex;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
-
-/* urencriterium track */
-.track{position:relative;height:34px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden}
-.track .fill{position:absolute;inset:0 auto 0 0;background:var(--accent-soft);border-right:3px solid var(--accent)}
-.track .pace{position:absolute;top:0;bottom:0;width:0;border-left:2px dashed var(--jersey)}
-.track .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:12px;font-weight:600}
-.trackkey{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)}
 
 a.org{color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
 a.org:hover{color:var(--accent)}
@@ -199,9 +187,6 @@ dialog footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;ju
   nav.menu{flex-direction:row;overflow-x:auto;gap:4px;scrollbar-width:none}
   nav.menu a{flex:none;padding:6px 10px}
   nav.menu a .cnt{display:none}
-  .timer{flex-direction:row;align-items:center;padding:6px 10px;gap:8px}
-  .timer .lab,.timer select{display:none}
-  .timer .clock{font-size:20px}
   .head h2{font-size:28px}
   .fields{grid-template-columns:1fr}
 }
@@ -215,7 +200,6 @@ dialog footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;ju
         <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect width="34" height="34" rx="8" fill="var(--accent)"/><path d="M5 25 L11 17 L15 21 L21 10 L29 25 Z" fill="var(--accent-ink)" opacity=".9"/><circle cx="21" cy="10" r="2.4" fill="var(--jersey)"/></svg>
         <div><h1 id="brandName">Jonker Sports Media</h1><small>Zakelijk cockpit</small></div>
       </div>
-      <div class="timer" id="timer"></div>
     </div>
     <nav class="menu" id="menu" aria-label="Onderdelen"></nav>
   </aside>
@@ -257,7 +241,7 @@ const STAGES = ["Lead","Gesprek","Voorstel","Onderhandeling","Gewonnen","Verlore
 const OPEN_STAGES = STAGES.slice(0,4);
 const STAGE_PROB = {Lead:10,Gesprek:25,Voorstel:50,Onderhandeling:75,Gewonnen:100,Verloren:0};
 const WORKTYPES = ["Hospitality & hosting","Partnerships & sponsoring","Storytelling & content","Events","Presenteren","Advies & strategie","Overig"];
-const S_DEF = {bedrijf:"",naam:"",uurtarief:95,reservePct:30,reserveBasis:"Omzet",jaardoel:90000,urenDoel:1225,termijn:14,kvk:"",btwnr:"",iban:""};
+const S_DEF = {bedrijf:"",naam:"",reservePct:30,jaardoel:90000,btwPct:21,kvk:"",btwnr:"",iban:""};
 
 const SCHEMA = {
   deals:{one:"deal", fields:[
@@ -292,37 +276,12 @@ const SCHEMA = {
     {k:"contact",l:"Contactpersoon",t:"text",list:"people"},
     {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
     {k:"status",l:"Status",t:"select",o:["Gepland","Lopend","Afgerond","On hold"],def:"Lopend"},
-    {k:"vorm",l:"Soort opdracht",t:"select",o:["Vaste prijs","Retainer","Uurtarief"],def:"Vaste prijs"},
+    {k:"vorm",l:"Soort opdracht",t:"select",o:["Vaste prijs","Retainer"],def:"Vaste prijs"},
     {k:"maandbedrag",l:"Retainer: bedrag per maand",t:"money"},
-    {k:"tarief",l:"Uurtarief (leeg = standaard)",t:"money"},
-    {k:"budget",l:"Budget / vaste prijs",t:"money"},
+    {k:"budget",l:"Opdrachtwaarde (excl. btw)",t:"money",hint:"Bij retainer: leeg laten"},
     {k:"start",l:"Start",t:"date"},
     {k:"eind",l:"Eind / deadline",t:"date",hint:"Retainer zonder einddatum telt door t/m eind volgend jaar"},
     {k:"notitie",l:"Notitie",t:"textarea",full:1}]},
-  hours:{one:"urenregel", fields:[
-    {k:"datum",l:"Datum",t:"date",req:1,def:TODAY},
-    {k:"uren",l:"Uren",t:"number",step:.25,min:0,req:1},
-    {k:"project",l:"Project",t:"ref",ref:"projects"},
-    {k:"declarabel",l:"Declarabel",t:"select",o:["Ja","Nee"],def:"Ja"},
-    {k:"omschrijving",l:"Wat heb je gedaan?",t:"text",full:1,ph:"Bijv. hosting VIP-tent finish"}]},
-  invoices:{one:"factuur", fields:[
-    {k:"nr",l:"Factuurnummer",t:"text",req:1,def:()=>nextInvoiceNr()},
-    {k:"klant",l:"Klant",t:"text",req:1,list:"orgs"},
-    {k:"omschrijving",l:"Omschrijving",t:"text",full:1},
-    {k:"project",l:"Project",t:"ref",ref:"projects"},
-    {k:"bedrag",l:"Bedrag excl. btw",t:"money",req:1},
-    {k:"btw",l:"Btw",t:"select",o:["21","9","0"],def:"21",fmt:v=>v+"%"},
-    {k:"datum",l:"Factuurdatum",t:"date",def:TODAY},
-    {k:"termijn",l:"Betaaltermijn (dagen)",t:"number",def:()=>S.settings.termijn||14},
-    {k:"status",l:"Status",t:"select",o:["Concept","Verstuurd","Betaald"],def:"Concept"},
-    {k:"betaaldOp",l:"Betaald op",t:"date"}]},
-  expenses:{one:"uitgave", fields:[
-    {k:"datum",l:"Datum",t:"date",req:1,def:TODAY},
-    {k:"omschrijving",l:"Omschrijving",t:"text",req:1},
-    {k:"categorie",l:"Categorie",t:"select",o:["Reiskosten","Software & abonnementen","Telefoon & internet","Representatie","Kleding & materiaal","Opleiding","Marketing","Verzekeringen","Overig"]},
-    {k:"bedrag",l:"Bedrag excl. btw",t:"money",req:1},
-    {k:"btw",l:"Btw",t:"select",o:["21","9","0"],def:"21",fmt:v=>v+"%"},
-    {k:"notitie",l:"Notitie",t:"text"}]},
   ideas:{one:"idee", fields:[
     {k:"titel",l:"Idee",t:"text",req:1,full:1},
     {k:"categorie",l:"Categorie",t:"select",o:["Concept / event","Merch & merk","Content & storytelling","Hospitality","Sportreis","Samenwerking","Eigen business"]},
@@ -342,58 +301,28 @@ const COLLS = Object.keys(SCHEMA);
 // ---------- state ----------
 const S = {settings:{...S_DEF}, loaded:{}, err:null, nodb:false};
 COLLS.forEach(c=>S[c]=[]);
-const F = {q:{}, invStatus:"Alle", hoursRange:"maand", contactSort:"followUp", dealYear:"Alle", year:(()=>{ const y=store.get("ploeg.year"); return y===YEAR()+1?y:YEAR(); })()};
+const F = {q:{}, contactSort:"followUp", dealYear:"Alle", year:(()=>{ const y=store.get("ploeg.year"); return y===YEAR()+1?y:YEAR(); })()};
 let db=null, downloads=null;
 
 // ---------- derived ----------
 const projById = id => S.projects.find(p=>p.id===id);
-const rateFor = h => { const p=projById(h.project); return +(p&&p.tarief)||+S.settings.uurtarief||0; };
-const invIncl = i => (+i.bedrag||0)*(1+(+i.btw||0)/100);
-const invBtw = i => (+i.bedrag||0)*((+i.btw||0)/100);
-const invDue = i => addDays(i.datum||TODAY(), +i.termijn||0);
-const invState = i => {
-  if(i.status==="Betaald") return "Betaald";
-  if(i.status==="Concept") return "Concept";
-  return invDue(i) < TODAY() ? "Verlopen" : "Verstuurd";
-};
-function nextInvoiceNr(){
-  const y=YEAR(); let max=0;
-  S.invoices.forEach(i=>{ const m=String(i.nr||"").match(new RegExp("^"+y+"-(\\d+)$")); if(m) max=Math.max(max,+m[1]); });
-  return y+"-"+String(max+1).padStart(3,"0");
+const btwRate = () => (S.settings.btwPct===""||S.settings.btwPct==null?21:+S.settings.btwPct)/100;
+// Afgerond project = gefactureerd en betaald in je eigen administratie. Retainers: elke maand t/m de huidige.
+function projBilled(p){
+  const v=projValue(p), thisM=TODAY().slice(0,7); if(!v) return [];
+  if(p.vorm==="Retainer") return projMonths(p).filter(m=>m<=thisM).map(m=>[m,+p.maandbedrag||0]);
+  if(p.status!=="Afgerond") return [];
+  let m=(p.eind||p.updatedAt||p.start||TODAY()).slice(0,7); if(m>thisM) m=thisM; return [[m,v]];
 }
+function billedMonths(){ const R={}; S.projects.forEach(p=>projBilled(p).forEach(([m,v])=>R[m]=(R[m]||0)+v)); return R; }
+const billedYear = y => Object.entries(billedMonths()).reduce((t,[m,v])=>t+(m.startsWith(String(y))?v:0),0);
 function kpis(){
-  const y=YEAR(), t=TODAY();
-  const realInv = S.invoices.filter(i=>i.status!=="Concept");
-  const gefact = sum(realInv.filter(i=>inYear(i.datum)),i=>i.bedrag);
-  const omzet = revenueYear(y);
-  const kosten = sum(S.expenses.filter(e=>inYear(e.datum)),e=>e.bedrag);
-  const open = S.invoices.filter(i=>["Verstuurd","Verlopen"].includes(invState(i)));
-  const late = open.filter(i=>invState(i)==="Verlopen");
-  const q=curQ();
-  const btwOut = sum(realInv.filter(i=>inYear(i.datum)&&quarterOf(i.datum)===q),invBtw);
-  const btwIn = sum(S.expenses.filter(e=>inYear(e.datum)&&quarterOf(e.datum)===q),e=>(+e.bedrag||0)*(+e.btw||0)/100);
-  const hoursY = S.hours.filter(h=>inYear(h.datum));
-  const urenY = sum(hoursY,h=>h.uren);
-  const m=t.slice(0,7);
-  const hoursM = S.hours.filter(h=>(h.datum||"").startsWith(m));
-  const urenM = sum(hoursM,h=>h.uren), declM = sum(hoursM.filter(h=>h.declarabel!=="Nee"),h=>h.uren);
-  const unbilled = sum(S.hours.filter(h=>h.declarabel!=="Nee"&&!h.gefactureerd),h=>(+h.uren||0)*rateFor(h));
-  const openDeals = S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
-  const pipeT = sum(openDeals,d=>d.waarde);
-  const pipeLater = sum(openDeals.filter(d=>d.uitvoering&&d.uitvoering.slice(0,4)>String(y)),d=>+d.waarde||0);
-  const dayOfYear = Math.floor((parse(t)-new Date(y,0,1))/864e5)+1;
-  const doel = +S.settings.urenDoel||1225;
-  const pace = doel*dayOfYear/(y%4===0?366:365);
-  return {omzet,gefact,kosten,winst:omzet-kosten,open,late,openSum:sum(open,invIncl),lateSum:sum(late,invIncl),btwOut,btwIn,btwNet:btwOut-btwIn,q,
-    urenY,urenM,declM,unbilled,openDeals,pipeT,pipeLater,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
-    reserve: 0};
+  const y=YEAR(), openDeals=S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
+  return {omzet:revenueYear(y), gefact:billedYear(y), openDeals, pipeT:sum(openDeals,d=>d.waarde)};
 }
 function todos(){
   const t=TODAY(), out=[];
-  S.invoices.forEach(i=>{ const st=invState(i);
-    if(st==="Verlopen") out.push({sev:"bad",txt:`Factuur ${i.nr} – ${i.klant} is ${daysBetween(invDue(i),t)} dagen over tijd`,sub:eur2(invIncl(i))+" incl. btw",go:["invoices",i.id],k:0});
-    else if(st==="Concept") out.push({sev:"warn",txt:`Concept-factuur ${i.nr} – ${i.klant} nog versturen`,sub:eur2(invIncl(i)),go:["invoices",i.id],k:2});
-  });
+  S.projects.forEach(p=>{ if(p.status==="Lopend" && p.vorm!=="Retainer" && p.eind && p.eind<t) out.push({sev:"warn",txt:`Is ${p.naam} afgerond en betaald?`,sub:`Deadline ${fmtD(p.eind)} voorbij · zet op Afgerond, dan telt het als gefactureerd`,go:["projects",p.id],k:0}); });
   S.contacts.forEach(c=>{ if(c.followUp && c.followUp<=t) out.push({sev:c.followUp<t?"warn":"ok",txt:`Follow-up ${c.naam}${c.organisatie?" ("+c.organisatie+")":""}`,sub:c.followUp<t?`Gepland ${fmtD(c.followUp)}`:"Vandaag",go:["contacts",c.id],k:1}); });
   S.deals.forEach(d=>{ if(OPEN_STAGES.includes(d.fase) && d.stapDatum && d.stapDatum<=addDays(t,2)) out.push({sev:d.stapDatum<t?"warn":"ok",txt:`${d.volgendeStap||"Volgende stap"} – ${d.naam}`,sub:`${d.fase} · ${fmtD(d.stapDatum)}`,go:["deals",d.id],k:1}); });
   S.projects.forEach(p=>{ if(p.status==="Lopend" && p.eind && p.eind>=t && p.eind<=addDays(t,7)) out.push({sev:"ok",txt:`Deadline ${p.naam}`,sub:fmtD(p.eind),go:["projects",p.id],k:3}); });
@@ -409,8 +338,8 @@ function todos(){
 // ---------- routing ----------
 const VIEWS = [
   ["overzicht","Overzicht"],["pipeline","Pipeline"],["bedrijven","Bedrijven"],["netwerk","Netwerk"],["projecten","Projecten"],
-  ["uren","Uren"],["facturen","Facturen"],["uitgaven","Uitgaven"],["belasting","Belastingpot"],["ideeen","Ideeënbank"],["instellingen","Instellingen"]];
-const VIEW_COLL = {pipeline:"deals",bedrijven:"companies",netwerk:"contacts",projecten:"projects",uren:"hours",facturen:"invoices",uitgaven:"expenses",belasting:"taxpot",ideeen:"ideas"};
+  ["belasting","Belastingpot"],["ideeen","Ideeënbank"],["instellingen","Instellingen"]];
+const VIEW_COLL = {pipeline:"deals",bedrijven:"companies",netwerk:"contacts",projecten:"projects",belasting:"taxpot",ideeen:"ideas"};
 const COLL_VIEW = Object.fromEntries(Object.entries(VIEW_COLL).map(([v,c])=>[c,v]));
 const view = () => { const h=location.hash.slice(1); return VIEWS.some(v=>v[0]===h)?h:"overzicht"; };
 
@@ -418,8 +347,8 @@ function renderMenu(){
   const v=view(), k=kpis(), t=TODAY();
   const badges = {
     pipeline:[k.openDeals.length], bedrijven:[companies().length], netwerk:[S.contacts.length, S.contacts.filter(c=>c.followUp&&c.followUp<=t).length],
-    projecten:[S.projects.filter(p=>p.status==="Lopend").length], uren:[NUM1.format(k.urenM)+"u"],
-    facturen:[S.invoices.length,k.late.length], uitgaven:[S.expenses.length], ideeen:[S.ideas.length]};
+    projecten:[S.projects.filter(p=>p.status==="Lopend").length],
+    ideeen:[S.ideas.length]};
   $("#menu").innerHTML = VIEWS.map(([id,l])=>{
     const b=badges[id]||[]; const alert=b[1]?`<span class="dot">${b[1]}</span>`:(b[0]!=null?`<span class="cnt">${esc(b[0])}</span>`:"");
     return `<a href="#${id}" ${id===v?'aria-current="page"':""}><span>${l}</span>${alert}</a>`;
@@ -428,14 +357,14 @@ function renderMenu(){
 
 function render(){
   const bn=S.settings.bedrijf||"Jonker Sports Media"; $("#brandName").textContent=bn; document.title=bn;
-  renderMenu(); renderTimer();
+  renderMenu();
   const v=view(); const m=$("#main");
   let html="";
   if(S.nodb) html += `<div class="banner err"><span><b>Opslag niet bereikbaar.</b> Open deze pagina ingelogd op claude.ai om je gegevens te laden en op te slaan.</span></div>`;
   else if(S.err) html += `<div class="banner err"><span>${esc(S.err)}</span></div>`;
   const ex = COLLS.reduce((t,c)=>t+S[c].filter(r=>r.example).length,0);
   if(ex && v!=="instellingen") html += `<div class="banner ex"><span><b>Je kijkt naar ${ex} voorbeeldregels.</b> Ze laten zien hoe alles werkt. Bewerk ze of wis ze in één keer zodra je je eigen data invoert.</span><button class="btn sm" data-act="clear-ex">Voorbeelden wissen</button></div>`;
-  html += ({overzicht:vOverview,pipeline:vPipeline,bedrijven:vCompanies,netwerk:vContacts,projecten:vProjects,uren:vHours,facturen:vInvoices,uitgaven:vExpenses,belasting:vTax,ideeen:vIdeas,instellingen:vSettings}[v])();
+  html += ({overzicht:vOverview,pipeline:vPipeline,bedrijven:vCompanies,netwerk:vContacts,projecten:vProjects,belasting:vTax,ideeen:vIdeas,instellingen:vSettings}[v])();
   m.innerHTML = html;
   if(VIEW_COLL[v]) renderList(VIEW_COLL[v]);
 }
@@ -451,24 +380,22 @@ function vOverview(){
   const greet = h<6?"Goedenacht":h<12?"Goedemorgen":h<18?"Goedemiddag":"Goedenavond";
   const name = S.settings.naam?(", "+esc(S.settings.naam.split(" ")[0])):"";
   const dateStr = new Date().toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"});
-  // akkoord = gewonnen werk (projecten + facturen) in dit jaar; pipeline = open deals met uitvoering in dit jaar
+  // akkoord = gewonnen opdrachten in dit jaar; pipeline = open deals met uitvoering in dit jaar
   const RM=revenueMonths(), ak=sum(Object.keys(RM).filter(m=>m.startsWith(ys)),m=>RM[m]);
-  const gef=sum(S.invoices.filter(i=>i.status!=="Concept"&&inYear(i.datum,y)),i=>i.bedrag);
+  const gef=billedYear(y);
   const openD=S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
   const deals=openD.filter(d=>d.uitvoering&&(d.uitvoering<thisM?thisM:d.uitvoering).startsWith(ys)).sort((a,b)=>(+b.waarde||0)-(+a.waarde||0));
   const pi=sum(deals,d=>d.waarde), undated=openD.filter(d=>!d.uitvoering), doel=goalFor(y), tot=ak+pi, gap=Math.max(0,doel-tot);
   const pct=v=>doel?Math.round(v/doel*100)+"% van doel":"";
   const scale=Math.max(doel,tot,1);
   const projs=S.projects.filter(p=>projShare(p,y)>0).sort((a,b)=>projShare(b,y)-projShare(a,y));
-  const loose=sum(Object.keys(RM).filter(m=>m.startsWith(ys)),m=>RM[m])-sum(projs,p=>projShare(p,y));
   const won=S.deals.filter(d=>d.fase==="Gewonnen"&&!S.projects.some(p=>p.deal===d.id)&&(d.uitvoering||"").startsWith(ys));
   const td=todos(), stCls={Lopend:"good",Gepland:"acc",Afgerond:"","On hold":"warn"};
   const items=Array.from({length:12},(_,i)=>{ const m=ys+"-"+pad(i+1);
     return {lab:new Date(y,i,1).toLocaleDateString("nl-NL",{month:"short"}).replace(".",""),b:RM[m]||0,p:sum(deals.filter(d=>(d.uitvoering<thisM?thisM:d.uitvoering)===m),d=>d.waarde),strong:m===thisM}; });
-  const urenPct=Math.min(100,k.urenY/k.doel*100), pacePct=Math.min(100,k.pace/k.doel*100), ahead=k.urenY-k.pace;
   const tx=taxCalc();
   return head(`${greet}${name}`, `${dateStr[0].toUpperCase()+dateStr.slice(1)} · ${loading()?"Gegevens laden…":"jaaroverzicht "+y}`,
-      yearSeg()+newBtn("hours","Uren",1)+newBtn("invoices","Factuur")+newBtn("deals","Deal")+newBtn("contacts","Contact")+newBtn("ideas","Idee")) +
+      yearSeg()+newBtn("deals","Deal",1)+newBtn("projects","Project")+newBtn("contacts","Contact")+newBtn("ideas","Idee")) +
   `<div class="panel"><h3>Doel ${y} <small>${doel?"":'<a href="#instellingen" style="color:var(--accent)">Stel een omzetdoel in</a>'}</small></h3>
     <div class="goalwrap"><div class="goalbar"><i style="width:${ak/scale*100}%;background:var(--accent)"></i><i style="width:${pi/scale*100}%;background:var(--jersey);opacity:.75"></i></div>${doel?`<div class="goalmark" style="left:${Math.min(100,doel/scale*100)}%"></div>`:""}</div>
     <div class="goalgrid">
@@ -480,11 +407,11 @@ function vOverview(){
     </div>
   </div>
   <div class="tiles">
-    <div class="tile"><span class="lab">Akkoord ${y}</span><b>${eur(ak)}</b><span class="sub">${eur(gef)} gefactureerd · ${eur(Math.max(0,ak-gef))} nog te factureren</span></div>
+    <div class="tile"><span class="lab">Akkoord ${y}</span><b>${eur(ak)}</b><span class="sub">${eur(gef)} afgerond & betaald</span></div>
     <div class="tile"><span class="lab">Pipeline ${y}</span><b>${eur(pi)}</b><span class="sub">${deals.length} open deal${deals.length===1?"":"s"}${undated.length?` · ${eur(sum(undated,d=>d.waarde))} zonder datum`:""}</span></div>
     <div class="tile"><span class="lab">Opdrachten ${y}</span><b>${projs.length}</b><span class="sub">${projs.filter(p=>p.vorm==="Retainer").length} retainer${projs.filter(p=>p.vorm==="Retainer").length===1?"":"s"} · ${projs.filter(p=>p.status==="Lopend").length} lopend</span></div>
     <div class="tile"><span class="lab">Nodig per maand</span><b>${doel&&gap?eur(gap/Math.max(1,y===YEAR()?12-new Date().getMonth():12)):"—"}</b><span class="sub">${doel&&gap?`extra omzet ${y===YEAR()?"de rest van het jaar":"in "+y}`:"doel is gedekt"}</span></div>
-    <div class="tile"><span class="lab">Openstaand nu</span><b>${eur(k.openSum)}</b><span class="sub">${k.open.length} facturen${k.late.length?` · <span style="color:var(--bad);font-weight:600">${k.late.length} verlopen</span>`:" · niets verlopen"}</span></div>
+    <div class="tile"><span class="lab">Nog te factureren</span><b>${eur(Math.max(0,ak-gef))}</b><span class="sub">akkoord ${y}, project nog niet afgerond</span></div>
     <a class="tile" href="#belasting" style="text-decoration:none;color:inherit"><span class="lab">Belastingpot</span><b style="${tx.todo>0?"color:var(--bad)":""}">${tx.todo>0?eur(tx.todo):"Op peil"}</b><span class="sub">${tx.todo>0?"nog over te boeken · ":""}${eur(tx.saldo)} in pot</span></a>
   </div>
   <div class="grid2">
@@ -496,26 +423,18 @@ function vOverview(){
   <div class="grid2">
     <div class="panel"><h3>Akkoord voor ${y} <small>${eur(ak)}</small></h3>
       ${won.length?`<ul class="todo">${won.map(d=>`<li><span class="sev warn"></span><div class="t">Gewonnen: ${esc(d.naam)}<span>Nog geen project, dus telt niet mee</span></div><button class="btn sm" data-mkproj="${d.id}">Maak project</button></li>`).join("")}</ul>`:""}
-      ${projs.length||loose>0.5?`<ul class="todo">${projs.map(p=>`<li><span class="sev ${p.status==="Lopend"?"ok":""}"></span><div class="t">${esc(p.naam)} <span class="pill ${stCls[p.status]??""}">${esc(p.status)}</span>${p.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}<span>${orgLink(p.klant)}${p.vorm==="Retainer"?" · "+eur(p.maandbedrag)+" p/m":""}</span></div><button class="btn sm" data-edit="projects:${p.id}">${eur(projShare(p,y))}</button></li>`).join("")}${loose>0.5?`<li><span class="sev ok"></span><div class="t">Losse facturen<span>facturen zonder project met budget</span></div><a class="btn sm" href="#facturen" style="text-decoration:none">${eur(loose)}</a></li>`:""}</ul>`:(won.length?"":`<div class="empty">Nog niets akkoord voor ${y}. Zet een deal op Gewonnen, dan verschijnt hij hier.</div>`)}
+      ${projs.length?`<ul class="todo">${projs.map(p=>`<li><span class="sev ${p.status==="Lopend"?"ok":""}"></span><div class="t">${esc(p.naam)} <span class="pill ${stCls[p.status]??""}">${esc(p.status)}</span>${p.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}<span>${orgLink(p.klant)}${p.vorm==="Retainer"?" · "+eur(p.maandbedrag)+" p/m":""}</span></div><button class="btn sm" data-edit="projects:${p.id}">${eur(projShare(p,y))}</button></li>`).join("")}</ul>`:(won.length?"":`<div class="empty">Nog niets akkoord voor ${y}. Zet een deal op Gewonnen, dan verschijnt hij hier.</div>`)}
     </div>
     <div class="panel"><h3>Pipeline voor ${y} <small><button class="btn sm ghost" data-dgo="${ys}">Bekijk op bord</button></small></h3>
       ${deals.length?`<ul class="todo">${deals.map(d=>`<li><span class="sev ${d.fase==="Onderhandeling"||d.fase==="Voorstel"?"ok":""}"></span><div class="t">${esc(d.naam)}${d.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}<span>${d.organisatie?orgLink(d.organisatie)+" · ":""}${d.fase} · ${fmtM(d.uitvoering)}</span></div><button class="btn sm" data-edit="deals:${d.id}">${eur(d.waarde)}</button></li>`).join("")}</ul>`:`<div class="empty">Geen open deals met uitvoering in ${y}.</div>`}
       ${undated.length?`<p class="muted" style="margin:0;font-size:12.5px">${undated.length} deal${undated.length===1?"":"s"} (${eur(sum(undated,d=>d.waarde))}) zonder uitvoeringsmaand telt nergens mee. <a href="#pipeline" style="color:var(--accent)">Plan ze in</a>.</p>`:""}
     </div>
-  </div>
-  <div class="grid2">
-    <div class="panel"><h3>Urencriterium ${YEAR()} <small>${NUM1.format(k.urenY)} van ${k.doel} uur</small></h3>
-      <div class="track"><div class="fill" style="width:${urenPct}%"></div><div class="pace" style="left:${pacePct}%"></div><div class="lbl"><span>${NUM1.format(k.urenY)} u</span><span>${k.doel} u</span></div></div>
-      <div class="trackkey"><span><span class="pill ${ahead>=0?"good":"warn"}">${ahead>=0?"Op schema":"Achter"}</span> ${NUM1.format(Math.abs(ahead))} uur ${ahead>=0?"voor":"achter"} op het tempo</span><span>Gele lijn = waar je vandaag moet zijn</span></div>
-    </div>
-    <div class="panel"><h3>Recent gelogd <small><a href="#uren" style="color:var(--accent)">Alle uren</a></small></h3>${recentHours()}</div>
   </div>`;
 }
 const goalFor = y => +S.settings["doel"+y] || +S.settings.jaardoel || 0;
 function monthsBetween(a,b){ const r=[]; let [y,m]=a.split("-").map(Number); const [y2,m2]=b.split("-").map(Number);
   while((y<y2||(y===y2&&m<=m2)) && r.length<36){ r.push(y+"-"+pad(m)); m++; if(m>12){m=1;y++;} } return r; }
-// Omzet = gewonnen werk: projecten met budget tellen over hun looptijd, ook zonder factuur.
-// Facturen zonder (budget)project tellen op factuurdatum; meer gefactureerd dan budget telt als extra.
+// Omzet (akkoord) = gewonnen opdrachten, verdeeld over hun looptijd.
 function projMonths(p){
   const t=TODAY(), ret=p.vorm==="Retainer"; let a=(p.start||p.eind||(p.createdAt||t).slice(0,10)).slice(0,7), b=(p.eind||(ret?(p.status==="Afgerond"?(p.updatedAt||t).slice(0,7):(YEAR()+1)+"-12"):p.start)||a).slice(0,7);
   if(b<a) b=a; return monthsBetween(a,b);
@@ -523,15 +442,7 @@ function projMonths(p){
 const projValue = p => p.vorm==="Retainer" ? (+p.maandbedrag||0)*projMonths(p).length : (+p.budget||0);
 const projShare = (p,y) => { const v=projValue(p); if(!v) return 0; const ms=projMonths(p); return v*ms.filter(m=>m.startsWith(String(y))).length/ms.length; };
 function revenueMonths(){
-  const R={}, add=(m,v)=>{ R[m]=(R[m]||0)+v; }, byProj={};
-  S.invoices.forEach(i=>{ const p=i.project&&projById(i.project);
-    if(p&&projValue(p)>0) (byProj[p.id]=byProj[p.id]||[]).push(i); else if(i.datum) add(i.datum.slice(0,7),+i.bedrag||0); });
-  S.projects.forEach(p=>{ const pv=projValue(p); if(!pv) return;
-    const ms=projMonths(p); ms.forEach(m=>add(m,pv/ms.length));
-    let extra=sum(byProj[p.id]||[],i=>i.bedrag)-pv;
-    (byProj[p.id]||[]).slice().sort((x,y)=>(y.datum||"").localeCompare(x.datum||"")).forEach(i=>{ if(extra<=0) return; const v=Math.min(extra,+i.bedrag||0); add((i.datum||TODAY()).slice(0,7),v); extra-=v; });
-  });
-  return R;
+  const R={}; S.projects.forEach(p=>{ const pv=projValue(p); if(!pv) return; const ms=projMonths(p); ms.forEach(m=>R[m]=(R[m]||0)+pv/ms.length); }); return R;
 }
 const revenueYear = y => Object.entries(revenueMonths()).reduce((t,[m,v])=>t+(m.startsWith(String(y))?v:0),0);
 function allocations(){
@@ -551,14 +462,8 @@ function stackSvg(items,aria){
     g+=`<text class="ax" x="${cx}" y="${H-8}" text-anchor="middle" ${x.strong?'style="fill:var(--fg)"':""}>${x.lab}</text>`; });
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${aria}">${g}</svg></div>`;
 }
-const stackLegend = extra => `<div class="legend"><span><i style="background:var(--accent)"></i>Akkoord: gewonnen opdrachten + facturen</span><span><i style="background:var(--jersey)"></i>Pipeline (open deals)</span>${extra||""}</div>`;
+const stackLegend = extra => `<div class="legend"><span><i style="background:var(--accent)"></i>Akkoord: gewonnen opdrachten</span><span><i style="background:var(--jersey)"></i>Pipeline (open deals)</span>${extra||""}</div>`;
 const yearSeg = () => `<div class="seg" role="group" aria-label="Jaar">${[YEAR(),YEAR()+1].map(y=>`<button type="button" data-oyear="${y}" aria-pressed="${F.year===y}">${y}</button>`).join("")}</div>`;
-function recentHours(){
-  const r=[...S.hours].sort((a,b)=>(b.datum||"").localeCompare(a.datum||"")).slice(0,5);
-  if(!r.length) return `<div class="empty">Nog geen uren. Start de timer links of log met + Uren.</div>`;
-  return `<ul class="todo">${r.map(h=>{const p=projById(h.project);return `<li><span class="sev ${h.declarabel==="Nee"?"":"ok"}"></span><div class="t">${esc(h.omschrijving||"—")}<span>${fmtD(h.datum)} · ${esc(p?p.naam:"Geen project")}</span></div><b class="num">${NUM1.format(h.uren)} u</b></li>`}).join("")}</ul>`;
-}
-
 function vPipeline(){
   const k=kpis();
   return head("Pipeline",`${k.openDeals.length} open · ${eur(k.pipeT)} in de pipeline`,newBtn("deals","Deal",1)) +
@@ -574,23 +479,6 @@ function vProjects(){
   return head("Projecten",`${S.projects.filter(p=>p.status==="Lopend").length} lopend`,newBtn("projects","Project",1)) +
     `<div class="toolbar"><input type="search" id="q-projects" placeholder="Zoek project of klant" data-q="projects" value="${esc(F.q.projects||"")}"></div><div id="list-projects"></div>`;
 }
-function vHours(){
-  const k=kpis();
-  return head("Uren",`${NUM1.format(k.urenY)} uur in ${YEAR()} · ${NUM1.format(k.urenM)} deze maand`,newBtn("hours","Uren",1)) +
-    `<div class="toolbar"><input type="search" id="q-hours" placeholder="Zoek omschrijving of project" data-q="hours" value="${esc(F.q.hours||"")}">
-    <div class="seg" role="group" aria-label="Periode">${[["week","Week"],["maand","Maand"],["jaar","Jaar"],["alles","Alles"]].map(([v,l])=>`<button type="button" data-hrange="${v}" aria-pressed="${F.hoursRange===v}">${l}</button>`).join("")}</div></div><div id="list-hours"></div>`;
-}
-function vInvoices(){
-  const k=kpis();
-  return head("Facturen",`${eur(k.openSum)} openstaand · ${eur(k.omzet)} gefactureerd in ${YEAR()}`,newBtn("invoices","Factuur",1)) +
-    `<div class="toolbar"><input type="search" id="q-invoices" placeholder="Zoek nummer of klant" data-q="invoices" value="${esc(F.q.invoices||"")}">
-    <div class="seg" role="group" aria-label="Status">${["Alle","Concept","Verstuurd","Verlopen","Betaald"].map(v=>`<button type="button" data-istat="${v}" aria-pressed="${F.invStatus===v}">${v}</button>`).join("")}</div></div><div id="list-invoices"></div>`;
-}
-function vExpenses(){
-  const k=kpis();
-  return head("Uitgaven",`${eur(k.kosten)} kosten in ${YEAR()} · ${eur(k.btwIn)} voorbelasting Q${k.q}`,newBtn("expenses","Uitgave",1)) +
-    `<div class="toolbar"><input type="search" id="q-expenses" placeholder="Zoek omschrijving of categorie" data-q="expenses" value="${esc(F.q.expenses||"")}"></div><div id="list-expenses"></div>`;
-}
 function vIdeas(){
   return head("Ideeënbank","Elk idee een plek, elk idee een kleinste volgende stap.",newBtn("ideas","Idee",1)) +
     `<div class="toolbar"><input type="search" id="q-ideas" placeholder="Zoek idee" data-q="ideas" value="${esc(F.q.ideas||"")}"></div><div id="list-ideas"></div>`;
@@ -602,37 +490,32 @@ function vSettings(){
   return head("Instellingen","Tarieven, doelen en je bedrijfsgegevens.",`<button class="btn pri" data-act="save-set">Opslaan</button>`) +
   `<div class="panel"><h3>Bedrijf</h3><div class="setgrid">${f("naam","Je naam")}${f("bedrijf","Bedrijfsnaam")}${f("kvk","KvK-nummer")}${f("btwnr","Btw-id")}${f("iban","IBAN")}</div></div>
   <div class="panel"><h3>Tarieven & doelen</h3><div class="setgrid">
-    ${f("uurtarief","Standaard uurtarief (€)","number")}${f("termijn","Betaaltermijn (dagen)","number")}
-    ${f("jaardoel","Omzetdoel "+YEAR()+" (€)","number")}${f("doel"+(YEAR()+1),"Omzetdoel "+(YEAR()+1)+" (€)","number","Leeg = zelfde als dit jaar")}${f("urenDoel","Urendoel","number","1.225 uur = urencriterium")}
-    ${f("reservePct","Reserve inkomstenbelasting (%)","number","Indicatie. Vraag je boekhouder naar jouw percentage.")}<label>Reserve berekenen over<select id="set-reserveBasis" data-set="reserveBasis">${["Omzet","Winst"].map(o=>`<option ${(s.reserveBasis||"Omzet")===o?"selected":""}>${o}</option>`).join("")}</select><span class="hint muted">Omzet is ruimer en dus veiliger</span></label>
+    ${f("btwPct","Btw-tarief op je omzet (%)","number","Meestal 21")}
+    ${f("jaardoel","Omzetdoel "+YEAR()+" (€)","number")}${f("doel"+(YEAR()+1),"Omzetdoel "+(YEAR()+1)+" (€)","number","Leeg = zelfde als dit jaar")}
+    ${f("reservePct","Reserve inkomstenbelasting (%)","number","Indicatie. Vraag je boekhouder naar jouw percentage.")}
   </div></div>
   <div class="panel"><h3>Exporteren <small>CSV voor je boekhouder, scheidingsteken ;</small></h3>
-    <div class="actions">${["invoices","hours","expenses","taxpot","contacts","deals"].map(c=>`<button class="btn" data-export="${c}">${({invoices:"Facturen",hours:"Uren",expenses:"Uitgaven",taxpot:"Belastingpot",contacts:"Netwerk",deals:"Pipeline"})[c]}</button>`).join("")}</div>
-    <p class="muted" style="margin:0">Jaarcijfers ${YEAR()}: omzet ${eur(k.omzet)}, kosten ${eur(k.kosten)}, resultaat ${eur(k.winst)}.</p></div>
+    <div class="actions">${["projects","deals","contacts","taxpot"].map(c=>`<button class="btn" data-export="${c}">${({projects:"Projecten",taxpot:"Belastingpot",contacts:"Netwerk",deals:"Pipeline"})[c]}</button>`).join("")}</div>
+    <p class="muted" style="margin:0">Omzet ${YEAR()}: ${eur(k.omzet)} akkoord, waarvan ${eur(k.gefact)} afgerond & betaald.</p></div>
   <div class="panel"><h3>Voorbeelddata</h3><p class="muted" style="margin:0">${ex?`Er staan nog ${ex} voorbeeldregels in je cockpit.`:"Geen voorbeeldregels meer. Alles is van jou."}</p>${ex?`<div><button class="btn danger" data-act="clear-ex">Voorbeelden wissen</button></div>`:""}</div>`;
 }
 
-const expBtw = e => (+e.bedrag||0)*(+e.btw||0)/100;
 const qDeadline = (y,q) => iso(new Date(y, q*3+1, 0));
 function taxCalc(y=YEAR()){
-  const pct=(+S.settings.reservePct||0)/100, onOmzet=(S.settings.reserveBasis||"Omzet")!=="Winst";
-  const inv=S.invoices.filter(i=>i.status!=="Concept"&&inYear(i.datum,y)), exp=S.expenses.filter(e=>inYear(e.datum,y));
-  const months=Array.from({length:12},(_,m)=>{ const k=y+"-"+pad(m+1), iv=inv.filter(i=>i.datum.startsWith(k)), ex=exp.filter(e=>(e.datum||"").startsWith(k));
-    const omzet=sum(iv,i=>i.bedrag), kosten=sum(ex,e=>e.bedrag), btwOut=sum(iv,invBtw), btwIn=sum(ex,expBtw);
-    return {k,omzet,kosten,btwOut,btwIn,btw:btwOut-btwIn,ib:(onOmzet?omzet:omzet-kosten)*pct}; });
-  const omzet=sum(months,m=>m.omzet), kosten=sum(months,m=>m.kosten);
-  const ibTot=Math.max(0,(onOmzet?omzet:omzet-kosten)*pct);
+  const pct=(+S.settings.reservePct||0)/100, BM=billedMonths();
+  const months=Array.from({length:12},(_,m)=>{ const k=y+"-"+pad(m+1), omzet=BM[k]||0, btw=omzet*btwRate(); return {k,omzet,btw,ib:omzet*pct}; });
+  const omzet=sum(months,m=>m.omzet), ibTot=omzet*pct;
   const pot=S.taxpot;
   const quarters=[1,2,3,4].map(q=>{ const ms=months.slice((q-1)*3,q*3), btw=sum(ms,m=>m.btw);
     const paid=sum(pot.filter(p=>p.type==="Betaling btw"&&p.kwartaal===`Q${q} ${y}`),p=>p.bedrag);
     const dl=qDeadline(y,q), ended=iso(new Date(y,q*3,0))<TODAY(), open=Math.max(0,btw-paid);
     const status = btw<=0&&ended ? "Niets te betalen" : !ended ? "Loopt" : open<=0.5 ? "Betaald" : dl<TODAY() ? "Te laat" : "Aangifte doen";
-    return {q,btwOut:sum(ms,m=>m.btwOut),btwIn:sum(ms,m=>m.btwIn),btw,paid,open,dl,status}; });
+    return {q,btw,paid,open,dl,status}; });
   const btwOpen=sum(quarters,x=>x.open);
   const ibPaid=sum(pot.filter(p=>p.type==="Betaling IB"&&inYear(p.datum,y)),p=>p.bedrag);
   const into=sum(pot.filter(p=>p.type==="Storting"),p=>p.bedrag), out=sum(pot.filter(p=>p.type!=="Storting"),p=>p.bedrag);
   const saldo=into-out, needed=Math.max(0,ibTot-ibPaid)+btwOpen;
-  return {pct,onOmzet,months,omzet,kosten,ibTot,ibPaid,quarters,btwOpen,saldo,needed,todo:Math.max(0,needed-saldo)};
+  return {pct,months,omzet,ibTot,ibPaid,quarters,btwOpen,saldo,needed,todo:Math.max(0,needed-saldo)};
 }
 function vTax(){
   const t=taxCalc(), y=YEAR(), pctTxt=Math.round(t.pct*100)+"%";
@@ -642,20 +525,20 @@ function vTax(){
   `<div class="tiles">
     <div class="tile"><span class="lab">Nog over te boeken</span><b style="${t.todo>0?"color:var(--bad)":"color:var(--good)"}">${eur(t.todo)}</b><span class="sub">${t.todo>0?"naar je belastingrekening":"je pot is op peil"}</span></div>
     <div class="tile"><span class="lab">In de pot</span><b>${eur(t.saldo)}</b><span class="sub">van ${eur(t.needed)} nodig</span><div class="meter"><i style="width:${fill}%;${fill>=100?"background:var(--good)":""}"></i></div></div>
-    <div class="tile"><span class="lab">Reserve IB ${y}</span><b>${eur(t.ibTot)}</b><span class="sub">${pctTxt} van je ${t.onOmzet?"omzet":"winst"}${t.ibPaid?` · ${eur(t.ibPaid)} al betaald`:""}</span></div>
+    <div class="tile"><span class="lab">Reserve IB ${y}</span><b>${eur(t.ibTot)}</b><span class="sub">${pctTxt} van je omzet${t.ibPaid?` · ${eur(t.ibPaid)} al betaald`:""}</span></div>
     <div class="tile"><span class="lab">Btw nog af te dragen</span><b>${eur(t.btwOpen)}</b><span class="sub">niet jouw geld, 100% apart</span></div>
-    <div class="tile"><span class="lab">Omzet ${y}</span><b>${eur(t.omzet)}</b><span class="sub">gefactureerd, excl. btw</span></div>
-    <div class="tile"><span class="lab">Netto voor jou</span><b>${eur(t.omzet-t.kosten-t.ibTot)}</b><span class="sub">omzet − kosten − IB-reserve</span></div>
+    <div class="tile"><span class="lab">Omzet ${y}</span><b>${eur(t.omzet)}</b><span class="sub">afgerond & betaald, excl. btw</span></div>
+    <div class="tile"><span class="lab">Netto voor jou</span><b>${eur(t.omzet-t.ibTot)}</b><span class="sub">omzet − IB-reserve</span></div>
   </div>
-  <div class="banner"><span><b>Zo werkt het:</b> komt er een factuur binnen, boek dan meteen de btw plus ${pctTxt} over naar een aparte spaarrekening en log dat hier als storting. Betaal je de btw-aangifte of een aanslag, log dat als betaling. Dan klopt de pot altijd.</span></div>
+  <div class="banner"><span><b>Zo werkt het:</b> is een project afgerond en betaald (of komt een retainermaand binnen), boek dan meteen de btw plus ${pctTxt} over naar een aparte spaarrekening en log dat hier als storting. Betaal je de btw-aangifte of een aanslag, log dat als betaling. Dan klopt de pot altijd.</span></div>
   <div class="grid2">
     <div class="panel"><h3>Per maand <small>${y} · reserve = btw + ${pctTxt}</small></h3>
-      <div class="tablewrap" style="border:0"><table style="min-width:520px"><thead><tr><th>Maand</th><th class="n">Omzet</th><th class="n">Kosten</th><th class="n">Btw-saldo</th><th class="n">IB ${pctTxt}</th><th class="n">Apart zetten</th></tr></thead><tbody>
-      ${t.months.filter(m=>m.k<=TODAY().slice(0,7)).map(m=>`<tr style="cursor:default"><td>${new Date(y,+m.k.slice(5)-1,1).toLocaleDateString("nl-NL",{month:"long"})}</td><td class="n">${eur(m.omzet)}</td><td class="n">${eur(m.kosten)}</td><td class="n">${eur(m.btw)}</td><td class="n">${eur(m.ib)}</td><td class="n"><b>${eur(m.btw+m.ib)}</b></td></tr>`).join("")}
-      </tbody><tfoot><tr><td>Totaal</td><td class="n">${eur(t.omzet)}</td><td class="n">${eur(t.kosten)}</td><td class="n">${eur(sum(t.months,m=>m.btw))}</td><td class="n">${eur(t.ibTot)}</td><td class="n">${eur(sum(t.months,m=>m.btw)+t.ibTot)}</td></tr></tfoot></table></div>
+      <div class="tablewrap" style="border:0"><table style="min-width:420px"><thead><tr><th>Maand</th><th class="n">Omzet</th><th class="n">Btw</th><th class="n">IB ${pctTxt}</th><th class="n">Apart zetten</th></tr></thead><tbody>
+      ${t.months.filter(m=>m.k<=TODAY().slice(0,7)).map(m=>`<tr style="cursor:default"><td>${new Date(y,+m.k.slice(5)-1,1).toLocaleDateString("nl-NL",{month:"long"})}</td><td class="n">${eur(m.omzet)}</td><td class="n">${eur(m.btw)}</td><td class="n">${eur(m.ib)}</td><td class="n"><b>${eur(m.btw+m.ib)}</b></td></tr>`).join("")}
+      </tbody><tfoot><tr><td>Totaal</td><td class="n">${eur(t.omzet)}</td><td class="n">${eur(sum(t.months,m=>m.btw))}</td><td class="n">${eur(t.ibTot)}</td><td class="n">${eur(sum(t.months,m=>m.btw)+t.ibTot)}</td></tr></tfoot></table></div>
     </div>
     <div class="panel"><h3>Btw per kwartaal <small>aangifte uiterlijk eind volgende maand</small></h3>
-      <ul class="todo">${t.quarters.map(x=>`<li><span class="sev ${x.status==="Te laat"?"bad":x.status==="Aangifte doen"?"warn":"ok"}"></span><div class="t"><b>Q${x.q}</b> · ${eur(x.btwOut)} ontvangen − ${eur(x.btwIn)} voorbelasting<span>Te betalen ${eur(x.btw)}${x.paid?` · ${eur(x.paid)} betaald`:""} · uiterlijk ${fmtDY(x.dl)}</span></div><span class="pill ${qcls[x.status]}">${x.status}</span></li>`).join("")}</ul>
+      <ul class="todo">${t.quarters.map(x=>`<li><span class="sev ${x.status==="Te laat"?"bad":x.status==="Aangifte doen"?"warn":"ok"}"></span><div class="t"><b>Q${x.q}</b> · ${eur(x.btw)} btw<span>Te betalen ${eur(x.btw)}${x.paid?` · ${eur(x.paid)} betaald`:""} · uiterlijk ${fmtDY(x.dl)}</span></div><span class="pill ${qcls[x.status]}">${x.status}</span></li>`).join("")}</ul>
       <p class="muted" style="margin:0;font-size:12.5px">${pctTxt} is een ruime schatting. Door zelfstandigenaftrek en mkb-winstvrijstelling betaal je vaak minder. Liever te veel opzij dan in april schrikken. Vraag bij de Belastingdienst een voorlopige aanslag aan, dan betaal je per maand en niet in één klap.</p>
     </div>
   </div>
@@ -673,20 +556,17 @@ function lTaxpot(){
 const okey = s => String(s||"").trim().toLowerCase();
 const orgLink = n => n ? `<a href="#bedrijven" class="org" data-org="${esc(String(n).trim())}">${esc(n)}</a>` : "";
 function companies(){
-  const M=new Map(), get=n=>{ const k=okey(n); if(!k) return null; if(!M.has(k)) M.set(k,{key:k,name:String(n).trim(),contacts:[],deals:[],projects:[],invoices:[]}); return M.get(k); };
+  const M=new Map(), get=n=>{ const k=okey(n); if(!k) return null; if(!M.has(k)) M.set(k,{key:k,name:String(n).trim(),contacts:[],deals:[],projects:[]}); return M.get(k); };
   S.contacts.forEach(x=>{ const o=get(x.organisatie); o&&o.contacts.push(x); });
   S.deals.forEach(x=>{ const o=get(x.organisatie); o&&o.deals.push(x); });
   S.projects.forEach(x=>{ const o=get(x.klant); o&&o.projects.push(x); });
-  S.invoices.forEach(x=>{ const o=get(x.klant); o&&o.invoices.push(x); });
   return [...M.values()].map(o=>{
     const open=o.deals.filter(d=>OPEN_STAGES.includes(d.fase));
-    const loose=o.invoices.filter(i=>{ const p=i.project&&projById(i.project); return !(p&&projValue(p)>0); });
-    const omzet=sum(o.projects,projValue)+sum(loose,i=>i.bedrag);
-    const omzetY=sum(o.projects,p=>projShare(p,YEAR()))+sum(loose.filter(i=>inYear(i.datum)),i=>i.bedrag);
-    const openInv=o.invoices.filter(i=>["Verstuurd","Verlopen"].includes(invState(i)));
-    const dates=[...o.contacts.map(c=>c.laatsteContact),...o.invoices.map(i=>i.datum),...o.projects.map(p=>p.start),...o.deals.map(d=>(d.updatedAt||d.createdAt||"").slice(0,10))].filter(x=>x&&x<=TODAY()).sort();
+    const omzet=sum(o.projects,projValue), omzetY=sum(o.projects,p=>projShare(p,YEAR()));
+    const betaald=sum(o.projects,p=>sum(projBilled(p),x=>x[1]));
+    const dates=[...o.contacts.map(c=>c.laatsteContact),...o.projects.map(p=>p.start),...o.deals.map(d=>(d.updatedAt||d.createdAt||"").slice(0,10))].filter(x=>x&&x<=TODAY()).sort();
     const ret=o.projects.filter(p=>p.vorm==="Retainer"&&p.status!=="Afgerond");
-    return {...o,open,pipe:sum(open,d=>d.waarde),omzet,omzetY,openInv,openSum:sum(openInv,invIncl),last:dates.pop()||"",retPm:sum(ret,p=>p.maandbedrag)};
+    return {...o,open,pipe:sum(open,d=>d.waarde),omzet,omzetY,betaald,last:dates.pop()||"",retPm:sum(ret,p=>p.maandbedrag)};
   });
 }
 function vCompanies(){
@@ -710,12 +590,12 @@ function vCompany(o){
   const projs=[...o.projects].sort((a,b)=>(b.start||"").localeCompare(a.start||""));
   return `<div><button class="btn ghost" data-org="">← Alle bedrijven</button></div>` +
   head(n,`${o.contacts.length} contact${o.contacts.length===1?"":"en"} · ${o.projects.length} project${o.projects.length===1?"":"en"} · laatste activiteit ${o.last?fmtDY(o.last):"—"}`,
-    nf("deals","Deal","organisatie")+nf("projects","Project","klant")+nf("contacts","Contact","organisatie")+nf("invoices","Factuur","klant")) +
+    nf("deals","Deal","organisatie")+nf("projects","Project","klant")+nf("contacts","Contact","organisatie")) +
   `<div class="tiles">
-    <div class="tile"><span class="lab">Omzet totaal</span><b>${eur(o.omzet)}</b><span class="sub">projecten + losse facturen</span></div>
+    <div class="tile"><span class="lab">Omzet totaal</span><b>${eur(o.omzet)}</b><span class="sub">alle opdrachten</span></div>
     <div class="tile"><span class="lab">Omzet ${YEAR()}</span><b>${eur(o.omzetY)}</b><span class="sub">gewonnen werk dit jaar</span></div>
     <div class="tile"><span class="lab">Pipeline</span><b>${eur(o.pipe)}</b><span class="sub">${o.open.length} open deal${o.open.length===1?"":"s"}</span></div>
-    <div class="tile"><span class="lab">Openstaand</span><b style="${o.openInv.some(i=>invState(i)==="Verlopen")?"color:var(--bad)":""}">${eur(o.openSum)}</b><span class="sub">${o.openInv.length} factu${o.openInv.length===1?"ur":"ren"} incl. btw</span></div>
+    <div class="tile"><span class="lab">Afgerond & betaald</span><b>${eur(o.betaald)}</b><span class="sub">nog te factureren ${eur(Math.max(0,o.omzet-o.betaald))}</span></div>
     <div class="tile"><span class="lab">Retainer</span><b>${o.retPm?eur(o.retPm):"—"}</b><span class="sub">${o.retPm?"per maand, lopend":"geen lopende retainer"}</span></div>
     <div class="tile"><span class="lab">Deals gewonnen</span><b>${o.deals.filter(d=>d.fase==="Gewonnen").length} / ${closed.length}</b><span class="sub">van de afgesloten deals</span></div>
   </div>
@@ -728,14 +608,10 @@ function vCompany(o){
       ${o.contacts.length?`<ul class="todo">${o.contacts.map(c=>li("contacts:"+c.id,`<b>${esc(c.naam)}</b>${c.rol?" · "+esc(c.rol):""}`,`<span class="sel">${esc(c.email||"")}</span>${c.email&&c.telefoon?" · ":""}<span class="sel">${esc(c.telefoon||"")}</span>${c.followUp?` · follow-up ${fmtD(c.followUp)}`:""}`,esc(c.warmte||"Open"),c.warmte==="Warm"?"ok":"")).join("")}</ul>`:`<div class="empty">Nog geen contactpersonen.</div>`}
     </div>
   </div>
-  <div class="grid2">
-    <div class="panel"><h3>Opdrachten <small>${eur(sum(o.projects,projValue))}</small></h3>
+  <div class="panel"><h3>Opdrachten <small>${eur(sum(o.projects,projValue))}</small></h3>
       ${projs.length?`<ul class="todo">${projs.map(p=>li("projects:"+p.id,`${esc(p.naam)} <span class="pill ${stCls[p.status]??""}">${esc(p.status)}</span>${p.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}`,`${p.vorm==="Retainer"?eur(p.maandbedrag)+" p/m · ":""}${fmtM((p.start||"").slice(0,7))||"?"} → ${p.eind?fmtM(p.eind.slice(0,7)):p.vorm==="Retainer"?"doorlopend":"?"}`,eur(projValue(p)),p.status==="Lopend"?"ok":"")).join("")}</ul>`:`<div class="empty">Nog geen opdrachten.</div>`}
     </div>
-    <div class="panel"><h3>Facturen <small>${eur(sum(o.invoices,i=>i.bedrag))} excl. btw</small></h3>
-      ${o.invoices.length?`<ul class="todo">${[...o.invoices].sort((a,b)=>String(b.nr).localeCompare(String(a.nr))).map(i=>{const st=invState(i);return li("invoices:"+i.id,`${esc(i.nr)} <span class="pill ${iCls[st]}">${st}</span>`,`${fmtDY(i.datum)}${i.omschrijving?" · "+esc(i.omschrijving):""}`,eur2(i.bedrag),st==="Verlopen"?"bad":st==="Betaald"?"ok":"warn")}).join("")}</ul>`:`<div class="empty">Nog geen facturen.</div>`}
-    </div>
-  </div>`;
+`;
 }
 async function ensureContact(name,org){
   const nm=String(name||"").trim(); if(!db||!nm) return false;
@@ -750,7 +626,7 @@ function renderList(c){
   const el=$("#list-"+c); if(!el) return;
   const q=(F.q[c]||"").trim().toLowerCase();
   if(loading() && !(S[c]||[]).length){ el.innerHTML=`<div class="empty">Gegevens laden…</div>`; return; }
-  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,hours:lHours,invoices:lInvoices,expenses:lExpenses,ideas:lIdeas,taxpot:lTaxpot,companies:lCompanies}[c])(q);
+  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,ideas:lIdeas,taxpot:lTaxpot,companies:lCompanies}[c])(q);
 }
 function emptyState(c,txt){ return `<div class="panel"><div class="empty">${txt}<br><br><button class="btn pri" data-new="${c}">+ ${SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)} toevoegen</button></div></div>`; }
 
@@ -792,54 +668,13 @@ function lProjects(q){
   const order={"Lopend":0,"Gepland":1,"On hold":2,"Afgerond":3};
   const rows=S.projects.filter(r=>match(r,q,["naam","klant","type"])).sort((a,b)=>(order[a.status]??9)-(order[b.status]??9));
   return `<div class="cards">${rows.map(p=>{
-    const hs=S.hours.filter(h=>h.project===p.id), u=sum(hs,h=>h.uren), val=sum(hs.filter(h=>h.declarabel!=="Nee"),h=>h.uren*rateFor(h));
-    const inv=sum(S.invoices.filter(i=>i.project===p.id&&i.status!=="Concept"),i=>i.bedrag);
-    const pct=p.budget?Math.min(100,val/p.budget*100):0;
     const st=p.status==="Lopend"?"good":p.status==="Gepland"?"acc":p.status==="Afgerond"?"":"warn";
     return `<div class="pcard" data-edit="projects:${p.id}" tabindex="0">
       <div class="top"><h4>${esc(p.naam)}${exPill(p)}</h4><span class="pill ${st}">${esc(p.status)}</span></div>
       <p>${orgLink(p.klant)}${p.type?" · "+esc(p.type):""}</p>
       <p>${p.vorm==="Retainer"?`<span class="pill acc">retainer ${eur(p.maandbedrag)} p/m</span> `:""}${p.start?fmtD(p.start):"?"} → ${p.eind?fmtD(p.eind):p.vorm==="Retainer"?"doorlopend":"?"}</p>
-      <div class="meta" style="display:flex;justify-content:space-between;font-size:12.5px"><span>${NUM1.format(u)} u · ${eur(val)} waarde</span><span>${eur(inv)} gefactureerd</span></div>
-      ${p.budget&&p.vorm!=="Retainer"?`<div class="meter"><i style="width:${pct}%;${pct>=100?"background:var(--bad)":pct>80?"background:var(--warn)":""}"></i></div><p style="font-size:12px">${Math.round(pct)}% van budget ${eur(p.budget)}</p>`:""}
+      <div class="meta" style="display:flex;justify-content:space-between;font-size:12.5px"><span>${eur(projValue(p))} opdrachtwaarde</span><span>${p.status==="Afgerond"?"afgerond & betaald":p.vorm==="Retainer"?eur(sum(projBilled(p),x=>x[1]))+" betaald":"nog te factureren"}</span></div>
     </div>`;}).join("")}</div>`;
-}
-function hoursInRange(){
-  const t=TODAY(), r=F.hoursRange;
-  return S.hours.filter(h=>{ const d=h.datum||"";
-    if(r==="week"){ const now=parse(t); const dow=(now.getDay()+6)%7; return d>=addDays(t,-dow) && d<=t; }
-    if(r==="maand") return d.startsWith(t.slice(0,7));
-    if(r==="jaar") return inYear(d);
-    return true; });
-}
-function lHours(q){
-  if(!S.hours.length) return emptyState("hours","Log je uren voor het urencriterium en om niets te vergeten te factureren.");
-  const rows=hoursInRange().filter(h=>{const p=projById(h.project);return !q||match(h,q,["omschrijving"])||(p&&p.naam.toLowerCase().includes(q));}).sort((a,b)=>(b.datum||"").localeCompare(a.datum||""));
-  if(!rows.length) return `<div class="panel"><div class="empty">Geen uren in deze periode.</div></div>`;
-  return `<div class="tablewrap"><table><thead><tr><th>Datum</th><th>Omschrijving</th><th>Project</th><th>Declarabel</th><th class="n">Uren</th><th class="n">Waarde</th></tr></thead><tbody>
-  ${rows.map(h=>{const p=projById(h.project);return `<tr data-edit="hours:${h.id}"><td>${fmtD(h.datum)}</td><td>${esc(h.omschrijving||"—")}${exPill(h)}</td><td>${esc(p?p.naam:"—")}</td><td>${h.declarabel==="Nee"?'<span class="pill">Nee</span>':'<span class="pill good">Ja</span>'}</td><td class="n">${NUM1.format(h.uren)}</td><td class="n">${h.declarabel==="Nee"?'<span class="muted">—</span>':eur(h.uren*rateFor(h))}</td></tr>`}).join("")}
-  </tbody><tfoot><tr><td colspan="4">${rows.length} regels</td><td class="n">${NUM1.format(sum(rows,h=>h.uren))}</td><td class="n">${eur(sum(rows.filter(h=>h.declarabel!=="Nee"),h=>h.uren*rateFor(h)))}</td></tr></tfoot></table></div>`;
-}
-function lInvoices(q){
-  if(!S.invoices.length) return emptyState("invoices","Houd hier bij wat je factureert en wat er nog binnen moet komen.");
-  const t=TODAY();
-  const rows=S.invoices.filter(i=>(F.invStatus==="Alle"||invState(i)===F.invStatus)&&match(i,q,["nr","klant","omschrijving"])).sort((a,b)=>String(b.nr).localeCompare(String(a.nr)));
-  const cls={Betaald:"good",Verstuurd:"acc",Verlopen:"bad",Concept:"warn"};
-  if(!rows.length) return `<div class="panel"><div class="empty">Geen facturen met deze status.</div></div>`;
-  return `<div class="tablewrap"><table><thead><tr><th>Nr</th><th>Klant</th><th>Datum</th><th>Vervalt</th><th class="n">Excl.</th><th class="n">Incl.</th><th>Status</th><th></th></tr></thead><tbody>
-  ${rows.map(i=>{const st=invState(i);return `<tr data-edit="invoices:${i.id}"><td><b>${esc(i.nr)}</b>${exPill(i)}</td><td>${orgLink(i.klant)}<div class="muted" style="font-size:12px">${esc(i.omschrijving||"")}</div></td><td>${fmtD(i.datum)}</td>
-    <td>${st==="Betaald"?`<span class="muted">${i.betaaldOp?"betaald "+fmtD(i.betaaldOp):"—"}</span>`:fmtD(invDue(i))+(st==="Verlopen"?`<div style="font-size:12px;color:var(--bad)">${daysBetween(invDue(i),t)} dagen te laat</div>`:"")}</td>
-    <td class="n">${eur2(i.bedrag)}</td><td class="n">${eur2(invIncl(i))}</td><td><span class="pill ${cls[st]}">${st}</span></td>
-    <td class="n">${st==="Concept"?`<button class="btn sm" data-istate="${i.id}:Verstuurd">Verstuurd</button>`:st!=="Betaald"?`<button class="btn sm" data-istate="${i.id}:Betaald">Betaald</button>`:""}</td></tr>`}).join("")}
-  </tbody><tfoot><tr><td colspan="4">${rows.length} facturen</td><td class="n">${eur2(sum(rows,i=>i.bedrag))}</td><td class="n">${eur2(sum(rows,invIncl))}</td><td colspan="2"></td></tr></tfoot></table></div>`;
-}
-function lExpenses(q){
-  if(!S.expenses.length) return emptyState("expenses","Leg je zakelijke kosten vast, dan klopt je btw-aangifte en je resultaat.");
-  const rows=S.expenses.filter(e=>match(e,q,["omschrijving","categorie","notitie"])).sort((a,b)=>(b.datum||"").localeCompare(a.datum||""));
-  const vat=e=>(+e.bedrag||0)*(+e.btw||0)/100;
-  return `<div class="tablewrap"><table><thead><tr><th>Datum</th><th>Omschrijving</th><th>Categorie</th><th class="n">Excl.</th><th class="n">Btw</th><th class="n">Incl.</th></tr></thead><tbody>
-  ${rows.map(e=>`<tr data-edit="expenses:${e.id}"><td>${fmtD(e.datum)}</td><td>${esc(e.omschrijving)}${exPill(e)}</td><td>${esc(e.categorie||"")}</td><td class="n">${eur2(e.bedrag)}</td><td class="n">${eur2(vat(e))}</td><td class="n">${eur2((+e.bedrag||0)+vat(e))}</td></tr>`).join("")}
-  </tbody><tfoot><tr><td colspan="3">${rows.length} uitgaven</td><td class="n">${eur2(sum(rows,e=>e.bedrag))}</td><td class="n">${eur2(sum(rows,vat))}</td><td class="n">${eur2(sum(rows,e=>(+e.bedrag||0)+vat(e)))}</td></tr></tfoot></table></div>`;
 }
 function lIdeas(q){
   if(!S.ideas.length) return emptyState("ideas","Parkeer hier elk idee dat in de auto of tijdens een wandeling opkomt.");
@@ -859,7 +694,7 @@ function openForm(c,id,preset={}){
   const sc=SCHEMA[c], row=id?S[c].find(r=>r.id===id):null;
   if(id && !row) return;
   editing={c,id,extra:preset.deal?{deal:preset.deal}:{}}; armed=false;
-  const orgs=[...new Set([...S.contacts.map(x=>x.organisatie),...S.projects.map(x=>x.klant),...S.deals.map(x=>x.organisatie),...S.invoices.map(x=>x.klant)].filter(Boolean))].sort();
+  const orgs=[...new Set([...S.contacts.map(x=>x.organisatie),...S.projects.map(x=>x.klant),...S.deals.map(x=>x.organisatie)].filter(Boolean))].sort();
   const people=[...new Set(S.contacts.map(x=>x.naam).filter(Boolean))].sort();
   const val=f=>{ if(row) return row[f.k]??""; if(preset[f.k]!=null) return preset[f.k]; return typeof f.def==="function"?f.def():(f.def??""); };
   const input=f=>{ const v=val(f), id="f-"+f.k, rq=f.req?"required":"";
@@ -881,13 +716,7 @@ function openForm(c,id,preset={}){
 function updateCalc(){
   const el=$("#calc"); if(!el||!editing) return;
   const g=k=>{const e=$("#f-"+k);return e?e.value:"";};
-  if(editing.c==="invoices"||editing.c==="expenses"){
-    const b=+g("bedrag")||0, v=b*(+g("btw")||0)/100;
-    el.hidden=false; el.innerHTML=`<span>Btw <b>${eur2(v)}</b></span><span>Totaal incl. <b>${eur2(b+v)}</b></span>${editing.c==="invoices"&&g("datum")?`<span>Vervalt <b>${fmtDY(addDays(g("datum"),+g("termijn")||0))}</b></span>`:""}`;
-  } else if(editing.c==="hours"){
-    const p=projById(g("project")), r=+(p&&p.tarief)||+S.settings.uurtarief||0, u=+g("uren")||0;
-    el.hidden=false; el.innerHTML=`<span>Waarde <b>${g("declarabel")==="Nee"?"niet declarabel":eur2(u*r)}</b></span><span class="muted">tarief ${eur2(r)}/u</span>`;
-  } else if(editing.c==="deals"){
+if(editing.c==="deals"){
     el.hidden=true;
   } else el.hidden=true;
 }
@@ -901,7 +730,7 @@ function readForm(){
 async function saveForm(){
   if(!db){ toast("Opslag niet beschikbaar"); return; }
   const {c,id,extra}=editing; const data=readForm(); const now=new Date().toISOString();
-  if(c==="invoices" && data.status==="Betaald" && !data.betaaldOp) data.betaaldOp=TODAY();
+  const wasDone = id && c==="projects" && (S.projects.find(r=>r.id===id)||{}).status==="Afgerond";
   if(c==="deals" && data.vorm==="Retainer" && data.maandbedrag!=="") data.waarde=(+data.maandbedrag||0)*(+data.looptijd||12);
   try{
     if(id){ const old=S[c].find(r=>r.id===id)||{}; const {id:_,example:__,...rest}=old; await db.collection(c).doc(id).set({...rest,...data,updatedAt:now}); }
@@ -910,6 +739,7 @@ async function saveForm(){
     $("#dlg").close();
     const newC=(c==="deals"||c==="projects")&&data.contact ? await ensureContact(data.contact,data.organisatie||data.klant) : false;
     if(c==="deals"&&data.fase==="Gewonnen"&&await ensureProject({...data,id:newId})) toast(wonMsg(data)+(newC?" · contact opgeslagen in Netwerk":""));
+    else if(c==="projects"&&data.status==="Afgerond"&&!wasDone&&data.vorm!=="Retainer"&&+data.budget) toast(`Afgerond & betaald. Zet ${eur(+data.budget*(btwRate()+(+S.settings.reservePct||0)/100))} apart in je belastingpot`);
     else if(newC) toast(`Opgeslagen · ${data.contact} toegevoegd aan Netwerk`);
     else toast(id?"Opgeslagen":SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)+" toegevoegd");
   }catch(e){ toast(e&&e.code==="quota_exceeded"?"Opslag is vol: verwijder oude regels":"Opslaan mislukt, probeer het opnieuw"); }
@@ -928,7 +758,7 @@ async function ensureProject(d){
   if(!db||!d.id||S.projects.some(p=>p.deal===d.id)) return false;
   const u=d.uitvoering, thisM=TODAY().slice(0,7);
   await db.collection("projects").add({naam:d.naam||"Nieuw project",klant:d.organisatie||"",type:d.type||"",
-    status:u&&u>thisM?"Gepland":"Lopend",tarief:"",contact:d.contact||"",
+    status:u&&u>thisM?"Gepland":"Lopend",contact:d.contact||"",
     ...(d.vorm==="Retainer" ? {vorm:"Retainer",maandbedrag:+d.maandbedrag||"",budget:"",
         start:(u||TODAY().slice(0,7))+"-01", eind:+d.looptijd?iso(new Date(+(u||TODAY()).slice(0,4),+(u||TODAY()).slice(5,7)-1+(+d.looptijd),0)):""}
       : {vorm:"Vaste prijs",budget:+d.waarde||"",start:u?u+"-01":TODAY(),eind:u?iso(new Date(+u.slice(0,4),+u.slice(5,7),0)):""}),
@@ -936,39 +766,12 @@ async function ensureProject(d){
   return true;
 }
 const wonMsg = d => `Gewonnen! Project aangemaakt: ${eur(d.waarde)} telt mee als omzet ${(d.uitvoering||TODAY()).slice(0,4)}`;
-// ---------- timer ----------
-let tick=null;
-function renderTimer(){
-  const t=store.get("ploeg.timer"), el=$("#timer");
-  const running=!!(t&&t.start);
-  el.className="timer"+(running?" running":"");
-  const secs=running?Math.floor((Date.now()-t.start)/1000):0;
-  const clock=`${pad(Math.floor(secs/3600))}:${pad(Math.floor(secs/60)%60)}:${pad(secs%60)}`;
-  const opts=S.projects.filter(p=>p.status!=="Afgerond").map(p=>`<option value="${esc(p.id)}" ${running&&t.project===p.id?"selected":""}>${esc(p.naam)}</option>`).join("");
-  el.innerHTML=`<span class="lab">Timer</span><span class="clock" id="clock">${clock}</span>
-    <select id="timerProj" aria-label="Project voor timer" ${running?"disabled":""}><option value="">Geen project</option>${opts}</select>
-    <button class="btn ${running?"":"pri"} sm" data-act="timer">${running?"Stop & log":"Start"}</button>`;
-  clearInterval(tick);
-  if(running) tick=setInterval(()=>{const c=$("#clock"); if(!c) return; const s=Math.floor((Date.now()-t.start)/1000); c.textContent=`${pad(Math.floor(s/3600))}:${pad(Math.floor(s/60)%60)}:${pad(s%60)}`;},1000);
-}
-function toggleTimer(){
-  const t=store.get("ploeg.timer");
-  if(t&&t.start){
-    const h=Math.max(.25,Math.round((Date.now()-t.start)/36e5*4)/4);
-    store.set("ploeg.timer",null); renderTimer();
-    openForm("hours",null,{uren:h,project:t.project||"",datum:TODAY()});
-  } else { const sel=$("#timerProj"); store.set("ploeg.timer",{start:Date.now(),project:sel?sel.value:""}); renderTimer(); toast("Timer loopt"); }
-}
-
 // ---------- export ----------
 async function exportCsv(c){
   if(!downloads){ toast("Downloaden kan niet in deze weergave"); return; }
   const n=v=>typeof v==="number"?String(v).replace(".",","):v;
   let cols, rows;
-  if(c==="invoices"){ cols=["Nummer","Klant","Omschrijving","Datum","Vervaldatum","Excl","Btw%","Btw","Incl","Status","Betaald op"]; rows=S.invoices.map(i=>[i.nr,i.klant,i.omschrijving,i.datum,invDue(i),+i.bedrag||0,i.btw,+invBtw(i).toFixed(2),+invIncl(i).toFixed(2),invState(i),i.betaaldOp]); }
-  else if(c==="hours"){ cols=["Datum","Uren","Project","Omschrijving","Declarabel","Waarde"]; rows=S.hours.map(h=>[h.datum,+h.uren||0,(projById(h.project)||{}).naam,h.omschrijving,h.declarabel,h.declarabel==="Nee"?0:+(h.uren*rateFor(h)).toFixed(2)]); }
-  else if(c==="expenses"){ cols=["Datum","Omschrijving","Categorie","Excl","Btw%","Btw"]; rows=S.expenses.map(e=>[e.datum,e.omschrijving,e.categorie,+e.bedrag||0,e.btw,+((+e.bedrag||0)*(+e.btw||0)/100).toFixed(2)]); }
-  else { const fs=SCHEMA[c].fields; cols=fs.map(f=>f.l); rows=S[c].map(r=>fs.map(f=>r[f.k])); }
+  const fs=SCHEMA[c].fields; cols=fs.map(f=>f.l); rows=S[c].map(r=>fs.map(f=>r[f.k]));
   const cell=v=>{v=n(v??""); v=String(v); return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
   const csv="﻿"+[cols,...rows].map(r=>r.map(cell).join(";")).join("\r\n");
   try{ await downloads.save({filename:`${c}-${TODAY()}.csv`,data:csv}); }catch(e){ if(e&&e.code!=="declined") toast("Export mislukt"); }
@@ -977,7 +780,7 @@ async function exportCsv(c){
 // ---------- events ----------
 document.addEventListener("click", async e=>{
   const mn=e.target.closest("nav.menu a"); if(mn&&mn.getAttribute("href")==="#bedrijven"){ F.org=null; if(view()==="bedrijven") render(); }
-  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-istate],[data-touch],[data-export],[data-hrange],[data-istat],[data-csort],[data-mkproj],[data-dyear],[data-oyear],[data-dgo],[data-org],[data-newfor]");
+  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-touch],[data-export],[data-csort],[data-mkproj],[data-dyear],[data-oyear],[data-dgo],[data-org],[data-newfor]");
   if(!t) return;
   const d=t.dataset;
   if(d.stage||d.istate||d.touch){ e.stopPropagation(); }
@@ -995,16 +798,12 @@ document.addEventListener("click", async e=>{
       if(to==="Gewonnen"){ if(await ensureProject(deal)) toast(wonMsg(deal)); }
       else if(deal.fase==="Gewonnen"){ const pr=S.projects.find(p=>p.deal===id); if(pr) toast(`Let op: project "${pr.naam}" telt nog als omzet. Verwijder het als de deal niet doorgaat.`); }
     }); }
-  if(d.istate){ const [id,st]=d.istate.split(":"); const iv=S.invoices.find(x=>x.id===id); return patch("invoices",id,st==="Betaald"?{status:st,betaaldOp:TODAY()}:{status:st}).then(()=>toast(st==="Betaald"&&iv?`Betaald. Zet ${eur(invBtw(iv)+(+iv.bedrag||0)*(+S.settings.reservePct||0)/100)} apart in je belastingpot`:st==="Betaald"?"Gemarkeerd als betaald":"Gemarkeerd als verstuurd")); }
   if(d.touch){ return patch("contacts",d.touch,{laatsteContact:TODAY()}).then(()=>toast("Laatste contact: vandaag")); }
   if(d.edit){ const [c,id]=d.edit.split(":"); return openForm(c,id); }
   if(d.export) return exportCsv(d.export);
-  if(d.hrange){ F.hoursRange=d.hrange; return render(); }
-  if(d.istat){ F.invStatus=d.istat; return render(); }
   if(d.csort){ F.contactSort=d.csort; return render(); }
   if(d.act==="close") return $("#dlg").close();
   if(d.act==="del") return delForm(t);
-  if(d.act==="timer") return toggleTimer();
   if(d.act==="clear-ex") return clearExamples(t);
   if(d.act==="save-set") return saveSettings();
 });
