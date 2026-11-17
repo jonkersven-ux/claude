@@ -237,14 +237,14 @@ const quarterOf = s => Math.floor((+s.slice(5,7)-1)/3)+1;
 const curQ = () => Math.floor(new Date().getMonth()/3)+1;
 const sum = (a,f) => a.reduce((t,x)=>t+(+f(x)||0),0);
 const store = { get(k){ try{return JSON.parse(localStorage.getItem(k));}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch{} } };
-let toastT; const toast = m => { const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2600); };
+let toastT; const toast = m => { const t=$("#toast"); t.textContent=m; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,4000); };
 
 // ---------- schema ----------
 const STAGES = ["Lead","Gesprek","Voorstel","Onderhandeling","Gewonnen","Verloren"];
 const OPEN_STAGES = STAGES.slice(0,4);
 const STAGE_PROB = {Lead:10,Gesprek:25,Voorstel:50,Onderhandeling:75,Gewonnen:100,Verloren:0};
 const WORKTYPES = ["Hospitality & hosting","Partnerships & sponsoring","Storytelling & content","Events","Presenteren","Advies & strategie","Overig"];
-const S_DEF = {bedrijf:"",naam:"",uurtarief:95,reservePct:32,jaardoel:90000,urenDoel:1225,termijn:14,kvk:"",btwnr:"",iban:""};
+const S_DEF = {bedrijf:"",naam:"",uurtarief:95,reservePct:30,reserveBasis:"Omzet",jaardoel:90000,urenDoel:1225,termijn:14,kvk:"",btwnr:"",iban:""};
 
 const SCHEMA = {
   deals:{one:"deal", fields:[
@@ -312,6 +312,12 @@ const SCHEMA = {
     {k:"status",l:"Status",t:"select",o:["Idee","Uitwerken","Pitchen","Geparkeerd","Gerealiseerd"],def:"Idee"},
     {k:"volgendeStap",l:"Kleinste volgende stap",t:"text",full:1},
     {k:"notitie",l:"Uitwerking",t:"textarea",full:1}]},
+  taxpot:{one:"boeking", fields:[
+    {k:"datum",l:"Datum",t:"date",req:1,def:TODAY},
+    {k:"type",l:"Soort",t:"select",o:["Storting","Betaling btw","Betaling IB","Opname"],def:"Storting"},
+    {k:"bedrag",l:"Bedrag",t:"money",req:1},
+    {k:"kwartaal",l:"Btw-kwartaal",t:"select",o:[YEAR()-1,YEAR()].flatMap(y=>[1,2,3,4].map(q=>`Q${q} ${y}`)),hint:"Alleen bij een btw-betaling"},
+    {k:"notitie",l:"Notitie",t:"text",full:1,ph:"Bijv. btw + 30% factuur 2026-017"}]},
 };
 const COLLS = Object.keys(SCHEMA);
 
@@ -363,7 +369,7 @@ function kpis(){
   const pace = doel*dayOfYear/(y%4===0?366:365);
   return {omzet,kosten,winst:omzet-kosten,open,late,openSum:sum(open,invIncl),lateSum:sum(late,invIncl),btwOut,btwIn,btwNet:btwOut-btwIn,q,
     urenY,urenM,declM,unbilled,openDeals,pipeW,pipeT,pipeLater,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
-    reserve: Math.max(0,(omzet-kosten))*(+S.settings.reservePct||0)/100};
+    reserve: 0};
 }
 function todos(){
   const t=TODAY(), out=[];
@@ -374,6 +380,7 @@ function todos(){
   S.contacts.forEach(c=>{ if(c.followUp && c.followUp<=t) out.push({sev:c.followUp<t?"warn":"ok",txt:`Follow-up ${c.naam}${c.organisatie?" ("+c.organisatie+")":""}`,sub:c.followUp<t?`Gepland ${fmtD(c.followUp)}`:"Vandaag",go:["contacts",c.id],k:1}); });
   S.deals.forEach(d=>{ if(OPEN_STAGES.includes(d.fase) && d.stapDatum && d.stapDatum<=addDays(t,2)) out.push({sev:d.stapDatum<t?"warn":"ok",txt:`${d.volgendeStap||"Volgende stap"} – ${d.naam}`,sub:`${d.fase} · ${fmtD(d.stapDatum)}`,go:["deals",d.id],k:1}); });
   S.projects.forEach(p=>{ if(p.status==="Lopend" && p.eind && p.eind>=t && p.eind<=addDays(t,7)) out.push({sev:"ok",txt:`Deadline ${p.naam}`,sub:fmtD(p.eind),go:["projects",p.id],k:3}); });
+  const tx=taxCalc(); if(tx.todo>=50) out.push({sev:"warn",txt:`Zet ${eur(tx.todo)} over naar je belastingpot`,sub:`Pot ${eur(tx.saldo)} · nodig ${eur(tx.needed)}`,go:null,k:1});
   // btw deadline: last day of month after quarter
   const now=new Date(), q=curQ(), dl=new Date(now.getFullYear(), q*3+1, 0), dlS=iso(dl), prevDl=new Date(now.getFullYear(), (q-1)*3+1, 0);
   const daysPrev = daysBetween(t, iso(prevDl));
@@ -385,8 +392,8 @@ function todos(){
 // ---------- routing ----------
 const VIEWS = [
   ["overzicht","Overzicht"],["pipeline","Pipeline"],["netwerk","Netwerk"],["projecten","Projecten"],
-  ["uren","Uren"],["facturen","Facturen"],["uitgaven","Uitgaven"],["ideeen","Ideeënbank"],["instellingen","Instellingen"]];
-const VIEW_COLL = {pipeline:"deals",netwerk:"contacts",projecten:"projects",uren:"hours",facturen:"invoices",uitgaven:"expenses",ideeen:"ideas"};
+  ["uren","Uren"],["facturen","Facturen"],["uitgaven","Uitgaven"],["belasting","Belastingpot"],["ideeen","Ideeënbank"],["instellingen","Instellingen"]];
+const VIEW_COLL = {pipeline:"deals",netwerk:"contacts",projecten:"projects",uren:"hours",facturen:"invoices",uitgaven:"expenses",belasting:"taxpot",ideeen:"ideas"};
 const COLL_VIEW = Object.fromEntries(Object.entries(VIEW_COLL).map(([v,c])=>[c,v]));
 const view = () => { const h=location.hash.slice(1); return VIEWS.some(v=>v[0]===h)?h:"overzicht"; };
 
@@ -410,7 +417,7 @@ function render(){
   else if(S.err) html += `<div class="banner err"><span>${esc(S.err)}</span></div>`;
   const ex = COLLS.reduce((t,c)=>t+S[c].filter(r=>r.example).length,0);
   if(ex && v!=="instellingen") html += `<div class="banner ex"><span><b>Je kijkt naar ${ex} voorbeeldregels.</b> Ze laten zien hoe alles werkt. Bewerk ze of wis ze in één keer zodra je je eigen data invoert.</span><button class="btn sm" data-act="clear-ex">Voorbeelden wissen</button></div>`;
-  html += ({overzicht:vOverview,pipeline:vPipeline,netwerk:vContacts,projecten:vProjects,uren:vHours,facturen:vInvoices,uitgaven:vExpenses,ideeen:vIdeas,instellingen:vSettings}[v])();
+  html += ({overzicht:vOverview,pipeline:vPipeline,netwerk:vContacts,projecten:vProjects,uren:vHours,facturen:vInvoices,uitgaven:vExpenses,belasting:vTax,ideeen:vIdeas,instellingen:vSettings}[v])();
   m.innerHTML = html;
   if(VIEW_COLL[v]) renderList(VIEW_COLL[v]);
 }
@@ -439,7 +446,7 @@ function vOverview(){
     <div class="tile"><span class="lab">Pipeline gewogen</span><b>${eur(k.pipeW)}</b><span class="sub">${k.openDeals.length} open deals · waarvan ${eur(k.pipeLater)} voor ${YEAR()+1} en later</span></div>
     <div class="tile"><span class="lab">Nog te factureren</span><b>${eur(k.unbilled)}</b><span class="sub">declarabele uren × tarief</span></div>
     <div class="tile"><span class="lab">Effectief uurtarief</span><b>${k.effRate?eur(k.effRate):"—"}</b><span class="sub">omzet ÷ declarabele uren ${YEAR()}</span></div>
-    <div class="tile"><span class="lab">Zet apart</span><b>${eur(k.reserve+Math.max(0,k.btwNet))}</b><span class="sub">${eur(k.reserve)} IB-reserve (${S.settings.reservePct}%) + ${eur(Math.max(0,k.btwNet))} btw Q${k.q}</span></div>
+    ${(()=>{const tx=taxCalc();return `<a class="tile" href="#belasting" style="text-decoration:none;color:inherit"><span class="lab">Belastingpot</span><b style="${tx.todo>0?"color:var(--bad)":""}">${tx.todo>0?eur(tx.todo):"Op peil"}</b><span class="sub">${tx.todo>0?"nog over te boeken · ":""}${eur(tx.saldo)} in pot van ${eur(tx.needed)} nodig</span></a>`;})()}
   </div>
   <div class="grid2">
     <div class="panel"><h3>Cashflow <small>laatste 12 maanden · excl. btw</small></h3>${chart()}</div>
@@ -619,12 +626,69 @@ function vSettings(){
   <div class="panel"><h3>Tarieven & doelen</h3><div class="setgrid">
     ${f("uurtarief","Standaard uurtarief (€)","number")}${f("termijn","Betaaltermijn (dagen)","number")}
     ${f("jaardoel","Omzetdoel "+YEAR()+" (€)","number")}${f("doel"+(YEAR()+1),"Omzetdoel "+(YEAR()+1)+" (€)","number","Leeg = zelfde als dit jaar")}${f("urenDoel","Urendoel","number","1.225 uur = urencriterium")}
-    ${f("reservePct","Reserve inkomstenbelasting (%)","number","Indicatie. Vraag je boekhouder naar jouw percentage.")}
+    ${f("reservePct","Reserve inkomstenbelasting (%)","number","Indicatie. Vraag je boekhouder naar jouw percentage.")}<label>Reserve berekenen over<select id="set-reserveBasis" data-set="reserveBasis">${["Omzet","Winst"].map(o=>`<option ${(s.reserveBasis||"Omzet")===o?"selected":""}>${o}</option>`).join("")}</select><span class="hint muted">Omzet is ruimer en dus veiliger</span></label>
   </div></div>
   <div class="panel"><h3>Exporteren <small>CSV voor je boekhouder, scheidingsteken ;</small></h3>
-    <div class="actions">${["invoices","hours","expenses","contacts","deals"].map(c=>`<button class="btn" data-export="${c}">${({invoices:"Facturen",hours:"Uren",expenses:"Uitgaven",contacts:"Netwerk",deals:"Pipeline"})[c]}</button>`).join("")}</div>
+    <div class="actions">${["invoices","hours","expenses","taxpot","contacts","deals"].map(c=>`<button class="btn" data-export="${c}">${({invoices:"Facturen",hours:"Uren",expenses:"Uitgaven",taxpot:"Belastingpot",contacts:"Netwerk",deals:"Pipeline"})[c]}</button>`).join("")}</div>
     <p class="muted" style="margin:0">Jaarcijfers ${YEAR()}: omzet ${eur(k.omzet)}, kosten ${eur(k.kosten)}, resultaat ${eur(k.winst)}.</p></div>
   <div class="panel"><h3>Voorbeelddata</h3><p class="muted" style="margin:0">${ex?`Er staan nog ${ex} voorbeeldregels in je cockpit.`:"Geen voorbeeldregels meer. Alles is van jou."}</p>${ex?`<div><button class="btn danger" data-act="clear-ex">Voorbeelden wissen</button></div>`:""}</div>`;
+}
+
+const expBtw = e => (+e.bedrag||0)*(+e.btw||0)/100;
+const qDeadline = (y,q) => iso(new Date(y, q*3+1, 0));
+function taxCalc(y=YEAR()){
+  const pct=(+S.settings.reservePct||0)/100, onOmzet=(S.settings.reserveBasis||"Omzet")!=="Winst";
+  const inv=S.invoices.filter(i=>i.status!=="Concept"&&inYear(i.datum,y)), exp=S.expenses.filter(e=>inYear(e.datum,y));
+  const months=Array.from({length:12},(_,m)=>{ const k=y+"-"+pad(m+1), iv=inv.filter(i=>i.datum.startsWith(k)), ex=exp.filter(e=>(e.datum||"").startsWith(k));
+    const omzet=sum(iv,i=>i.bedrag), kosten=sum(ex,e=>e.bedrag), btwOut=sum(iv,invBtw), btwIn=sum(ex,expBtw);
+    return {k,omzet,kosten,btwOut,btwIn,btw:btwOut-btwIn,ib:(onOmzet?omzet:omzet-kosten)*pct}; });
+  const omzet=sum(months,m=>m.omzet), kosten=sum(months,m=>m.kosten);
+  const ibTot=Math.max(0,(onOmzet?omzet:omzet-kosten)*pct);
+  const pot=S.taxpot;
+  const quarters=[1,2,3,4].map(q=>{ const ms=months.slice((q-1)*3,q*3), btw=sum(ms,m=>m.btw);
+    const paid=sum(pot.filter(p=>p.type==="Betaling btw"&&p.kwartaal===`Q${q} ${y}`),p=>p.bedrag);
+    const dl=qDeadline(y,q), ended=iso(new Date(y,q*3,0))<TODAY(), open=Math.max(0,btw-paid);
+    const status = btw<=0&&ended ? "Niets te betalen" : !ended ? "Loopt" : open<=0.5 ? "Betaald" : dl<TODAY() ? "Te laat" : "Aangifte doen";
+    return {q,btwOut:sum(ms,m=>m.btwOut),btwIn:sum(ms,m=>m.btwIn),btw,paid,open,dl,status}; });
+  const btwOpen=sum(quarters,x=>x.open);
+  const ibPaid=sum(pot.filter(p=>p.type==="Betaling IB"&&inYear(p.datum,y)),p=>p.bedrag);
+  const into=sum(pot.filter(p=>p.type==="Storting"),p=>p.bedrag), out=sum(pot.filter(p=>p.type!=="Storting"),p=>p.bedrag);
+  const saldo=into-out, needed=Math.max(0,ibTot-ibPaid)+btwOpen;
+  return {pct,onOmzet,months,omzet,kosten,ibTot,ibPaid,quarters,btwOpen,saldo,needed,todo:Math.max(0,needed-saldo)};
+}
+function vTax(){
+  const t=taxCalc(), y=YEAR(), pctTxt=Math.round(t.pct*100)+"%";
+  const fill=t.needed?Math.min(100,t.saldo/t.needed*100):100;
+  const qcls={"Betaald":"good","Niets te betalen":"","Loopt":"acc","Aangifte doen":"warn","Te laat":"bad"};
+  return head("Belastingpot",`Wat je opzij moet zetten voor btw en inkomstenbelasting ${y}`,`<button class="btn pri" data-new="taxpot">+ Storting of betaling</button>`) +
+  `<div class="tiles">
+    <div class="tile"><span class="lab">Nog over te boeken</span><b style="${t.todo>0?"color:var(--bad)":"color:var(--good)"}">${eur(t.todo)}</b><span class="sub">${t.todo>0?"naar je belastingrekening":"je pot is op peil"}</span></div>
+    <div class="tile"><span class="lab">In de pot</span><b>${eur(t.saldo)}</b><span class="sub">van ${eur(t.needed)} nodig</span><div class="meter"><i style="width:${fill}%;${fill>=100?"background:var(--good)":""}"></i></div></div>
+    <div class="tile"><span class="lab">Reserve IB ${y}</span><b>${eur(t.ibTot)}</b><span class="sub">${pctTxt} van je ${t.onOmzet?"omzet":"winst"}${t.ibPaid?` · ${eur(t.ibPaid)} al betaald`:""}</span></div>
+    <div class="tile"><span class="lab">Btw nog af te dragen</span><b>${eur(t.btwOpen)}</b><span class="sub">niet jouw geld, 100% apart</span></div>
+    <div class="tile"><span class="lab">Omzet ${y}</span><b>${eur(t.omzet)}</b><span class="sub">gefactureerd, excl. btw</span></div>
+    <div class="tile"><span class="lab">Netto voor jou</span><b>${eur(t.omzet-t.kosten-t.ibTot)}</b><span class="sub">omzet − kosten − IB-reserve</span></div>
+  </div>
+  <div class="banner"><span><b>Zo werkt het:</b> komt er een factuur binnen, boek dan meteen de btw plus ${pctTxt} over naar een aparte spaarrekening en log dat hier als storting. Betaal je de btw-aangifte of een aanslag, log dat als betaling. Dan klopt de pot altijd.</span></div>
+  <div class="grid2">
+    <div class="panel"><h3>Per maand <small>${y} · reserve = btw + ${pctTxt}</small></h3>
+      <div class="tablewrap" style="border:0"><table style="min-width:520px"><thead><tr><th>Maand</th><th class="n">Omzet</th><th class="n">Kosten</th><th class="n">Btw-saldo</th><th class="n">IB ${pctTxt}</th><th class="n">Apart zetten</th></tr></thead><tbody>
+      ${t.months.filter(m=>m.k<=TODAY().slice(0,7)).map(m=>`<tr style="cursor:default"><td>${new Date(y,+m.k.slice(5)-1,1).toLocaleDateString("nl-NL",{month:"long"})}</td><td class="n">${eur(m.omzet)}</td><td class="n">${eur(m.kosten)}</td><td class="n">${eur(m.btw)}</td><td class="n">${eur(m.ib)}</td><td class="n"><b>${eur(m.btw+m.ib)}</b></td></tr>`).join("")}
+      </tbody><tfoot><tr><td>Totaal</td><td class="n">${eur(t.omzet)}</td><td class="n">${eur(t.kosten)}</td><td class="n">${eur(sum(t.months,m=>m.btw))}</td><td class="n">${eur(t.ibTot)}</td><td class="n">${eur(sum(t.months,m=>m.btw)+t.ibTot)}</td></tr></tfoot></table></div>
+    </div>
+    <div class="panel"><h3>Btw per kwartaal <small>aangifte uiterlijk eind volgende maand</small></h3>
+      <ul class="todo">${t.quarters.map(x=>`<li><span class="sev ${x.status==="Te laat"?"bad":x.status==="Aangifte doen"?"warn":"ok"}"></span><div class="t"><b>Q${x.q}</b> · ${eur(x.btwOut)} ontvangen − ${eur(x.btwIn)} voorbelasting<span>Te betalen ${eur(x.btw)}${x.paid?` · ${eur(x.paid)} betaald`:""} · uiterlijk ${fmtDY(x.dl)}</span></div><span class="pill ${qcls[x.status]}">${x.status}</span></li>`).join("")}</ul>
+      <p class="muted" style="margin:0;font-size:12.5px">${pctTxt} is een ruime schatting. Door zelfstandigenaftrek en mkb-winstvrijstelling betaal je vaak minder. Liever te veel opzij dan in april schrikken. Vraag bij de Belastingdienst een voorlopige aanslag aan, dan betaal je per maand en niet in één klap.</p>
+    </div>
+  </div>
+  <div class="panel"><h3>Stortingen & betalingen <small>saldo ${eur(t.saldo)}</small></h3><div id="list-taxpot"></div></div>`;
+}
+function lTaxpot(){
+  if(!S.taxpot.length) return `<div class="empty">Nog niets gelogd. Begin met je huidige saldo op je belastingrekening als eerste storting.<br><br><button class="btn pri" data-new="taxpot">+ Eerste storting</button></div>`;
+  const rows=[...S.taxpot].sort((a,b)=>(b.datum||"").localeCompare(a.datum||""));
+  return `<div class="tablewrap" style="border:0"><table style="min-width:480px"><thead><tr><th>Datum</th><th>Soort</th><th>Notitie</th><th class="n">Bedrag</th></tr></thead><tbody>
+  ${rows.map(p=>`<tr data-edit="taxpot:${p.id}"><td>${fmtDY(p.datum)}</td><td><span class="pill ${p.type==="Storting"?"good":"acc"}">${esc(p.type)}</span>${p.kwartaal?` <span class="muted">${esc(p.kwartaal)}</span>`:""}${exPill(p)}</td><td>${esc(p.notitie||"")}</td><td class="n" style="${p.type==="Storting"?"color:var(--good)":""}">${p.type==="Storting"?"+":"−"} ${eur2(p.bedrag)}</td></tr>`).join("")}
+  </tbody></table></div>`;
 }
 
 // ---------- lists ----------
@@ -633,7 +697,7 @@ function renderList(c){
   const el=$("#list-"+c); if(!el) return;
   const q=(F.q[c]||"").trim().toLowerCase();
   if(loading() && !S[c].length){ el.innerHTML=`<div class="empty">Gegevens laden…</div>`; return; }
-  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,hours:lHours,invoices:lInvoices,expenses:lExpenses,ideas:lIdeas}[c])(q);
+  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,hours:lHours,invoices:lInvoices,expenses:lExpenses,ideas:lIdeas,taxpot:lTaxpot}[c])(q);
 }
 function emptyState(c,txt){ return `<div class="panel"><div class="empty">${txt}<br><br><button class="btn pri" data-new="${c}">+ ${SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)} toevoegen</button></div></div>`; }
 
@@ -854,7 +918,7 @@ document.addEventListener("click", async e=>{
     return openForm("projects",null,{naam:x.naam,klant:x.organisatie,budget:x.waarde,type:x.type,status:"Gepland",start:x.uitvoering?x.uitvoering+"-01":"",deal:x.id}); }
   if(d.stage){ const [id,dir]=d.stage.split(":"); const deal=S.deals.find(x=>x.id===id); if(!deal) return;
     const i=Math.max(0,Math.min(STAGES.length-1,STAGES.indexOf(deal.fase)+ +dir)); return patch("deals",id,{fase:STAGES[i],kans:""}); }
-  if(d.istate){ const [id,st]=d.istate.split(":"); return patch("invoices",id,st==="Betaald"?{status:st,betaaldOp:TODAY()}:{status:st}).then(()=>toast(st==="Betaald"?"Gemarkeerd als betaald":"Gemarkeerd als verstuurd")); }
+  if(d.istate){ const [id,st]=d.istate.split(":"); const iv=S.invoices.find(x=>x.id===id); return patch("invoices",id,st==="Betaald"?{status:st,betaaldOp:TODAY()}:{status:st}).then(()=>toast(st==="Betaald"&&iv?`Betaald. Zet ${eur(invBtw(iv)+(+iv.bedrag||0)*(+S.settings.reservePct||0)/100)} apart in je belastingpot`:st==="Betaald"?"Gemarkeerd als betaald":"Gemarkeerd als verstuurd")); }
   if(d.touch){ return patch("contacts",d.touch,{laatsteContact:TODAY()}).then(()=>toast("Laatste contact: vandaag")); }
   if(d.edit){ const [c,id]=d.edit.split(":"); return openForm(c,id); }
   if(d.export) return exportCsv(d.export);
