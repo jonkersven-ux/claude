@@ -253,7 +253,6 @@ const SCHEMA = {
     {k:"contact",l:"Contactpersoon",t:"text",list:"people"},
     {k:"waarde",l:"Waarde (excl. btw)",t:"money"},
     {k:"fase",l:"Fase",t:"select",o:STAGES,def:"Lead"},
-    {k:"kans",l:"Kans %",t:"number",min:0,max:100,hint:"Leeg = standaard per fase"},
     {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
     {k:"volgendeStap",l:"Volgende stap",t:"text",full:1,ph:"Bijv. voorstel sturen, koffie in Enschede"},
     {k:"stapDatum",l:"Datum volgende stap",t:"date"},
@@ -338,7 +337,6 @@ const invState = i => {
   if(i.status==="Concept") return "Concept";
   return invDue(i) < TODAY() ? "Verlopen" : "Verstuurd";
 };
-const dealProb = d => d.kans===""||d.kans==null ? STAGE_PROB[d.fase]??0 : +d.kans;
 function nextInvoiceNr(){
   const y=YEAR(); let max=0;
   S.invoices.forEach(i=>{ const m=String(i.nr||"").match(new RegExp("^"+y+"-(\\d+)$")); if(m) max=Math.max(max,+m[1]); });
@@ -362,14 +360,13 @@ function kpis(){
   const urenM = sum(hoursM,h=>h.uren), declM = sum(hoursM.filter(h=>h.declarabel!=="Nee"),h=>h.uren);
   const unbilled = sum(S.hours.filter(h=>h.declarabel!=="Nee"&&!h.gefactureerd),h=>(+h.uren||0)*rateFor(h));
   const openDeals = S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
-  const pipeW = sum(openDeals,d=>(+d.waarde||0)*dealProb(d)/100);
   const pipeT = sum(openDeals,d=>d.waarde);
-  const pipeLater = sum(openDeals.filter(d=>d.uitvoering&&d.uitvoering.slice(0,4)>String(y)),d=>(+d.waarde||0)*dealProb(d)/100);
+  const pipeLater = sum(openDeals.filter(d=>d.uitvoering&&d.uitvoering.slice(0,4)>String(y)),d=>+d.waarde||0);
   const dayOfYear = Math.floor((parse(t)-new Date(y,0,1))/864e5)+1;
   const doel = +S.settings.urenDoel||1225;
   const pace = doel*dayOfYear/(y%4===0?366:365);
   return {omzet,gefact,kosten,winst:omzet-kosten,open,late,openSum:sum(open,invIncl),lateSum:sum(late,invIncl),btwOut,btwIn,btwNet:btwOut-btwIn,q,
-    urenY,urenM,declM,unbilled,openDeals,pipeW,pipeT,pipeLater,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
+    urenY,urenM,declM,unbilled,openDeals,pipeT,pipeLater,pace,doel,effRate: urenY? omzet/sum(hoursY.filter(h=>h.declarabel!=="Nee"),h=>h.uren)||0:0,
     reserve: 0};
 }
 function todos(){
@@ -445,7 +442,7 @@ function vOverview(){
   `<div class="tiles">
     <div class="tile"><span class="lab">Omzet ${YEAR()}</span><b>${eur(k.omzet)}</b><span class="sub">${S.settings.jaardoel?`${Math.round(doelPct)}% van doel · `:""}${k.omzet-k.gefact>0.5?`${eur(k.omzet-k.gefact)} nog niet gefactureerd`:"alles gefactureerd"}</span><div class="meter"><i style="width:${doelPct}%"></i></div></div>
     <div class="tile"><span class="lab">Openstaand</span><b>${eur(k.openSum)}</b><span class="sub">${k.open.length} facturen${k.late.length?` · <span style="color:var(--bad);font-weight:600">${k.late.length} verlopen (${eur(k.lateSum)})</span>`:" · niets verlopen"}</span></div>
-    <div class="tile"><span class="lab">Pipeline gewogen</span><b>${eur(k.pipeW)}</b><span class="sub">${k.openDeals.length} open deals · waarvan ${eur(k.pipeLater)} voor ${YEAR()+1} en later</span></div>
+    <div class="tile"><span class="lab">Pipeline</span><b>${eur(k.pipeT)}</b><span class="sub">${k.openDeals.length} open deals · waarvan ${eur(k.pipeLater)} voor ${YEAR()+1} en later</span></div>
     <div class="tile"><span class="lab">Uren nog te factureren</span><b>${eur(k.unbilled)}</b><span class="sub">declarabele uren × tarief</span></div>
     <div class="tile"><span class="lab">Effectief uurtarief</span><b>${k.effRate?eur(k.effRate):"—"}</b><span class="sub">omzet ÷ declarabele uren ${YEAR()}</span></div>
     ${(()=>{const tx=taxCalc();return `<a class="tile" href="#belasting" style="text-decoration:none;color:inherit"><span class="lab">Belastingpot</span><b style="${tx.todo>0?"color:var(--bad)":""}">${tx.todo>0?eur(tx.todo):"Op peil"}</b><span class="sub">${tx.todo>0?"nog over te boeken · ":""}${eur(tx.saldo)} in pot van ${eur(tx.needed)} nodig</span></a>`;})()}
@@ -497,10 +494,10 @@ function pipeSummary(){
   const tot=sum(open,d=>d.waarde)||1;
   const cols=["var(--cost)","var(--accent-soft)","var(--accent)","var(--jersey)"];
   const bar=OPEN_STAGES.map((s,i)=>{const v=sum(open.filter(d=>d.fase===s),d=>d.waarde); return v?`<i title="${s}: ${eur(v)}" style="width:${v/tot*100}%;background:${cols[i]}"></i>`:"";}).join("");
-  const top=[...open].sort((a,b)=>(b.waarde*dealProb(b))-(a.waarde*dealProb(a))).slice(0,4);
+  const top=[...open].sort((a,b)=>(+b.waarde||0)-(+a.waarde||0)).slice(0,4);
   return `<div class="meter" style="height:12px;display:flex">${bar}</div>
   <div class="legend">${OPEN_STAGES.map((s,i)=>`<span><i style="background:${cols[i]}"></i>${s} ${eur(sum(open.filter(d=>d.fase===s),d=>d.waarde))}</span>`).join("")}</div>
-  <ul class="todo">${top.map(d=>`<li><span class="sev ok"></span><div class="t">${esc(d.naam)}<span>${esc(d.organisatie||"")} · ${d.fase} · ${dealProb(d)}%</span></div><b class="num">${eur(d.waarde)}</b></li>`).join("")}</ul>`;
+  <ul class="todo">${top.map(d=>`<li><span class="sev ok"></span><div class="t">${esc(d.naam)}<span>${esc(d.organisatie||"")} · ${d.fase}</span></div><b class="num">${eur(d.waarde)}</b></li>`).join("")}</ul>`;
 }
 const goalFor = y => +S.settings["doel"+y] || +S.settings.jaardoel || 0;
 function monthsBetween(a,b){ const r=[]; let [y,m]=a.split("-").map(Number); const [y2,m2]=b.split("-").map(Number);
@@ -527,7 +524,7 @@ const revenueYear = y => Object.entries(revenueMonths()).reduce((t,[m,v])=>t+(m.
 function allocations(){
   const t=TODAY(), thisM=t.slice(0,7), out=[];
   Object.entries(revenueMonths()).forEach(([m,v])=>out.push({m,k:"booked",v}));
-  S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&d.uitvoering).forEach(d=>out.push({m:d.uitvoering<thisM?thisM:d.uitvoering,k:"pipe",v:(+d.waarde||0)*dealProb(d)/100,src:d}));
+  S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&d.uitvoering).forEach(d=>out.push({m:d.uitvoering<thisM?thisM:d.uitvoering,k:"pipe",v:+d.waarde||0,src:d}));
   return out;
 }
 function stackSvg(items,aria){
@@ -536,29 +533,29 @@ function stackSvg(items,aria){
   let g=`<line class="gl" x1="${L}" x2="${W-R}" y1="${base}" y2="${base}"/>`;
   items.forEach((x,i)=>{ const cx=L+cw*i+cw/2, hb=h(x.b), hp=h(x.p);
     g+=`<rect x="${cx-bw/2}" y="${base-hb}" width="${bw}" height="${hb}" fill="var(--accent)"><title>${x.lab}: omzet ${eur(x.b)}</title></rect>`;
-    g+=`<rect x="${cx-bw/2}" y="${base-hb-hp}" width="${bw}" height="${hp}" fill="var(--jersey)" opacity=".75"><title>${x.lab}: gewogen pipeline ${eur(x.p)}</title></rect>`;
+    g+=`<rect x="${cx-bw/2}" y="${base-hb-hp}" width="${bw}" height="${hp}" fill="var(--jersey)" opacity=".75"><title>${x.lab}: pipeline ${eur(x.p)}</title></rect>`;
     if(x.b+x.p) g+=`<text class="ax" x="${cx}" y="${base-hb-hp-6}" text-anchor="middle" style="fill:var(--fg);font-weight:600${n>6?";font-size:9.5px":""}">${n>6&&x.b+x.p>=1000?"€"+Math.round((x.b+x.p)/1000)+"k":eur(x.b+x.p)}</text>`;
     g+=`<text class="ax" x="${cx}" y="${H-8}" text-anchor="middle" ${x.strong?'style="fill:var(--fg)"':""}>${x.lab}</text>`; });
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${aria}">${g}</svg></div>`;
 }
-const stackLegend = extra => `<div class="legend"><span><i style="background:var(--accent)"></i>Omzet: gewonnen projecten + facturen</span><span><i style="background:var(--jersey)"></i>Pipeline × kans</span>${extra||""}</div>`;
+const stackLegend = extra => `<div class="legend"><span><i style="background:var(--accent)"></i>Omzet: gewonnen projecten + facturen</span><span><i style="background:var(--jersey)"></i>Pipeline (open deals)</span>${extra||""}</div>`;
 function forecast(){
   const now=new Date(), ny=YEAR()+1, al=allocations(), qs=[];
   for(let i=0;i<6;i++){ const d=new Date(now.getFullYear(),(curQ()-1+i)*3,1); qs.push({y:d.getFullYear(),q:Math.floor(d.getMonth()/3)+1}); }
   const items=qs.map(x=>{ const inQ=al.filter(a=>+a.m.slice(0,4)===x.y && Math.floor((+a.m.slice(5,7)-1)/3)+1===x.q);
     return {lab:`Q${x.q} '${String(x.y).slice(2)}`,b:sum(inQ.filter(a=>a.k==="booked"),a=>a.v),p:sum(inQ.filter(a=>a.k==="pipe"),a=>a.v),strong:x.y>YEAR()}; });
-  const undated=sum(S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&!d.uitvoering),d=>(+d.waarde||0)*dealProb(d)/100);
+  const undated=sum(S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&!d.uitvoering),d=>+d.waarde||0);
   const nyA=al.filter(a=>a.m.startsWith(String(ny))), nb=sum(nyA.filter(a=>a.k==="booked"),a=>a.v), np=sum(nyA.filter(a=>a.k==="pipe"),a=>a.v), doel=goalFor(ny);
   return stackSvg(items,"Verwachte omzet per kwartaal") +
-    stackLegend(undated?`<span>${eur(undated)} gewogen zonder uitvoeringsdatum: <a href="#pipeline" style="color:var(--accent)">plan ze in</a></span>`:"") +
-    `<div class="trackkey"><span><b style="color:var(--fg)">${ny}:</b> ${eur(nb)} geboekt + ${eur(np)} gewogen pipeline${doel?` = <b style="color:var(--fg)">${Math.round((nb+np)/doel*100)}%</b> van een doel van ${eur(doel)}`:""}</span><button class="btn sm" data-oyear="${ny}">Bekijk ${ny}</button></div>`;
+    stackLegend(undated?`<span>${eur(undated)} aan deals zonder uitvoeringsdatum: <a href="#pipeline" style="color:var(--accent)">plan ze in</a></span>`:"") +
+    `<div class="trackkey"><span><b style="color:var(--fg)">${ny}:</b> ${eur(nb)} geboekt + ${eur(np)} in de pipeline${doel?` = <b style="color:var(--fg)">${Math.round((nb+np)/doel*100)}%</b> van een doel van ${eur(doel)}`:""}</span><button class="btn sm" data-oyear="${ny}">Bekijk ${ny}</button></div>`;
 }
 const yearSeg = () => `<div class="seg" role="group" aria-label="Jaar">${[YEAR(),YEAR()+1].map(y=>`<button type="button" data-oyear="${y}" aria-pressed="${F.year===y}">${y}</button>`).join("")}</div>`;
 function vFuture(y){
   const ys=String(y), al=allocations().filter(a=>a.m.startsWith(ys));
   const booked=sum(al.filter(a=>a.k==="booked"),a=>a.v), pipe=sum(al.filter(a=>a.k==="pipe"),a=>a.v);
   const inv=sum(S.invoices.filter(i=>i.status!=="Concept"&&inYear(i.datum,y)),i=>i.bedrag);
-  const deals=S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&(d.uitvoering||"").startsWith(ys)).sort((a,b)=>b.waarde*dealProb(b)-a.waarde*dealProb(a));
+  const deals=S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&(d.uitvoering||"").startsWith(ys)).sort((a,b)=>(+b.waarde||0)-(+a.waarde||0));
   const projs=S.projects.filter(p=>projShare(p,y)>0);
   const won=S.deals.filter(d=>d.fase==="Gewonnen"&&(d.uitvoering||"").startsWith(ys)&&!S.projects.some(p=>p.deal===d.id));
   const sure=booked, exp=sure+pipe, doel=goalFor(y), gap=Math.max(0,doel-exp);
@@ -570,10 +567,10 @@ function vFuture(y){
   `<div class="tiles">
     <div class="tile"><span class="lab">Verwacht ${y}</span><b>${eur(exp)}</b><span class="sub">${doel?`${Math.round(exp/doel*100)}% van doel ${eur(doel)}`:"zet een doel in Instellingen"}</span><div class="meter" style="display:flex"><i style="width:${surePct}%"></i><i style="width:${Math.max(0,pct-surePct)}%;background:var(--jersey);opacity:.75"></i></div></div>
     <div class="tile"><span class="lab">Geboekt</span><b>${eur(sure)}</b><span class="sub">${projs.length} project${projs.length===1?"":"en"}${inv?` · ${eur(inv)} al gefactureerd`:""}</span></div>
-    <div class="tile"><span class="lab">Pipeline gewogen</span><b>${eur(pipe)}</b><span class="sub">${deals.length} open deals · ongewogen ${eur(sum(deals,d=>d.waarde))}</span></div>
+    <div class="tile"><span class="lab">Pipeline ${y}</span><b>${eur(pipe)}</b><span class="sub">${deals.length} open deal${deals.length===1?"":"s"}</span></div>
     <div class="tile"><span class="lab">Zekerheid</span><b>${exp?Math.round(sure/exp*100)+"%":"—"}</b><span class="sub">deel van de verwachting dat al vastligt</span></div>
     <div class="tile"><span class="lab">Gat tot doel</span><b style="${gap?"color:var(--bad)":""}">${doel?eur(gap):"—"}</b><span class="sub">${gap&&doel?`≈ ${eur(gap/12)} per maand extra nodig`:doel?"doel is gedekt":"geen doel ingesteld"}</span></div>
-    <div class="tile"><span class="lab">Nog binnenhalen</span><b>${eur(gap/0.4)}</b><span class="sub">aan nieuwe deals, als 40% ervan doorgaat</span></div>
+    <div class="tile"><span class="lab">Gemiddelde deal</span><b>${deals.length?eur(pipe/deals.length):"—"}</b><span class="sub">open deals voor ${y}</span></div>
   </div>
   <div class="grid2">
     <div class="panel"><h3>Verwacht per maand <small>${y} · excl. btw</small></h3>${stackSvg(items,"Verwachte omzet per maand "+y)}${stackLegend()}</div>
@@ -583,7 +580,7 @@ function vFuture(y){
   </div>
   <div class="grid2">
     <div class="panel"><h3>Kansen voor ${y} <small><button class="btn sm ghost" data-dgo="${ys}">Bekijk op bord</button></small></h3>
-      ${deals.length?`<ul class="todo">${deals.map(d=>`<li><span class="sev ${d.fase==="Onderhandeling"||d.fase==="Voorstel"?"ok":""}"></span><div class="t">${esc(d.naam)}${exPill(d)}<span>${d.organisatie?esc(d.organisatie)+" · ":""}${d.fase} · ${dealProb(d)}% · ${fmtM(d.uitvoering)}</span></div><button class="btn sm" data-edit="deals:${d.id}">${eur(d.waarde)}</button></li>`).join("")}</ul>`:`<div class="empty">Nog geen deals met uitvoering in ${y}. Geef je deals een uitvoeringsmaand in de Pipeline.</div>`}
+      ${deals.length?`<ul class="todo">${deals.map(d=>`<li><span class="sev ${d.fase==="Onderhandeling"||d.fase==="Voorstel"?"ok":""}"></span><div class="t">${esc(d.naam)}${exPill(d)}<span>${d.organisatie?esc(d.organisatie)+" · ":""}${d.fase} · ${fmtM(d.uitvoering)}</span></div><button class="btn sm" data-edit="deals:${d.id}">${eur(d.waarde)}</button></li>`).join("")}</ul>`:`<div class="empty">Nog geen deals met uitvoering in ${y}. Geef je deals een uitvoeringsmaand in de Pipeline.</div>`}
     </div>
     <div class="panel"><h3>Bevestigd voor ${y} <small>${eur(booked)} omzet</small></h3>
       ${won.length?`<ul class="todo">${won.map(d=>`<li><span class="sev warn"></span><div class="t">Gewonnen: ${esc(d.naam)}<span>Nog geen project, dus telt niet mee als geboekt</span></div><button class="btn sm" data-mkproj="${d.id}">Maak project</button></li>`).join("")}</ul>`:""}
@@ -599,7 +596,7 @@ function recentHours(){
 
 function vPipeline(){
   const k=kpis();
-  return head("Pipeline",`${k.openDeals.length} open · ${eur(k.pipeT)} totaal · ${eur(k.pipeW)} gewogen`,newBtn("deals","Deal",1)) +
+  return head("Pipeline",`${k.openDeals.length} open · ${eur(k.pipeT)} in de pipeline`,newBtn("deals","Deal",1)) +
     `<div class="toolbar"><input type="search" id="q-deals" placeholder="Zoek deal of organisatie" data-q="deals" value="${esc(F.q.deals||"")}">
     <div class="seg" role="group" aria-label="Uitvoering">${["Alle",String(YEAR()),String(YEAR()+1),"Zonder datum"].map(v=>`<button type="button" data-dyear="${v}" aria-pressed="${F.dealYear===v}">${v}</button>`).join("")}</div></div><div id="list-deals"></div>`;
 }
@@ -730,7 +727,7 @@ function lDeals(q){
       <div class="meta"><span>${esc(d.organisatie||"")}</span><b class="num" style="color:var(--fg)">${eur(d.waarde)}</b></div>
       ${d.volgendeStap&&OPEN_STAGES.includes(s)?`<div class="meta"><span>→ ${esc(d.volgendeStap)}</span>${d.stapDatum?`<span class="pill ${due?"warn":""}">${fmtD(d.stapDatum)}</span>`:""}</div>`:""}
       ${s==="Gewonnen"&&!S.projects.some(p=>p.deal===d.id)?`<button class="btn sm" data-mkproj="${d.id}">Maak project</button>`:""}
-      <div class="mv"><button class="btn sm ghost" data-stage="${d.id}:-1" ${s==="Lead"?"disabled":""} aria-label="Fase terug">←</button><span class="muted" style="font-size:12px">${dealProb(d)}% kans</span><button class="btn sm ghost" data-stage="${d.id}:1" ${s==="Verloren"?"disabled":""} aria-label="Volgende fase">→</button></div>
+      <div class="mv"><button class="btn sm ghost" data-stage="${d.id}:-1" ${s==="Lead"?"disabled":""} aria-label="Fase terug">←</button><span class="muted" style="font-size:12px">${esc(d.type||"")}</span><button class="btn sm ghost" data-stage="${d.id}:1" ${s==="Verloren"?"disabled":""} aria-label="Volgende fase">→</button></div>
     </div>`}).join("")||`<div class="muted" style="font-size:12px;padding:6px 2px">Leeg</div>`}</div>`;}).join("")}</div>`;
 }
 function lContacts(q){
@@ -851,8 +848,7 @@ function updateCalc(){
     const p=projById(g("project")), r=+(p&&p.tarief)||+S.settings.uurtarief||0, u=+g("uren")||0;
     el.hidden=false; el.innerHTML=`<span>Waarde <b>${g("declarabel")==="Nee"?"niet declarabel":eur2(u*r)}</b></span><span class="muted">tarief ${eur2(r)}/u</span>`;
   } else if(editing.c==="deals"){
-    const w=+g("waarde")||0, k=g("kans")===""?STAGE_PROB[g("fase")]??0:+g("kans");
-    el.hidden=false; el.innerHTML=`<span>Gewogen waarde <b>${eur2(w*k/100)}</b></span><span class="muted">${k}% kans</span>`;
+    el.hidden=true;
   } else el.hidden=true;
 }
 function readForm(){
@@ -947,7 +943,7 @@ document.addEventListener("click", async e=>{
     return openForm("projects",null,{naam:x.naam,klant:x.organisatie,budget:x.waarde,type:x.type,status:"Gepland",start:x.uitvoering?x.uitvoering+"-01":"",deal:x.id}); }
   if(d.stage){ const [id,dir]=d.stage.split(":"); const deal=S.deals.find(x=>x.id===id); if(!deal) return;
     const i=Math.max(0,Math.min(STAGES.length-1,STAGES.indexOf(deal.fase)+ +dir)); const to=STAGES[i];
-    return patch("deals",id,{fase:to,kans:""}).then(async()=>{
+    return patch("deals",id,{fase:to}).then(async()=>{
       if(to==="Gewonnen"){ if(await ensureProject(deal)) toast(wonMsg(deal)); }
       else if(deal.fase==="Gewonnen"){ const pr=S.projects.find(p=>p.deal===id); if(pr) toast(`Let op: project "${pr.naam}" telt nog als omzet. Verwijder het als de deal niet doorgaat.`); }
     }); }
