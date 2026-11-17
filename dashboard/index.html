@@ -97,7 +97,7 @@ main{min-width:0;display:flex;flex-direction:column;gap:22px}
 .todo .sev{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .todo .sev.bad{background:var(--bad)} .todo .sev.warn{background:var(--warn)} .todo .sev.ok{background:var(--accent)}
 .todo .t{min-width:0}
-.todo .t span{display:block;color:var(--muted);font-size:12px}
+.todo .t>span:not(.pill){display:block;color:var(--muted);font-size:12px}
 .empty{color:var(--muted);padding:18px 4px;text-align:center}
 
 .chart svg{width:100%;height:auto;display:block}
@@ -113,6 +113,8 @@ main{min-width:0;display:flex;flex-direction:column;gap:22px}
 .track .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:12px;font-weight:600}
 .trackkey{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted)}
 
+a.org{color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
+a.org:hover{color:var(--accent)}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
 .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
@@ -251,7 +253,10 @@ const SCHEMA = {
     {k:"naam",l:"Deal / kans",t:"text",req:1,full:1,ph:"Bijv. VIP-hosting voorjaarsklassieker"},
     {k:"organisatie",l:"Organisatie",t:"text",list:"orgs"},
     {k:"contact",l:"Contactpersoon",t:"text",list:"people"},
-    {k:"waarde",l:"Waarde (excl. btw)",t:"money"},
+    {k:"vorm",l:"Soort opdracht",t:"select",o:["Eenmalig","Retainer"],def:"Eenmalig"},
+    {k:"waarde",l:"Waarde (excl. btw)",t:"money",hint:"Bij retainer: wordt berekend"},
+    {k:"maandbedrag",l:"Retainer: bedrag per maand",t:"money"},
+    {k:"looptijd",l:"Retainer: looptijd (maanden)",t:"number",min:1,hint:"Leeg = doorlopend, telt als 12 maanden"},
     {k:"fase",l:"Fase",t:"select",o:STAGES,def:"Lead"},
     {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
     {k:"volgendeStap",l:"Volgende stap",t:"text",full:1,ph:"Bijv. voorstel sturen, koffie in Enschede"},
@@ -273,12 +278,15 @@ const SCHEMA = {
   projects:{one:"project", fields:[
     {k:"naam",l:"Projectnaam",t:"text",req:1,full:1},
     {k:"klant",l:"Klant",t:"text",list:"orgs"},
+    {k:"contact",l:"Contactpersoon",t:"text",list:"people"},
     {k:"type",l:"Soort werk",t:"select",o:WORKTYPES},
     {k:"status",l:"Status",t:"select",o:["Gepland","Lopend","Afgerond","On hold"],def:"Lopend"},
+    {k:"vorm",l:"Soort opdracht",t:"select",o:["Vaste prijs","Retainer","Uurtarief"],def:"Vaste prijs"},
+    {k:"maandbedrag",l:"Retainer: bedrag per maand",t:"money"},
     {k:"tarief",l:"Uurtarief (leeg = standaard)",t:"money"},
     {k:"budget",l:"Budget / vaste prijs",t:"money"},
     {k:"start",l:"Start",t:"date"},
-    {k:"eind",l:"Eind / deadline",t:"date"},
+    {k:"eind",l:"Eind / deadline",t:"date",hint:"Retainer zonder einddatum telt door t/m eind volgend jaar"},
     {k:"notitie",l:"Notitie",t:"textarea",full:1}]},
   hours:{one:"urenregel", fields:[
     {k:"datum",l:"Datum",t:"date",req:1,def:TODAY},
@@ -389,16 +397,16 @@ function todos(){
 
 // ---------- routing ----------
 const VIEWS = [
-  ["overzicht","Overzicht"],["pipeline","Pipeline"],["netwerk","Netwerk"],["projecten","Projecten"],
+  ["overzicht","Overzicht"],["pipeline","Pipeline"],["bedrijven","Bedrijven"],["netwerk","Netwerk"],["projecten","Projecten"],
   ["uren","Uren"],["facturen","Facturen"],["uitgaven","Uitgaven"],["belasting","Belastingpot"],["ideeen","Ideeënbank"],["instellingen","Instellingen"]];
-const VIEW_COLL = {pipeline:"deals",netwerk:"contacts",projecten:"projects",uren:"hours",facturen:"invoices",uitgaven:"expenses",belasting:"taxpot",ideeen:"ideas"};
+const VIEW_COLL = {pipeline:"deals",bedrijven:"companies",netwerk:"contacts",projecten:"projects",uren:"hours",facturen:"invoices",uitgaven:"expenses",belasting:"taxpot",ideeen:"ideas"};
 const COLL_VIEW = Object.fromEntries(Object.entries(VIEW_COLL).map(([v,c])=>[c,v]));
 const view = () => { const h=location.hash.slice(1); return VIEWS.some(v=>v[0]===h)?h:"overzicht"; };
 
 function renderMenu(){
   const v=view(), k=kpis(), t=TODAY();
   const badges = {
-    pipeline:[k.openDeals.length], netwerk:[S.contacts.length, S.contacts.filter(c=>c.followUp&&c.followUp<=t).length],
+    pipeline:[k.openDeals.length], bedrijven:[companies().length], netwerk:[S.contacts.length, S.contacts.filter(c=>c.followUp&&c.followUp<=t).length],
     projecten:[S.projects.filter(p=>p.status==="Lopend").length], uren:[NUM1.format(k.urenM)+"u"],
     facturen:[S.invoices.length,k.late.length], uitgaven:[S.expenses.length], ideeen:[S.ideas.length]};
   $("#menu").innerHTML = VIEWS.map(([id,l])=>{
@@ -416,7 +424,7 @@ function render(){
   else if(S.err) html += `<div class="banner err"><span>${esc(S.err)}</span></div>`;
   const ex = COLLS.reduce((t,c)=>t+S[c].filter(r=>r.example).length,0);
   if(ex && v!=="instellingen") html += `<div class="banner ex"><span><b>Je kijkt naar ${ex} voorbeeldregels.</b> Ze laten zien hoe alles werkt. Bewerk ze of wis ze in één keer zodra je je eigen data invoert.</span><button class="btn sm" data-act="clear-ex">Voorbeelden wissen</button></div>`;
-  html += ({overzicht:vOverview,pipeline:vPipeline,netwerk:vContacts,projecten:vProjects,uren:vHours,facturen:vInvoices,uitgaven:vExpenses,belasting:vTax,ideeen:vIdeas,instellingen:vSettings}[v])();
+  html += ({overzicht:vOverview,pipeline:vPipeline,bedrijven:vCompanies,netwerk:vContacts,projecten:vProjects,uren:vHours,facturen:vInvoices,uitgaven:vExpenses,belasting:vTax,ideeen:vIdeas,instellingen:vSettings}[v])();
   m.innerHTML = html;
   if(VIEW_COLL[v]) renderList(VIEW_COLL[v]);
 }
@@ -505,17 +513,18 @@ function monthsBetween(a,b){ const r=[]; let [y,m]=a.split("-").map(Number); con
 // Omzet = gewonnen werk: projecten met budget tellen over hun looptijd, ook zonder factuur.
 // Facturen zonder (budget)project tellen op factuurdatum; meer gefactureerd dan budget telt als extra.
 function projMonths(p){
-  const t=TODAY(); let a=(p.start||p.eind||(p.createdAt||t).slice(0,10)).slice(0,7), b=(p.eind||p.start||a).slice(0,7);
+  const t=TODAY(), ret=p.vorm==="Retainer"; let a=(p.start||p.eind||(p.createdAt||t).slice(0,10)).slice(0,7), b=(p.eind||(ret?(p.status==="Afgerond"?(p.updatedAt||t).slice(0,7):(YEAR()+1)+"-12"):p.start)||a).slice(0,7);
   if(b<a) b=a; return monthsBetween(a,b);
 }
-const projShare = (p,y) => { if(!+p.budget) return 0; const ms=projMonths(p); return +p.budget*ms.filter(m=>m.startsWith(String(y))).length/ms.length; };
+const projValue = p => p.vorm==="Retainer" ? (+p.maandbedrag||0)*projMonths(p).length : (+p.budget||0);
+const projShare = (p,y) => { const v=projValue(p); if(!v) return 0; const ms=projMonths(p); return v*ms.filter(m=>m.startsWith(String(y))).length/ms.length; };
 function revenueMonths(){
   const R={}, add=(m,v)=>{ R[m]=(R[m]||0)+v; }, byProj={};
   S.invoices.forEach(i=>{ const p=i.project&&projById(i.project);
-    if(p&&+p.budget) (byProj[p.id]=byProj[p.id]||[]).push(i); else if(i.datum) add(i.datum.slice(0,7),+i.bedrag||0); });
-  S.projects.forEach(p=>{ if(!+p.budget) return;
-    const ms=projMonths(p); ms.forEach(m=>add(m,+p.budget/ms.length));
-    let extra=sum(byProj[p.id]||[],i=>i.bedrag)-(+p.budget);
+    if(p&&projValue(p)>0) (byProj[p.id]=byProj[p.id]||[]).push(i); else if(i.datum) add(i.datum.slice(0,7),+i.bedrag||0); });
+  S.projects.forEach(p=>{ const pv=projValue(p); if(!pv) return;
+    const ms=projMonths(p); ms.forEach(m=>add(m,pv/ms.length));
+    let extra=sum(byProj[p.id]||[],i=>i.bedrag)-pv;
     (byProj[p.id]||[]).slice().sort((x,y)=>(y.datum||"").localeCompare(x.datum||"")).forEach(i=>{ if(extra<=0) return; const v=Math.min(extra,+i.bedrag||0); add((i.datum||TODAY()).slice(0,7),v); extra-=v; });
   });
   return R;
@@ -704,13 +713,88 @@ function lTaxpot(){
   </tbody></table></div>`;
 }
 
+// ---------- bedrijven (CRM) ----------
+const okey = s => String(s||"").trim().toLowerCase();
+const orgLink = n => n ? `<a href="#bedrijven" class="org" data-org="${esc(String(n).trim())}">${esc(n)}</a>` : "";
+function companies(){
+  const M=new Map(), get=n=>{ const k=okey(n); if(!k) return null; if(!M.has(k)) M.set(k,{key:k,name:String(n).trim(),contacts:[],deals:[],projects:[],invoices:[]}); return M.get(k); };
+  S.contacts.forEach(x=>{ const o=get(x.organisatie); o&&o.contacts.push(x); });
+  S.deals.forEach(x=>{ const o=get(x.organisatie); o&&o.deals.push(x); });
+  S.projects.forEach(x=>{ const o=get(x.klant); o&&o.projects.push(x); });
+  S.invoices.forEach(x=>{ const o=get(x.klant); o&&o.invoices.push(x); });
+  return [...M.values()].map(o=>{
+    const open=o.deals.filter(d=>OPEN_STAGES.includes(d.fase));
+    const loose=o.invoices.filter(i=>{ const p=i.project&&projById(i.project); return !(p&&projValue(p)>0); });
+    const omzet=sum(o.projects,projValue)+sum(loose,i=>i.bedrag);
+    const omzetY=sum(o.projects,p=>projShare(p,YEAR()))+sum(loose.filter(i=>inYear(i.datum)),i=>i.bedrag);
+    const openInv=o.invoices.filter(i=>["Verstuurd","Verlopen"].includes(invState(i)));
+    const dates=[...o.contacts.map(c=>c.laatsteContact),...o.invoices.map(i=>i.datum),...o.projects.map(p=>p.start),...o.deals.map(d=>(d.updatedAt||d.createdAt||"").slice(0,10))].filter(x=>x&&x<=TODAY()).sort();
+    const ret=o.projects.filter(p=>p.vorm==="Retainer"&&p.status!=="Afgerond");
+    return {...o,open,pipe:sum(open,d=>d.waarde),omzet,omzetY,openInv,openSum:sum(openInv,invIncl),last:dates.pop()||"",retPm:sum(ret,p=>p.maandbedrag)};
+  });
+}
+function vCompanies(){
+  const all=companies(), o=F.org&&all.find(x=>x.key===okey(F.org));
+  if(o) return vCompany(o);
+  return head("Bedrijven",`${all.length} bedrijven · ${eur(sum(all,x=>x.pipe))} in de pipeline`,newBtn("contacts","Contact")+newBtn("deals","Deal",1)) +
+    `<div class="toolbar"><input type="search" id="q-companies" placeholder="Zoek bedrijf" data-q="companies" value="${esc(F.q.companies||"")}"></div><div id="list-companies"></div>`;
+}
+function lCompanies(q){
+  const all=companies().filter(o=>!q||o.key.includes(q)).sort((a,b)=>(b.pipe+b.omzet)-(a.pipe+a.omzet));
+  if(!all.length) return `<div class="panel"><div class="empty">Bedrijven verschijnen hier vanzelf zodra je een contact, deal, project of factuur met een organisatie of klant invoert.</div></div>`;
+  return `<div class="tablewrap"><table><thead><tr><th>Bedrijf</th><th class="n">Contacten</th><th class="n">Pipeline</th><th class="n">Projecten</th><th class="n">Omzet ${YEAR()}</th><th class="n">Omzet totaal</th><th>Laatste activiteit</th></tr></thead><tbody>
+  ${all.map(o=>`<tr data-org="${esc(o.name)}"><td><b>${esc(o.name)}</b>${o.retPm?` <span class="pill acc">retainer ${eur(o.retPm)} p/m</span>`:""}</td><td class="n">${o.contacts.length}</td><td class="n">${o.pipe?eur(o.pipe):'<span class="muted">—</span>'}${o.open.length?`<div class="muted" style="font-size:12px">${o.open.length} open</div>`:""}</td><td class="n">${o.projects.length}</td><td class="n">${eur(o.omzetY)}</td><td class="n">${eur(o.omzet)}</td><td>${o.last?fmtDY(o.last):"—"}</td></tr>`).join("")}
+  </tbody></table></div>`;
+}
+function vCompany(o){
+  const n=esc(o.name), stCls={Lopend:"good",Gepland:"acc",Afgerond:"","On hold":"warn"}, iCls={Betaald:"good",Verstuurd:"acc",Verlopen:"bad",Concept:"warn"};
+  const nf=(c,l,k)=>`<button class="btn" data-newfor="${c}" data-k="${k}" data-v="${n}">+ ${l}</button>`;
+  const li=(go,main,sub,right,sev="ok")=>`<li><span class="sev ${sev}"></span><div class="t">${main}<span>${sub}</span></div>${go?`<button class="btn sm" data-edit="${go}">${right}</button>`:right}</li>`;
+  const closed=o.deals.filter(d=>!OPEN_STAGES.includes(d.fase));
+  const projs=[...o.projects].sort((a,b)=>(b.start||"").localeCompare(a.start||""));
+  return `<div><button class="btn ghost" data-org="">← Alle bedrijven</button></div>` +
+  head(n,`${o.contacts.length} contact${o.contacts.length===1?"":"en"} · ${o.projects.length} project${o.projects.length===1?"":"en"} · laatste activiteit ${o.last?fmtDY(o.last):"—"}`,
+    nf("deals","Deal","organisatie")+nf("projects","Project","klant")+nf("contacts","Contact","organisatie")+nf("invoices","Factuur","klant")) +
+  `<div class="tiles">
+    <div class="tile"><span class="lab">Omzet totaal</span><b>${eur(o.omzet)}</b><span class="sub">projecten + losse facturen</span></div>
+    <div class="tile"><span class="lab">Omzet ${YEAR()}</span><b>${eur(o.omzetY)}</b><span class="sub">gewonnen werk dit jaar</span></div>
+    <div class="tile"><span class="lab">Pipeline</span><b>${eur(o.pipe)}</b><span class="sub">${o.open.length} open deal${o.open.length===1?"":"s"}</span></div>
+    <div class="tile"><span class="lab">Openstaand</span><b style="${o.openInv.some(i=>invState(i)==="Verlopen")?"color:var(--bad)":""}">${eur(o.openSum)}</b><span class="sub">${o.openInv.length} factu${o.openInv.length===1?"ur":"ren"} incl. btw</span></div>
+    <div class="tile"><span class="lab">Retainer</span><b>${o.retPm?eur(o.retPm):"—"}</b><span class="sub">${o.retPm?"per maand, lopend":"geen lopende retainer"}</span></div>
+    <div class="tile"><span class="lab">Deals gewonnen</span><b>${o.deals.filter(d=>d.fase==="Gewonnen").length} / ${closed.length}</b><span class="sub">van de afgesloten deals</span></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Pipeline <small>${eur(o.pipe)}</small></h3>
+      ${o.open.length?`<ul class="todo">${o.open.sort((a,b)=>(+b.waarde||0)-(+a.waarde||0)).map(d=>li("deals:"+d.id,esc(d.naam)+(d.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""),`${d.fase}${d.contact?" · "+esc(d.contact):""}${d.uitvoering?" · uitvoering "+fmtM(d.uitvoering):""}${d.volgendeStap?" · → "+esc(d.volgendeStap):""}`,eur(d.waarde),d.fase==="Onderhandeling"||d.fase==="Voorstel"?"ok":"")).join("")}</ul>`:`<div class="empty">Geen open deals.</div>`}
+      ${closed.length?`<details><summary class="muted" style="cursor:pointer">Afgesloten deals (${closed.length})</summary><ul class="todo">${closed.map(d=>li("deals:"+d.id,esc(d.naam),d.fase,eur(d.waarde),d.fase==="Gewonnen"?"ok":"")).join("")}</ul></details>`:""}
+    </div>
+    <div class="panel"><h3>Contactpersonen <small>${o.contacts.length}</small></h3>
+      ${o.contacts.length?`<ul class="todo">${o.contacts.map(c=>li("contacts:"+c.id,`<b>${esc(c.naam)}</b>${c.rol?" · "+esc(c.rol):""}`,`<span class="sel">${esc(c.email||"")}</span>${c.email&&c.telefoon?" · ":""}<span class="sel">${esc(c.telefoon||"")}</span>${c.followUp?` · follow-up ${fmtD(c.followUp)}`:""}`,esc(c.warmte||"Open"),c.warmte==="Warm"?"ok":"")).join("")}</ul>`:`<div class="empty">Nog geen contactpersonen.</div>`}
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Opdrachten <small>${eur(sum(o.projects,projValue))}</small></h3>
+      ${projs.length?`<ul class="todo">${projs.map(p=>li("projects:"+p.id,`${esc(p.naam)} <span class="pill ${stCls[p.status]??""}">${esc(p.status)}</span>${p.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}`,`${p.vorm==="Retainer"?eur(p.maandbedrag)+" p/m · ":""}${fmtM((p.start||"").slice(0,7))||"?"} → ${p.eind?fmtM(p.eind.slice(0,7)):p.vorm==="Retainer"?"doorlopend":"?"}`,eur(projValue(p)),p.status==="Lopend"?"ok":"")).join("")}</ul>`:`<div class="empty">Nog geen opdrachten.</div>`}
+    </div>
+    <div class="panel"><h3>Facturen <small>${eur(sum(o.invoices,i=>i.bedrag))} excl. btw</small></h3>
+      ${o.invoices.length?`<ul class="todo">${[...o.invoices].sort((a,b)=>String(b.nr).localeCompare(String(a.nr))).map(i=>{const st=invState(i);return li("invoices:"+i.id,`${esc(i.nr)} <span class="pill ${iCls[st]}">${st}</span>`,`${fmtDY(i.datum)}${i.omschrijving?" · "+esc(i.omschrijving):""}`,eur2(i.bedrag),st==="Verlopen"?"bad":st==="Betaald"?"ok":"warn")}).join("")}</ul>`:`<div class="empty">Nog geen facturen.</div>`}
+    </div>
+  </div>`;
+}
+async function ensureContact(name,org){
+  const nm=String(name||"").trim(); if(!db||!nm) return false;
+  if(S.contacts.some(c=>okey(c.naam)===okey(nm))) return false;
+  await db.collection("contacts").add({naam:nm,organisatie:String(org||"").trim(),rol:"",warmte:"Lauw",email:"",telefoon:"",laatsteContact:TODAY(),followUp:"",tags:"",notitie:"",createdAt:new Date().toISOString()});
+  return true;
+}
+
 // ---------- lists ----------
 const match = (r,q,keys) => !q || keys.some(k=>String(r[k]??"").toLowerCase().includes(q));
 function renderList(c){
   const el=$("#list-"+c); if(!el) return;
   const q=(F.q[c]||"").trim().toLowerCase();
-  if(loading() && !S[c].length){ el.innerHTML=`<div class="empty">Gegevens laden…</div>`; return; }
-  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,hours:lHours,invoices:lInvoices,expenses:lExpenses,ideas:lIdeas,taxpot:lTaxpot}[c])(q);
+  if(loading() && !(S[c]||[]).length){ el.innerHTML=`<div class="empty">Gegevens laden…</div>`; return; }
+  el.innerHTML = ({deals:lDeals,contacts:lContacts,projects:lProjects,hours:lHours,invoices:lInvoices,expenses:lExpenses,ideas:lIdeas,taxpot:lTaxpot,companies:lCompanies}[c])(q);
 }
 function emptyState(c,txt){ return `<div class="panel"><div class="empty">${txt}<br><br><button class="btn pri" data-new="${c}">+ ${SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)} toevoegen</button></div></div>`; }
 
@@ -724,7 +808,7 @@ function lDeals(q){
     ${ds.map(d=>{const due=d.stapDatum&&d.stapDatum<=TODAY()&&OPEN_STAGES.includes(s);return `<div class="card" data-edit="deals:${d.id}" tabindex="0">
       <div class="ttl">${esc(d.naam)}${exPill(d)}</div>
       ${d.uitvoering?`<div><span class="pill ${d.uitvoering.slice(0,4)>String(YEAR())?"acc":""}">Uitvoering ${fmtM(d.uitvoering)}</span></div>`:""}
-      <div class="meta"><span>${esc(d.organisatie||"")}</span><b class="num" style="color:var(--fg)">${eur(d.waarde)}</b></div>
+      <div class="meta"><span>${orgLink(d.organisatie)}</span><b class="num" style="color:var(--fg)">${eur(d.waarde)}${d.vorm==="Retainer"?`<span class="muted" style="font-weight:400"> · ${eur(d.maandbedrag)} p/m</span>`:""}</b></div>
       ${d.volgendeStap&&OPEN_STAGES.includes(s)?`<div class="meta"><span>→ ${esc(d.volgendeStap)}</span>${d.stapDatum?`<span class="pill ${due?"warn":""}">${fmtD(d.stapDatum)}</span>`:""}</div>`:""}
       ${s==="Gewonnen"&&!S.projects.some(p=>p.deal===d.id)?`<button class="btn sm" data-mkproj="${d.id}">Maak project</button>`:""}
       <div class="mv"><button class="btn sm ghost" data-stage="${d.id}:-1" ${s==="Lead"?"disabled":""} aria-label="Fase terug">←</button><span class="muted" style="font-size:12px">${esc(d.type||"")}</span><button class="btn sm ghost" data-stage="${d.id}:1" ${s==="Verloren"?"disabled":""} aria-label="Volgende fase">→</button></div>
@@ -739,7 +823,7 @@ function lContacts(q){
   return `<div class="tablewrap"><table><thead><tr><th>Naam</th><th>Organisatie</th><th>Relatie</th><th>Laatste contact</th><th>Follow-up</th><th>Contact</th><th></th></tr></thead><tbody>
   ${rows.map(r=>{const ago=r.laatsteContact?daysBetween(r.laatsteContact,t):null;return `<tr data-edit="contacts:${r.id}">
     <td><b>${esc(r.naam)}</b>${exPill(r)}<div class="muted" style="font-size:12px">${esc(r.rol||"")}</div></td>
-    <td>${esc(r.organisatie||"")}</td>
+    <td>${orgLink(r.organisatie)}</td>
     <td><span class="pill ${r.warmte==="Warm"?"good":r.warmte==="Koud"?"":"acc"}">${esc(r.warmte||"—")}</span></td>
     <td>${fmtD(r.laatsteContact)}${ago!=null?`<div class="muted" style="font-size:12px">${ago===0?"vandaag":ago+" dagen geleden"}</div>`:""}</td>
     <td>${r.followUp?`<span class="pill ${r.followUp<t?"bad":r.followUp===t?"warn":""}">${fmtD(r.followUp)}</span>`:'<span class="muted">—</span>'}</td>
@@ -758,10 +842,10 @@ function lProjects(q){
     const st=p.status==="Lopend"?"good":p.status==="Gepland"?"acc":p.status==="Afgerond"?"":"warn";
     return `<div class="pcard" data-edit="projects:${p.id}" tabindex="0">
       <div class="top"><h4>${esc(p.naam)}${exPill(p)}</h4><span class="pill ${st}">${esc(p.status)}</span></div>
-      <p>${esc(p.klant||"")}${p.type?" · "+esc(p.type):""}</p>
-      <p>${p.start?fmtD(p.start):"?"} → ${p.eind?fmtD(p.eind):"?"}</p>
+      <p>${orgLink(p.klant)}${p.type?" · "+esc(p.type):""}</p>
+      <p>${p.vorm==="Retainer"?`<span class="pill acc">retainer ${eur(p.maandbedrag)} p/m</span> `:""}${p.start?fmtD(p.start):"?"} → ${p.eind?fmtD(p.eind):p.vorm==="Retainer"?"doorlopend":"?"}</p>
       <div class="meta" style="display:flex;justify-content:space-between;font-size:12.5px"><span>${NUM1.format(u)} u · ${eur(val)} waarde</span><span>${eur(inv)} gefactureerd</span></div>
-      ${p.budget?`<div class="meter"><i style="width:${pct}%;${pct>=100?"background:var(--bad)":pct>80?"background:var(--warn)":""}"></i></div><p style="font-size:12px">${Math.round(pct)}% van budget ${eur(p.budget)}</p>`:""}
+      ${p.budget&&p.vorm!=="Retainer"?`<div class="meter"><i style="width:${pct}%;${pct>=100?"background:var(--bad)":pct>80?"background:var(--warn)":""}"></i></div><p style="font-size:12px">${Math.round(pct)}% van budget ${eur(p.budget)}</p>`:""}
     </div>`;}).join("")}</div>`;
 }
 function hoursInRange(){
@@ -787,7 +871,7 @@ function lInvoices(q){
   const cls={Betaald:"good",Verstuurd:"acc",Verlopen:"bad",Concept:"warn"};
   if(!rows.length) return `<div class="panel"><div class="empty">Geen facturen met deze status.</div></div>`;
   return `<div class="tablewrap"><table><thead><tr><th>Nr</th><th>Klant</th><th>Datum</th><th>Vervalt</th><th class="n">Excl.</th><th class="n">Incl.</th><th>Status</th><th></th></tr></thead><tbody>
-  ${rows.map(i=>{const st=invState(i);return `<tr data-edit="invoices:${i.id}"><td><b>${esc(i.nr)}</b>${exPill(i)}</td><td>${esc(i.klant)}<div class="muted" style="font-size:12px">${esc(i.omschrijving||"")}</div></td><td>${fmtD(i.datum)}</td>
+  ${rows.map(i=>{const st=invState(i);return `<tr data-edit="invoices:${i.id}"><td><b>${esc(i.nr)}</b>${exPill(i)}</td><td>${orgLink(i.klant)}<div class="muted" style="font-size:12px">${esc(i.omschrijving||"")}</div></td><td>${fmtD(i.datum)}</td>
     <td>${st==="Betaald"?`<span class="muted">${i.betaaldOp?"betaald "+fmtD(i.betaaldOp):"—"}</span>`:fmtD(invDue(i))+(st==="Verlopen"?`<div style="font-size:12px;color:var(--bad)">${daysBetween(invDue(i),t)} dagen te laat</div>`:"")}</td>
     <td class="n">${eur2(i.bedrag)}</td><td class="n">${eur2(invIncl(i))}</td><td><span class="pill ${cls[st]}">${st}</span></td>
     <td class="n">${st==="Concept"?`<button class="btn sm" data-istate="${i.id}:Verstuurd">Verstuurd</button>`:st!=="Betaald"?`<button class="btn sm" data-istate="${i.id}:Betaald">Betaald</button>`:""}</td></tr>`}).join("")}
@@ -862,12 +946,15 @@ async function saveForm(){
   if(!db){ toast("Opslag niet beschikbaar"); return; }
   const {c,id,extra}=editing; const data=readForm(); const now=new Date().toISOString();
   if(c==="invoices" && data.status==="Betaald" && !data.betaaldOp) data.betaaldOp=TODAY();
+  if(c==="deals" && data.vorm==="Retainer" && data.maandbedrag!=="") data.waarde=(+data.maandbedrag||0)*(+data.looptijd||12);
   try{
     if(id){ const old=S[c].find(r=>r.id===id)||{}; const {id:_,example:__,...rest}=old; await db.collection(c).doc(id).set({...rest,...data,updatedAt:now}); }
     let newId=id;
     if(!id){ const ref=await db.collection(c).add({...extra,...data,createdAt:now}); newId=ref.id; }
     $("#dlg").close();
-    if(c==="deals"&&data.fase==="Gewonnen"&&await ensureProject({...data,id:newId})) toast(wonMsg(data));
+    const newC=(c==="deals"||c==="projects")&&data.contact ? await ensureContact(data.contact,data.organisatie||data.klant) : false;
+    if(c==="deals"&&data.fase==="Gewonnen"&&await ensureProject({...data,id:newId})) toast(wonMsg(data)+(newC?" · contact opgeslagen in Netwerk":""));
+    else if(newC) toast(`Opgeslagen · ${data.contact} toegevoegd aan Netwerk`);
     else toast(id?"Opgeslagen":SCHEMA[c].one[0].toUpperCase()+SCHEMA[c].one.slice(1)+" toegevoegd");
   }catch(e){ toast(e&&e.code==="quota_exceeded"?"Opslag is vol: verwijder oude regels":"Opslaan mislukt, probeer het opnieuw"); }
 }
@@ -885,8 +972,10 @@ async function ensureProject(d){
   if(!db||!d.id||S.projects.some(p=>p.deal===d.id)) return false;
   const u=d.uitvoering, thisM=TODAY().slice(0,7);
   await db.collection("projects").add({naam:d.naam||"Nieuw project",klant:d.organisatie||"",type:d.type||"",
-    status:u&&u>thisM?"Gepland":"Lopend",tarief:"",budget:+d.waarde||"",
-    start:u?u+"-01":TODAY(),eind:u?iso(new Date(+u.slice(0,4),+u.slice(5,7),0)):"",
+    status:u&&u>thisM?"Gepland":"Lopend",tarief:"",contact:d.contact||"",
+    ...(d.vorm==="Retainer" ? {vorm:"Retainer",maandbedrag:+d.maandbedrag||"",budget:"",
+        start:(u||TODAY().slice(0,7))+"-01", eind:+d.looptijd?iso(new Date(+(u||TODAY()).slice(0,4),+(u||TODAY()).slice(5,7)-1+(+d.looptijd),0)):""}
+      : {vorm:"Vaste prijs",budget:+d.waarde||"",start:u?u+"-01":TODAY(),eind:u?iso(new Date(+u.slice(0,4),+u.slice(5,7),0)):""}),
     notitie:d.notitie||"",deal:d.id,createdAt:new Date().toISOString()});
   return true;
 }
@@ -931,10 +1020,13 @@ async function exportCsv(c){
 
 // ---------- events ----------
 document.addEventListener("click", async e=>{
-  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-istate],[data-touch],[data-export],[data-hrange],[data-istat],[data-csort],[data-mkproj],[data-dyear],[data-oyear],[data-dgo]");
+  const mn=e.target.closest("nav.menu a"); if(mn&&mn.getAttribute("href")==="#bedrijven"){ F.org=null; if(view()==="bedrijven") render(); }
+  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-istate],[data-touch],[data-export],[data-hrange],[data-istat],[data-csort],[data-mkproj],[data-dyear],[data-oyear],[data-dgo],[data-org],[data-newfor]");
   if(!t) return;
   const d=t.dataset;
   if(d.stage||d.istate||d.touch){ e.stopPropagation(); }
+  if(d.org!=null){ e.preventDefault(); F.org=d.org; if(view()!=="bedrijven") location.hash="bedrijven"; else { render(); window.scrollTo(0,0); } return; }
+  if(d.newfor) return openForm(d.newfor,null,{[d.k]:d.v});
   if(d.new) return openForm(d.new);
   if(d.dyear){ F.dealYear=d.dyear; return render(); }
   if(d.oyear){ F.year=+d.oyear; store.set("ploeg.year",F.year); if(view()!=="overzicht") location.hash="overzicht"; else render(); window.scrollTo(0,0); return; }
