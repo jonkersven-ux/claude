@@ -115,6 +115,17 @@ main{min-width:0;display:flex;flex-direction:column;gap:22px}
 
 a.org{color:inherit;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px}
 a.org:hover{color:var(--accent)}
+.goalwrap{position:relative;padding-block:6px}
+.goalbar{height:26px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);display:flex;overflow:hidden}
+.goalbar i{display:block;height:100%}
+.goalmark{position:absolute;top:0;bottom:0;width:0;border-left:3px solid var(--fg)}
+.goalgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.goalgrid>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.goalgrid .lab{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.goalgrid .lab i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.goalgrid b{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.goalgrid .sub{color:var(--muted);font-size:12px}
+@media (max-width:700px){.goalgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
 .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
@@ -436,76 +447,69 @@ const newBtn = (c,l,pri) => `<button class="btn ${pri?"pri":""}" data-new="${c}"
 const exPill = r => r.example?` <span class="pill ex">voorbeeld</span>`:"";
 
 function vOverview(){
-  if(F.year>YEAR()) return vFuture(F.year);
-  const k=kpis(), h=new Date().getHours();
+  const y=F.year, ys=String(y), k=kpis(), h=new Date().getHours(), thisM=TODAY().slice(0,7);
   const greet = h<6?"Goedenacht":h<12?"Goedemorgen":h<18?"Goedemiddag":"Goedenavond";
   const name = S.settings.naam?(", "+esc(S.settings.naam.split(" ")[0])):"";
   const dateStr = new Date().toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long"});
-  const doelPct = S.settings.jaardoel? Math.min(100,k.omzet/S.settings.jaardoel*100):0;
-  const td = todos();
-  const urenPct = Math.min(100,k.urenY/k.doel*100), pacePct=Math.min(100,k.pace/k.doel*100);
-  const ahead = k.urenY - k.pace;
-  return head(`${greet}${name}`, `${dateStr[0].toUpperCase()+dateStr.slice(1)} · ${loading()?"Gegevens laden…":"koers voor "+YEAR()}`,
+  // akkoord = gewonnen werk (projecten + facturen) in dit jaar; pipeline = open deals met uitvoering in dit jaar
+  const RM=revenueMonths(), ak=sum(Object.keys(RM).filter(m=>m.startsWith(ys)),m=>RM[m]);
+  const gef=sum(S.invoices.filter(i=>i.status!=="Concept"&&inYear(i.datum,y)),i=>i.bedrag);
+  const openD=S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
+  const deals=openD.filter(d=>d.uitvoering&&(d.uitvoering<thisM?thisM:d.uitvoering).startsWith(ys)).sort((a,b)=>(+b.waarde||0)-(+a.waarde||0));
+  const pi=sum(deals,d=>d.waarde), undated=openD.filter(d=>!d.uitvoering), doel=goalFor(y), tot=ak+pi, gap=Math.max(0,doel-tot);
+  const pct=v=>doel?Math.round(v/doel*100)+"% van doel":"";
+  const scale=Math.max(doel,tot,1);
+  const projs=S.projects.filter(p=>projShare(p,y)>0).sort((a,b)=>projShare(b,y)-projShare(a,y));
+  const loose=sum(Object.keys(RM).filter(m=>m.startsWith(ys)),m=>RM[m])-sum(projs,p=>projShare(p,y));
+  const won=S.deals.filter(d=>d.fase==="Gewonnen"&&!S.projects.some(p=>p.deal===d.id)&&(d.uitvoering||"").startsWith(ys));
+  const td=todos(), stCls={Lopend:"good",Gepland:"acc",Afgerond:"","On hold":"warn"};
+  const items=Array.from({length:12},(_,i)=>{ const m=ys+"-"+pad(i+1);
+    return {lab:new Date(y,i,1).toLocaleDateString("nl-NL",{month:"short"}).replace(".",""),b:RM[m]||0,p:sum(deals.filter(d=>(d.uitvoering<thisM?thisM:d.uitvoering)===m),d=>d.waarde),strong:m===thisM}; });
+  const urenPct=Math.min(100,k.urenY/k.doel*100), pacePct=Math.min(100,k.pace/k.doel*100), ahead=k.urenY-k.pace;
+  const tx=taxCalc();
+  return head(`${greet}${name}`, `${dateStr[0].toUpperCase()+dateStr.slice(1)} · ${loading()?"Gegevens laden…":"jaaroverzicht "+y}`,
       yearSeg()+newBtn("hours","Uren",1)+newBtn("invoices","Factuur")+newBtn("deals","Deal")+newBtn("contacts","Contact")+newBtn("ideas","Idee")) +
-  `<div class="tiles">
-    <div class="tile"><span class="lab">Omzet ${YEAR()}</span><b>${eur(k.omzet)}</b><span class="sub">${S.settings.jaardoel?`${Math.round(doelPct)}% van doel · `:""}${k.omzet-k.gefact>0.5?`${eur(k.omzet-k.gefact)} nog niet gefactureerd`:"alles gefactureerd"}</span><div class="meter"><i style="width:${doelPct}%"></i></div></div>
-    <div class="tile"><span class="lab">Openstaand</span><b>${eur(k.openSum)}</b><span class="sub">${k.open.length} facturen${k.late.length?` · <span style="color:var(--bad);font-weight:600">${k.late.length} verlopen (${eur(k.lateSum)})</span>`:" · niets verlopen"}</span></div>
-    <div class="tile"><span class="lab">Pipeline</span><b>${eur(k.pipeT)}</b><span class="sub">${k.openDeals.length} open deals · waarvan ${eur(k.pipeLater)} voor ${YEAR()+1} en later</span></div>
-    <div class="tile"><span class="lab">Uren nog te factureren</span><b>${eur(k.unbilled)}</b><span class="sub">declarabele uren × tarief</span></div>
-    <div class="tile"><span class="lab">Effectief uurtarief</span><b>${k.effRate?eur(k.effRate):"—"}</b><span class="sub">omzet ÷ declarabele uren ${YEAR()}</span></div>
-    ${(()=>{const tx=taxCalc();return `<a class="tile" href="#belasting" style="text-decoration:none;color:inherit"><span class="lab">Belastingpot</span><b style="${tx.todo>0?"color:var(--bad)":""}">${tx.todo>0?eur(tx.todo):"Op peil"}</b><span class="sub">${tx.todo>0?"nog over te boeken · ":""}${eur(tx.saldo)} in pot van ${eur(tx.needed)} nodig</span></a>`;})()}
+  `<div class="panel"><h3>Doel ${y} <small>${doel?"":'<a href="#instellingen" style="color:var(--accent)">Stel een omzetdoel in</a>'}</small></h3>
+    <div class="goalwrap"><div class="goalbar"><i style="width:${ak/scale*100}%;background:var(--accent)"></i><i style="width:${pi/scale*100}%;background:var(--jersey);opacity:.75"></i></div>${doel?`<div class="goalmark" style="left:${Math.min(100,doel/scale*100)}%"></div>`:""}</div>
+    <div class="goalgrid">
+      <div><span class="lab">Doel</span><b>${doel?eur(doel):"—"}</b><span class="sub">omzet excl. btw</span></div>
+      <div><span class="lab"><i style="background:var(--accent)"></i>Akkoord</span><b>${eur(ak)}</b><span class="sub">${pct(ak)}</span></div>
+      <div><span class="lab"><i style="background:var(--jersey)"></i>Pipeline</span><b>${eur(pi)}</b><span class="sub">${pct(pi)}</span></div>
+      <div><span class="lab">Akkoord + pipeline</span><b>${eur(tot)}</b><span class="sub">${pct(tot)}</span></div>
+      <div><span class="lab">Nog te vinden</span><b style="color:${gap?"var(--bad)":"var(--good)"}">${doel?(gap?eur(gap):"Gehaald"):"—"}</b><span class="sub">${doel?(gap?`zonder pipeline: ${eur(Math.max(0,doel-ak))}`:`${eur(tot-doel)} boven je doel`):""}</span></div>
+    </div>
+  </div>
+  <div class="tiles">
+    <div class="tile"><span class="lab">Akkoord ${y}</span><b>${eur(ak)}</b><span class="sub">${eur(gef)} gefactureerd · ${eur(Math.max(0,ak-gef))} nog te factureren</span></div>
+    <div class="tile"><span class="lab">Pipeline ${y}</span><b>${eur(pi)}</b><span class="sub">${deals.length} open deal${deals.length===1?"":"s"}${undated.length?` · ${eur(sum(undated,d=>d.waarde))} zonder datum`:""}</span></div>
+    <div class="tile"><span class="lab">Opdrachten ${y}</span><b>${projs.length}</b><span class="sub">${projs.filter(p=>p.vorm==="Retainer").length} retainer${projs.filter(p=>p.vorm==="Retainer").length===1?"":"s"} · ${projs.filter(p=>p.status==="Lopend").length} lopend</span></div>
+    <div class="tile"><span class="lab">Nodig per maand</span><b>${doel&&gap?eur(gap/Math.max(1,y===YEAR()?12-new Date().getMonth():12)):"—"}</b><span class="sub">${doel&&gap?`extra omzet ${y===YEAR()?"de rest van het jaar":"in "+y}`:"doel is gedekt"}</span></div>
+    <div class="tile"><span class="lab">Openstaand nu</span><b>${eur(k.openSum)}</b><span class="sub">${k.open.length} facturen${k.late.length?` · <span style="color:var(--bad);font-weight:600">${k.late.length} verlopen</span>`:" · niets verlopen"}</span></div>
+    <a class="tile" href="#belasting" style="text-decoration:none;color:inherit"><span class="lab">Belastingpot</span><b style="${tx.todo>0?"color:var(--bad)":""}">${tx.todo>0?eur(tx.todo):"Op peil"}</b><span class="sub">${tx.todo>0?"nog over te boeken · ":""}${eur(tx.saldo)} in pot</span></a>
   </div>
   <div class="grid2">
-    <div class="panel"><h3>Cashflow <small>laatste 12 maanden · excl. btw</small></h3>${chart()}</div>
-    <div class="panel"><h3>Actiepunten <small>${td.length} open</small></h3>
-      ${td.length?`<ul class="todo">${td.slice(0,9).map(x=>`<li><span class="sev ${x.sev}"></span><div class="t">${esc(x.txt)}<span>${esc(x.sub)}</span></div>${x.go?`<button class="btn sm" data-edit="${x.go[0]}:${x.go[1]}">Open</button>`:""}</li>`).join("")}</ul>`:`<div class="empty">Alles bij. Geen verlopen facturen of follow-ups.</div>`}
+    <div class="panel"><h3>Per maand <small>${y} · excl. btw</small></h3>${stackSvg(items,"Akkoord en pipeline per maand "+y)}${stackLegend()}</div>
+    <div class="panel"><h3>Actiepunten <small>vandaag · ${td.length} open</small></h3>
+      ${td.length?`<ul class="todo">${td.slice(0,8).map(x=>`<li><span class="sev ${x.sev}"></span><div class="t">${esc(x.txt)}<span>${esc(x.sub)}</span></div>${x.go?`<button class="btn sm" data-edit="${x.go[0]}:${x.go[1]}">Open</button>`:""}</li>`).join("")}</ul>`:`<div class="empty">Alles bij. Geen verlopen facturen of follow-ups.</div>`}
     </div>
   </div>
   <div class="grid2">
-    <div class="panel"><h3>Urencriterium <small>${NUM1.format(k.urenY)} van ${k.doel} uur</small></h3>
+    <div class="panel"><h3>Akkoord voor ${y} <small>${eur(ak)}</small></h3>
+      ${won.length?`<ul class="todo">${won.map(d=>`<li><span class="sev warn"></span><div class="t">Gewonnen: ${esc(d.naam)}<span>Nog geen project, dus telt niet mee</span></div><button class="btn sm" data-mkproj="${d.id}">Maak project</button></li>`).join("")}</ul>`:""}
+      ${projs.length||loose>0.5?`<ul class="todo">${projs.map(p=>`<li><span class="sev ${p.status==="Lopend"?"ok":""}"></span><div class="t">${esc(p.naam)} <span class="pill ${stCls[p.status]??""}">${esc(p.status)}</span>${p.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}<span>${orgLink(p.klant)}${p.vorm==="Retainer"?" · "+eur(p.maandbedrag)+" p/m":""}</span></div><button class="btn sm" data-edit="projects:${p.id}">${eur(projShare(p,y))}</button></li>`).join("")}${loose>0.5?`<li><span class="sev ok"></span><div class="t">Losse facturen<span>facturen zonder project met budget</span></div><a class="btn sm" href="#facturen" style="text-decoration:none">${eur(loose)}</a></li>`:""}</ul>`:(won.length?"":`<div class="empty">Nog niets akkoord voor ${y}. Zet een deal op Gewonnen, dan verschijnt hij hier.</div>`)}
+    </div>
+    <div class="panel"><h3>Pipeline voor ${y} <small><button class="btn sm ghost" data-dgo="${ys}">Bekijk op bord</button></small></h3>
+      ${deals.length?`<ul class="todo">${deals.map(d=>`<li><span class="sev ${d.fase==="Onderhandeling"||d.fase==="Voorstel"?"ok":""}"></span><div class="t">${esc(d.naam)}${d.vorm==="Retainer"?' <span class="pill acc">retainer</span>':""}<span>${d.organisatie?orgLink(d.organisatie)+" · ":""}${d.fase} · ${fmtM(d.uitvoering)}</span></div><button class="btn sm" data-edit="deals:${d.id}">${eur(d.waarde)}</button></li>`).join("")}</ul>`:`<div class="empty">Geen open deals met uitvoering in ${y}.</div>`}
+      ${undated.length?`<p class="muted" style="margin:0;font-size:12.5px">${undated.length} deal${undated.length===1?"":"s"} (${eur(sum(undated,d=>d.waarde))}) zonder uitvoeringsmaand telt nergens mee. <a href="#pipeline" style="color:var(--accent)">Plan ze in</a>.</p>`:""}
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><h3>Urencriterium ${YEAR()} <small>${NUM1.format(k.urenY)} van ${k.doel} uur</small></h3>
       <div class="track"><div class="fill" style="width:${urenPct}%"></div><div class="pace" style="left:${pacePct}%"></div><div class="lbl"><span>${NUM1.format(k.urenY)} u</span><span>${k.doel} u</span></div></div>
-      <div class="trackkey"><span><span class="pill ${ahead>=0?"good":"warn"}">${ahead>=0?"Op schema":"Achter"}</span> ${NUM1.format(Math.abs(ahead))} uur ${ahead>=0?"voor":"achter"} op het tempo voor zelfstandigenaftrek</span><span>Gele lijn = waar je vandaag moet zijn</span></div>
-      <div class="trackkey"><span>Deze maand: <b>${NUM1.format(k.urenM)} u</b> (${k.urenM?Math.round(k.declM/k.urenM*100):0}% declarabel)</span><span>Nodig per week tot 31 dec: <b>${NUM1.format(Math.max(0,(k.doel-k.urenY)/Math.max(1,(new Date(YEAR(),11,31)-new Date())/6048e5)))} u</b></span></div>
+      <div class="trackkey"><span><span class="pill ${ahead>=0?"good":"warn"}">${ahead>=0?"Op schema":"Achter"}</span> ${NUM1.format(Math.abs(ahead))} uur ${ahead>=0?"voor":"achter"} op het tempo</span><span>Gele lijn = waar je vandaag moet zijn</span></div>
     </div>
-    <div class="panel"><h3>Pipeline <small><a href="#pipeline" style="color:var(--accent)">Bekijk bord</a></small></h3>${pipeSummary()}</div>
-  </div>
-  <div class="panel"><h3>Vooruitblik <small>komende 6 kwartalen · excl. btw</small></h3>${forecast()}</div>
-  <div class="panel"><h3>Recent gelogd <small><a href="#uren" style="color:var(--accent)">Alle uren</a></small></h3>${recentHours()}</div>`;
-}
-
-function chart(){
-  const now=new Date(), months=[];
-  for(let i=11;i>=0;i--){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); months.push(d.getFullYear()+"-"+pad(d.getMonth()+1)); }
-  const RM=revenueMonths(), rev = months.map(m=>RM[m]||0);
-  const cost = months.map(m=>sum(S.expenses.filter(e=>(e.datum||"").startsWith(m)),e=>e.bedrag));
-  const max = Math.max(1,...rev,...cost);
-  const step = [500,1000,2000,2500,5000,10000,20000,25000,50000].find(s=>max/s<=4)||Math.ceil(max/4/10000)*10000;
-  const top = Math.ceil(max/step)*step;
-  const W=640,H=230,L=52,R=8,T=10,B=26, cw=(W-L-R)/12, bw=Math.min(16,cw/3);
-  const y=v=>T+(H-T-B)*(1-v/top);
-  let g="";
-  for(let v=0;v<=top+1e-6;v+=step) g+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${v>=1000?"€"+(v/1000)+"k":"€"+v}</text>`;
-  months.forEach((m,i)=>{
-    const x=L+cw*i+cw/2;
-    const cur=i===11;
-    g+=`<rect x="${x-bw-1}" y="${y(rev[i])}" width="${bw}" height="${Math.max(0,y(0)-y(rev[i]))}" rx="2" fill="var(--accent)" opacity="${cur?1:.85}"><title>${m}: omzet ${eur(rev[i])}</title></rect>`;
-    g+=`<rect x="${x+1}" y="${y(cost[i])}" width="${bw}" height="${Math.max(0,y(0)-y(cost[i]))}" rx="2" fill="var(--cost)"><title>${m}: kosten ${eur(cost[i])}</title></rect>`;
-    g+=`<text class="ax" x="${x}" y="${H-8}" text-anchor="middle" ${cur?'style="font-weight:600;fill:var(--fg)"':""}>${new Date(+m.slice(0,4),+m.slice(5)-1,1).toLocaleDateString("nl-NL",{month:"short"}).replace(".","")}</text>`;
-  });
-  const tr=sum(rev,x=>x), tc=sum(cost,x=>x);
-  return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Omzet en kosten per maand">${g}</svg></div>
-  <div class="legend"><span><i style="background:var(--accent)"></i>Omzet ${eur(tr)}</span><span><i style="background:var(--cost)"></i>Kosten ${eur(tc)}</span><span>Resultaat <b style="color:var(--fg)">${eur(tr-tc)}</b></span></div>`;
-}
-function pipeSummary(){
-  const open=S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
-  if(!open.length) return `<div class="empty">Nog geen open deals. <button class="btn sm" data-new="deals">+ Deal</button></div>`;
-  const tot=sum(open,d=>d.waarde)||1;
-  const cols=["var(--cost)","var(--accent-soft)","var(--accent)","var(--jersey)"];
-  const bar=OPEN_STAGES.map((s,i)=>{const v=sum(open.filter(d=>d.fase===s),d=>d.waarde); return v?`<i title="${s}: ${eur(v)}" style="width:${v/tot*100}%;background:${cols[i]}"></i>`:"";}).join("");
-  const top=[...open].sort((a,b)=>(+b.waarde||0)-(+a.waarde||0)).slice(0,4);
-  return `<div class="meter" style="height:12px;display:flex">${bar}</div>
-  <div class="legend">${OPEN_STAGES.map((s,i)=>`<span><i style="background:${cols[i]}"></i>${s} ${eur(sum(open.filter(d=>d.fase===s),d=>d.waarde))}</span>`).join("")}</div>
-  <ul class="todo">${top.map(d=>`<li><span class="sev ok"></span><div class="t">${esc(d.naam)}<span>${esc(d.organisatie||"")} · ${d.fase}</span></div><b class="num">${eur(d.waarde)}</b></li>`).join("")}</ul>`;
+    <div class="panel"><h3>Recent gelogd <small><a href="#uren" style="color:var(--accent)">Alle uren</a></small></h3>${recentHours()}</div>
+  </div>`;
 }
 const goalFor = y => +S.settings["doel"+y] || +S.settings.jaardoel || 0;
 function monthsBetween(a,b){ const r=[]; let [y,m]=a.split("-").map(Number); const [y2,m2]=b.split("-").map(Number);
@@ -541,62 +545,14 @@ function stackSvg(items,aria){
   const W=640,H=200,L=8,R=8,T=22,B=26, cw=(W-L-R)/n, bw=Math.min(54,cw*.55), base=H-B, h=v=>(H-T-B)*v/max;
   let g=`<line class="gl" x1="${L}" x2="${W-R}" y1="${base}" y2="${base}"/>`;
   items.forEach((x,i)=>{ const cx=L+cw*i+cw/2, hb=h(x.b), hp=h(x.p);
-    g+=`<rect x="${cx-bw/2}" y="${base-hb}" width="${bw}" height="${hb}" fill="var(--accent)"><title>${x.lab}: omzet ${eur(x.b)}</title></rect>`;
+    g+=`<rect x="${cx-bw/2}" y="${base-hb}" width="${bw}" height="${hb}" fill="var(--accent)"><title>${x.lab}: akkoord ${eur(x.b)}</title></rect>`;
     g+=`<rect x="${cx-bw/2}" y="${base-hb-hp}" width="${bw}" height="${hp}" fill="var(--jersey)" opacity=".75"><title>${x.lab}: pipeline ${eur(x.p)}</title></rect>`;
     if(x.b+x.p) g+=`<text class="ax" x="${cx}" y="${base-hb-hp-6}" text-anchor="middle" style="fill:var(--fg);font-weight:600${n>6?";font-size:9.5px":""}">${n>6&&x.b+x.p>=1000?"€"+Math.round((x.b+x.p)/1000)+"k":eur(x.b+x.p)}</text>`;
     g+=`<text class="ax" x="${cx}" y="${H-8}" text-anchor="middle" ${x.strong?'style="fill:var(--fg)"':""}>${x.lab}</text>`; });
   return `<div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${aria}">${g}</svg></div>`;
 }
-const stackLegend = extra => `<div class="legend"><span><i style="background:var(--accent)"></i>Omzet: gewonnen projecten + facturen</span><span><i style="background:var(--jersey)"></i>Pipeline (open deals)</span>${extra||""}</div>`;
-function forecast(){
-  const now=new Date(), ny=YEAR()+1, al=allocations(), qs=[];
-  for(let i=0;i<6;i++){ const d=new Date(now.getFullYear(),(curQ()-1+i)*3,1); qs.push({y:d.getFullYear(),q:Math.floor(d.getMonth()/3)+1}); }
-  const items=qs.map(x=>{ const inQ=al.filter(a=>+a.m.slice(0,4)===x.y && Math.floor((+a.m.slice(5,7)-1)/3)+1===x.q);
-    return {lab:`Q${x.q} '${String(x.y).slice(2)}`,b:sum(inQ.filter(a=>a.k==="booked"),a=>a.v),p:sum(inQ.filter(a=>a.k==="pipe"),a=>a.v),strong:x.y>YEAR()}; });
-  const undated=sum(S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&!d.uitvoering),d=>+d.waarde||0);
-  const nyA=al.filter(a=>a.m.startsWith(String(ny))), nb=sum(nyA.filter(a=>a.k==="booked"),a=>a.v), np=sum(nyA.filter(a=>a.k==="pipe"),a=>a.v), doel=goalFor(ny);
-  return stackSvg(items,"Verwachte omzet per kwartaal") +
-    stackLegend(undated?`<span>${eur(undated)} aan deals zonder uitvoeringsdatum: <a href="#pipeline" style="color:var(--accent)">plan ze in</a></span>`:"") +
-    `<div class="trackkey"><span><b style="color:var(--fg)">${ny}:</b> ${eur(nb)} geboekt + ${eur(np)} in de pipeline${doel?` = <b style="color:var(--fg)">${Math.round((nb+np)/doel*100)}%</b> van een doel van ${eur(doel)}`:""}</span><button class="btn sm" data-oyear="${ny}">Bekijk ${ny}</button></div>`;
-}
+const stackLegend = extra => `<div class="legend"><span><i style="background:var(--accent)"></i>Akkoord: gewonnen opdrachten + facturen</span><span><i style="background:var(--jersey)"></i>Pipeline (open deals)</span>${extra||""}</div>`;
 const yearSeg = () => `<div class="seg" role="group" aria-label="Jaar">${[YEAR(),YEAR()+1].map(y=>`<button type="button" data-oyear="${y}" aria-pressed="${F.year===y}">${y}</button>`).join("")}</div>`;
-function vFuture(y){
-  const ys=String(y), al=allocations().filter(a=>a.m.startsWith(ys));
-  const booked=sum(al.filter(a=>a.k==="booked"),a=>a.v), pipe=sum(al.filter(a=>a.k==="pipe"),a=>a.v);
-  const inv=sum(S.invoices.filter(i=>i.status!=="Concept"&&inYear(i.datum,y)),i=>i.bedrag);
-  const deals=S.deals.filter(d=>OPEN_STAGES.includes(d.fase)&&(d.uitvoering||"").startsWith(ys)).sort((a,b)=>(+b.waarde||0)-(+a.waarde||0));
-  const projs=S.projects.filter(p=>projShare(p,y)>0);
-  const won=S.deals.filter(d=>d.fase==="Gewonnen"&&(d.uitvoering||"").startsWith(ys)&&!S.projects.some(p=>p.deal===d.id));
-  const sure=booked, exp=sure+pipe, doel=goalFor(y), gap=Math.max(0,doel-exp);
-  const pct=doel?Math.min(100,exp/doel*100):0, surePct=doel?Math.min(100,sure/doel*100):0;
-  const items=Array.from({length:12},(_,i)=>{ const m=ys+"-"+pad(i+1), inM=al.filter(a=>a.m===m);
-    return {lab:new Date(y,i,1).toLocaleDateString("nl-NL",{month:"short"}).replace(".",""),b:sum(inM.filter(a=>a.k==="booked"),a=>a.v),p:sum(inM.filter(a=>a.k==="pipe"),a=>a.v)}; });
-  const td=todos();
-  return head(`Vooruitblik ${y}`,`Wat er nu al voor ${y} op de planning staat · bijgewerkt bij elke deal en elk project`, yearSeg()+newBtn("deals","Deal",1)+newBtn("projects","Project")) +
-  `<div class="tiles">
-    <div class="tile"><span class="lab">Verwacht ${y}</span><b>${eur(exp)}</b><span class="sub">${doel?`${Math.round(exp/doel*100)}% van doel ${eur(doel)}`:"zet een doel in Instellingen"}</span><div class="meter" style="display:flex"><i style="width:${surePct}%"></i><i style="width:${Math.max(0,pct-surePct)}%;background:var(--jersey);opacity:.75"></i></div></div>
-    <div class="tile"><span class="lab">Geboekt</span><b>${eur(sure)}</b><span class="sub">${projs.length} project${projs.length===1?"":"en"}${inv?` · ${eur(inv)} al gefactureerd`:""}</span></div>
-    <div class="tile"><span class="lab">Pipeline ${y}</span><b>${eur(pipe)}</b><span class="sub">${deals.length} open deal${deals.length===1?"":"s"}</span></div>
-    <div class="tile"><span class="lab">Zekerheid</span><b>${exp?Math.round(sure/exp*100)+"%":"—"}</b><span class="sub">deel van de verwachting dat al vastligt</span></div>
-    <div class="tile"><span class="lab">Gat tot doel</span><b style="${gap?"color:var(--bad)":""}">${doel?eur(gap):"—"}</b><span class="sub">${gap&&doel?`≈ ${eur(gap/12)} per maand extra nodig`:doel?"doel is gedekt":"geen doel ingesteld"}</span></div>
-    <div class="tile"><span class="lab">Gemiddelde deal</span><b>${deals.length?eur(pipe/deals.length):"—"}</b><span class="sub">open deals voor ${y}</span></div>
-  </div>
-  <div class="grid2">
-    <div class="panel"><h3>Verwacht per maand <small>${y} · excl. btw</small></h3>${stackSvg(items,"Verwachte omzet per maand "+y)}${stackLegend()}</div>
-    <div class="panel"><h3>Actiepunten <small>vandaag · ${td.length} open</small></h3>
-      ${td.length?`<ul class="todo">${td.slice(0,7).map(x=>`<li><span class="sev ${x.sev}"></span><div class="t">${esc(x.txt)}<span>${esc(x.sub)}</span></div>${x.go?`<button class="btn sm" data-edit="${x.go[0]}:${x.go[1]}">Open</button>`:""}</li>`).join("")}</ul>`:`<div class="empty">Alles bij.</div>`}
-    </div>
-  </div>
-  <div class="grid2">
-    <div class="panel"><h3>Kansen voor ${y} <small><button class="btn sm ghost" data-dgo="${ys}">Bekijk op bord</button></small></h3>
-      ${deals.length?`<ul class="todo">${deals.map(d=>`<li><span class="sev ${d.fase==="Onderhandeling"||d.fase==="Voorstel"?"ok":""}"></span><div class="t">${esc(d.naam)}${exPill(d)}<span>${d.organisatie?esc(d.organisatie)+" · ":""}${d.fase} · ${fmtM(d.uitvoering)}</span></div><button class="btn sm" data-edit="deals:${d.id}">${eur(d.waarde)}</button></li>`).join("")}</ul>`:`<div class="empty">Nog geen deals met uitvoering in ${y}. Geef je deals een uitvoeringsmaand in de Pipeline.</div>`}
-    </div>
-    <div class="panel"><h3>Bevestigd voor ${y} <small>${eur(booked)} omzet</small></h3>
-      ${won.length?`<ul class="todo">${won.map(d=>`<li><span class="sev warn"></span><div class="t">Gewonnen: ${esc(d.naam)}<span>Nog geen project, dus telt niet mee als geboekt</span></div><button class="btn sm" data-mkproj="${d.id}">Maak project</button></li>`).join("")}</ul>`:""}
-      ${projs.length?`<ul class="todo">${projs.map(p=>{const v=projShare(p,y);return `<li><span class="sev ok"></span><div class="t">${esc(p.naam)}${exPill(p)}<span>${esc(p.klant||"")} · ${fmtD(p.start)} → ${fmtD(p.eind)}</span></div><button class="btn sm" data-edit="projects:${p.id}">${eur(v)}</button></li>`}).join("")}</ul>`:(won.length?"":`<div class="empty">Nog niets bevestigd voor ${y}. Zet een deal op Gewonnen, dan verschijnt hij hier automatisch.</div>`)}
-    </div>
-  </div>`;
-}
 function recentHours(){
   const r=[...S.hours].sort((a,b)=>(b.datum||"").localeCompare(a.datum||"")).slice(0,5);
   if(!r.length) return `<div class="empty">Nog geen uren. Start de timer links of log met + Uren.</div>`;
