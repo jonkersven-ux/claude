@@ -5,7 +5,7 @@ This file provides guidance for AI assistants (Claude, etc.) working in this rep
 ## Repository Overview
 
 - **Repository**: `jonkersven-ux/claude`
-- **Status**: Contains `dashboard/` — "De Ploegleider", a single-file freelancer dashboard published as a claude.ai Artifact (https://claude.ai/artifact/9ds3VAkoftHkmzcimXmaDw).
+- **Status**: Contains `dashboard/` — "Jonker Sports Media" (formerly "De Ploegleider"), a single-file freelancer dashboard published as a claude.ai Artifact (https://claude.ai/artifact/9ds3VAkoftHkmzcimXmaDw).
 
 ## Project Structure
 
@@ -13,7 +13,7 @@ This file provides guidance for AI assistants (Claude, etc.) working in this rep
 .
 ├── CLAUDE.md          # AI assistant guidance (this file)
 └── dashboard/
-    └── index.html     # De Ploegleider: vanilla HTML/CSS/JS, data via Artifact `db` capability
+    └── index.html     # Jonker Sports Media dashboard: vanilla HTML/CSS/JS, data via Artifact `db` capability
 ```
 
 This repository is in its initial state. Update this section as the project grows.
