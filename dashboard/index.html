@@ -120,6 +120,27 @@ a.org:hover{color:var(--accent)}
 .tasks li span[data-edit]{cursor:pointer;overflow-wrap:anywhere}
 .tick{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--muted);background:var(--surface);cursor:pointer;padding:0}
 .tick:hover{border-color:var(--good);background:var(--good-soft)}
+.advisor{border-color:var(--accent);background:linear-gradient(180deg,var(--accent-soft),var(--surface) 70%)}
+.adv-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.adv-id{display:flex;align-items:center;gap:10px}
+.adv-id h3{margin:0}
+.adv-id small{color:var(--muted);font-size:12px}
+.adv-mark{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-weight:700;font-size:18px}
+.adv-body{max-width:78ch;font-size:14.5px}
+.adv-body p,.msg p{margin:0 0 8px}
+.adv-body ul,.msg ul{margin:0 0 8px;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+dialog.chat{width:min(720px,calc(100vw - 24px));height:min(760px,calc(100vh - 32px))}
+.chat-wrap{display:flex;flex-direction:column;height:100%}
+.chat-wrap header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.chat-wrap header h3{margin:0;font-family:var(--f-display);text-transform:uppercase;font-size:20px}
+.chat-log{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:88%;padding:10px 12px;border-radius:12px;font-size:14px;overflow-wrap:anywhere}
+.msg.adv{background:var(--surface-2);border:1px solid var(--line);align-self:flex-start}
+.msg.me{background:var(--accent);color:var(--accent-ink);align-self:flex-end}
+.msg>:last-child{margin-bottom:0}
+.chat-form{display:flex;gap:8px;padding:12px 18px;border-top:1px solid var(--line);align-items:flex-end}
+dialog .chat-form{flex-direction:row;max-height:none}
+.chat-form textarea{min-height:44px;flex:1;width:auto;resize:none}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
 .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
@@ -212,6 +233,12 @@ dialog footer{padding:12px 18px;border-top:1px solid var(--line);display:flex;ju
   <main id="main" aria-live="polite"></main>
 </div>
 <dialog id="dlg"><form id="dlgForm" method="dialog"></form></dialog>
+<dialog id="chat" class="chat" aria-label="Sparren met je adviseur"><div class="chat-wrap">
+  <header><h3>Sparren met je adviseur</h3><button type="button" class="btn ghost" data-act="chat-close" aria-label="Sluiten">✕</button></header>
+  <div class="chat-log" id="chatLog"></div>
+  <form class="chat-form" id="chatForm"><textarea id="chatInput" rows="2" placeholder="Vraag door op het advies, of gooi een idee in de groep…"></textarea>
+    <button type="submit" class="btn pri" id="chatSend">Stuur</button><button type="button" class="btn" id="chatStop" data-act="chat-stop" hidden>Stop</button></form>
+</div></dialog>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -400,7 +427,7 @@ function vOverview(){
   const tx=taxCalc();
   return head(`${greet}${name}`, `${dateStr[0].toUpperCase()+dateStr.slice(1)} · ${loading()?"Gegevens laden…":"jaaroverzicht "+y}`,
       yearSeg()+newBtn("deals","Deal",1)+newBtn("projects","Project")+newBtn("contacts","Contact")+newBtn("ideas","Idee")) +
-  `<div class="panel"><h3>Doel ${y} <small>${doel?"":'<a href="#instellingen" style="color:var(--accent)">Stel een omzetdoel in</a>'}</small></h3>
+  advisorPanel() + `<div class="panel"><h3>Doel ${y} <small>${doel?"":'<a href="#instellingen" style="color:var(--accent)">Stel een omzetdoel in</a>'}</small></h3>
     <div class="goalwrap"><div class="goalbar"><i style="width:${ak/scale*100}%;background:var(--accent)"></i><i style="width:${pi/scale*100}%;background:var(--jersey);opacity:.75"></i></div>${doel?`<div class="goalmark" style="left:${Math.min(100,doel/scale*100)}%"></div>`:""}</div>
     <div class="goalgrid">
       <div><span class="lab">Doel</span><b>${doel?eur(doel):"—"}</b><span class="sub">omzetdoel</span></div>
@@ -492,7 +519,8 @@ function vSettings(){
   const f=(key,l,t="text",hint="")=>`<label>${l}<input id="set-${key}" data-set="${key}" type="${t}" value="${esc(s[key]??"")}" ${t==="number"?'step="any"':""}>${hint?`<span class="hint muted">${hint}</span>`:""}</label>`;
   const ex = COLLS.reduce((t,c)=>t+S[c].filter(r=>r.example).length,0);
   return head("Instellingen","Tarieven, doelen en je bedrijfsgegevens.",`<button class="btn pri" data-act="save-set">Opslaan</button>`) +
-  `<div class="panel"><h3>Bedrijf</h3><div class="setgrid">${f("naam","Je naam")}${f("bedrijf","Bedrijfsnaam")}${f("kvk","KvK-nummer")}${f("iban","IBAN")}</div></div>
+  `<div class="panel"><h3>Je adviseur <small>wat hij over je weet</small></h3><label class="setgrid" style="grid-template-columns:1fr"><textarea id="advProfile" rows="8" placeholder="Wie je bent, wat je drijft, waar je naartoe wilt…">${esc(ADV.profile)}</textarea></label><p class="muted" style="margin:0;font-size:12.5px">Je adviseur leest dit elke dag samen met je dashboard. Houd het actueel: doelen, twijfels, wat je energie geeft.</p></div>
+  <div class="panel"><h3>Bedrijf</h3><div class="setgrid">${f("naam","Je naam")}${f("bedrijf","Bedrijfsnaam")}${f("kvk","KvK-nummer")}${f("iban","IBAN")}</div></div>
   <div class="panel"><h3>Tarieven & doelen</h3><div class="setgrid">
     ${f("jaardoel","Omzetdoel "+YEAR()+" (€)","number")}${f("doel"+(YEAR()+1),"Omzetdoel "+(YEAR()+1)+" (€)","number","Leeg = zelfde als dit jaar")}${f("doel"+(YEAR()+2),"Omzetdoel "+(YEAR()+2)+" (€)","number","Leeg = zelfde als dit jaar")}
     ${f("reservePct","Reserve inkomstenbelasting (%)","number","Indicatie. Vraag je boekhouder naar jouw percentage.")}
@@ -798,6 +826,10 @@ document.addEventListener("click", async e=>{
   if(d.export) return exportCsv(d.export);
   if(d.csort){ F.contactSort=d.csort; return render(); }
   if(d.act==="close") return $("#dlg").close();
+  if(d.act==="adv-new") return genAdvice();
+  if(d.act==="adv-chat") return openChat();
+  if(d.act==="chat-close") return $("#chat").close();
+  if(d.act==="chat-stop"){ ADV.ctl&&ADV.ctl.abort(); return; }
   if(d.act==="del") return delForm(t);
   if(d.act==="clear-ex") return clearExamples(t);
   if(d.act==="save-set") return saveSettings();
@@ -808,6 +840,8 @@ document.addEventListener("input", e=>{
   if(e.target.closest("#dlgForm")) updateCalc();
 });
 $("#dlgForm").addEventListener("submit", e=>{ e.preventDefault(); saveForm(); });
+$("#chatForm").addEventListener("submit", e=>{ e.preventDefault(); sendChat(); });
+$("#chatInput").addEventListener("keydown", e=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendChat(); } });
 $("#dlg").addEventListener("close", ()=>{ editing=null; schedule(); });
 window.addEventListener("hashchange", ()=>{ render(); window.scrollTo(0,0); });
 
@@ -823,7 +857,114 @@ async function saveSettings(){
   if(!db) return toast("Opslag niet beschikbaar");
   const next={...S.settings};
   document.querySelectorAll("[data-set]").forEach(i=>{ const k=i.dataset.set; next[k]= i.type==="number"? (i.value===""?"":+i.value) : i.value.trim(); });
-  try{ await db.doc("settings/main").set(next); toast("Instellingen opgeslagen"); }catch{ toast("Opslaan mislukt"); }
+  try{ await db.doc("settings/main").set(next); const pr=$("#advProfile"); if(pr&&pr.value.trim()!==ADV.profile) await db.doc("advisor/profile").set({tekst:pr.value.trim()}); toast("Instellingen opgeslagen"); }catch{ toast("Opslaan mislukt"); }
+}
+
+// ---------- persoonlijke adviseur ----------
+// Eén advies per dag (opgeslagen in advice/<datum>), gebaseerd op het dashboard + het profiel in advisor/profile.
+const ADV = {sample:null, doc:null, loaded:false, profile:"", draft:"", busy:false, err:"", tried:false, chatBusy:false, ctl:null};
+function mdLite(t){
+  const lines=esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").split(/\n/);
+  let html="", inList=false;
+  lines.forEach(l=>{ const m=l.match(/^\s*[-•*]\s+(.*)/);
+    if(m){ if(!inList){ html+="<ul>"; inList=true; } html+=`<li>${m[1]}</li>`; }
+    else { if(inList){ html+="</ul>"; inList=false; } if(l.trim()) html+=`<p>${l}</p>`; } });
+  return html+(inList?"</ul>":"");
+}
+function dashSnapshot(){
+  const t=TODAY(), y=YEAR(), thisM=t.slice(0,7), RM=revenueMonths(), L=[];
+  const openD=S.deals.filter(d=>OPEN_STAGES.includes(d.fase));
+  const yr=yy=>{ const ys=String(yy), ak=sum(Object.keys(RM).filter(m=>m.startsWith(ys)),m=>RM[m]);
+    const pi=sum(openD.filter(d=>d.uitvoering&&(d.uitvoering<thisM?thisM:d.uitvoering).startsWith(ys)),d=>d.waarde), doel=goalFor(yy);
+    return `- ${yy}: doel ${eur(doel)}, akkoord ${eur(ak)}, pipeline ${eur(pi)}, nog te vinden ${eur(Math.max(0,doel-ak-pi))}`; };
+  L.push(`Vandaag: ${new Date().toLocaleDateString("nl-NL",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}`);
+  L.push("JAARCIJFERS (omzet = akkoord-opdrachten, pipeline = open deals met uitvoering in dat jaar):",...[y,y+1,y+2].map(yr));
+  const undated=openD.filter(d=>!d.uitvoering); if(undated.length) L.push(`- Deals zonder uitvoeringsmaand: ${undated.length} (${eur(sum(undated,d=>d.waarde))})`);
+  L.push("OPEN DEALS:"); [...openD].sort((a,b)=>(+b.waarde||0)-(+a.waarde||0)).slice(0,25).forEach(d=>L.push(`- ${d.naam} | ${d.organisatie||"-"} | ${d.fase} | ${eur(d.waarde)}${d.vorm==="Retainer"?` (retainer ${eur(d.maandbedrag)} p/m)`:""} | uitvoering ${d.uitvoering||"onbekend"} | contact ${d.contact||"-"} | volgende stap: ${d.volgendeStap||"geen"}${d.stapDatum?" op "+d.stapDatum:""}`));
+  if(!openD.length) L.push("- geen");
+  const won=S.deals.filter(d=>d.fase==="Gewonnen").length, lost=S.deals.filter(d=>d.fase==="Verloren").length; L.push(`Afgesloten deals: ${won} gewonnen, ${lost} verloren.`);
+  L.push("PROJECTEN:"); S.projects.filter(p=>p.status!=="Afgerond"||(p.eind||"")>=addDays(t,-90)).forEach(p=>{ const open=S.tasks.filter(a=>a.project===p.id&&!a.klaar);
+    L.push(`- ${p.naam} | ${p.klant||"-"} | ${p.status} | ${p.vorm==="Retainer"?`retainer ${eur(p.maandbedrag)} p/m`:eur(projValue(p))} | ${p.start||"?"} t/m ${p.eind||(p.vorm==="Retainer"?"doorlopend":"?")}${open.length?" | open actiepunten: "+open.map(a=>`${a.titel} (${a.datum})`).join("; "):""}`); });
+  const td=todos(); L.push("ACTIEPUNTEN VANDAAG:",...(td.length?td.map(x=>`- ${x.txt} (${x.sub})`):["- geen"]));
+  const quiet=S.contacts.filter(c=>c.laatsteContact&&daysBetween(c.laatsteContact,t)>45).sort((a,b)=>(a.laatsteContact||"").localeCompare(b.laatsteContact||"")).slice(0,10);
+  L.push(`NETWERK: ${S.contacts.length} contacten.`,...quiet.map(c=>`- lang niet gesproken: ${c.naam} (${c.organisatie||"-"}, ${c.warmte||"?"}) sinds ${c.laatsteContact}`));
+  const tx=taxCalc(); L.push(`BELASTINGPOT: reserve ${eur(tx.ibTot)}, in pot ${eur(tx.saldo)}, nog over te boeken ${eur(tx.todo)}.`);
+  const ideas=S.ideas.filter(i=>!["Geparkeerd","Gerealiseerd"].includes(i.status)).sort((a,b)=>(+b.potentie||0)-(+a.potentie||0)).slice(0,8);
+  if(ideas.length) L.push("IDEEËN:",...ideas.map(i=>`- ${i.titel} | ${i.status} | potentie ${i.potentie}/5 | volgende stap: ${i.volgendeStap||"-"}`));
+  return L.join("\n").slice(0,30000);
+}
+function advRules(){
+  const naam=S.settings.naam||"de ondernemer", bedrijf=S.settings.bedrijf||"Jonker Sports Media";
+  return `Je bent de persoonlijke zakelijke adviseur van ${naam}, eigenaar van ${bedrijf}.
+WAT JE OVER HEM WEET:
+${ADV.profile||"(nog geen profiel ingevuld)"}
+
+JOUW STIJL: Nederlands, direct en eerlijk, zonder jargon of fluff. Concreet en uitvoerbaar, met gevoel voor sport, storytelling en relaties. Daag hem uit waar dat nodig is. Gebruik voor cijfers, namen en deals uitsluitend de dashboarddata hieronder; verzin niets.
+
+DASHBOARD:
+${dashSnapshot()}`;
+}
+const ADV_ASK = `Schrijf je advies van vandaag, maximaal 170 woorden, precies in dit format:
+**Kern:** één scherpe observatie over waar hij nu staat.
+Dan drie acties, elk op een eigen regel die begint met "- ", concreet (wie, wat, wanneer) en gerangschikt op impact.
+**Vraag:** één prikkelende vraag om vandaag over na te denken.
+Geen inleiding en geen afsluiting.`;
+const advErr = c => c==="not_granted"?"Je hebt Claude niet toegestaan voor deze pagina. Klik op 'Vraag advies' om het alsnog te doen."
+  : c==="rate_limited"?"Even te veel vragen tegelijk. Probeer het over een minuut opnieuw."
+  : c==="cancelled"?"" : "Het advies kon niet worden opgehaald. Probeer het opnieuw.";
+async function genAdvice(){
+  if(!ADV.sample||ADV.busy) return;
+  ADV.busy=true; ADV.err=""; ADV.draft=""; ADV.tried=true; schedule();
+  try{
+    const {text}=await ADV.sample(advRules()+"\n\n"+ADV_ASK,{onText:({text})=>{ ADV.draft=text; const el=$("#advBody"); if(el) el.innerHTML=mdLite(text); }});
+    const doc={tekst:text, at:new Date().toISOString(), chat:[]};
+    ADV.doc=doc; if(db) await db.doc("advice/"+TODAY()).set(doc).catch(()=>{});
+  }catch(e){ ADV.err=advErr(e&&e.code); }
+  ADV.busy=false; ADV.draft=""; schedule();
+}
+function maybeAutoAdvice(){ if(ADV.sample && ADV.loaded && !ADV.doc && !ADV.tried && !loading()) genAdvice(); }
+function advisorPanel(){
+  if(S.nodb) return "";
+  const body = ADV.busy ? (ADV.draft?mdLite(ADV.draft):`<p class="muted">Je adviseur leest je dashboard door…</p>`)
+    : ADV.doc ? mdLite(ADV.doc.tekst)
+    : ADV.err ? `<p class="muted">${esc(ADV.err)}</p>`
+    : !ADV.sample ? `<p class="muted">Je adviseur is alleen beschikbaar als je dit dashboard in claude.ai opent.</p>`
+    : `<p class="muted">Het advies van vandaag wordt klaargezet…</p>`;
+  const when = ADV.doc&&ADV.doc.at ? "vandaag, "+new Date(ADV.doc.at).toLocaleTimeString("nl-NL",{hour:"2-digit",minute:"2-digit"}) : "";
+  return `<section class="panel advisor" aria-label="Persoonlijke adviseur">
+    <div class="adv-head"><div class="adv-id"><span class="adv-mark" aria-hidden="true">A</span><div><h3>Je adviseur</h3><small>${when||"advies van de dag"}</small></div></div>
+    <div class="actions">${ADV.sample?`${ADV.doc&&!ADV.busy?`<button class="btn sm ghost" data-act="adv-new" title="Schrijf een nieuw advies op basis van de huidige stand">Nieuw advies</button>`:""}${!ADV.doc&&!ADV.busy?`<button class="btn sm" data-act="adv-new">Vraag advies</button>`:""}<button class="btn sm pri" data-act="adv-chat" ${ADV.busy?"disabled":""}>Spar verder →</button>`:""}</div></div>
+    <div class="adv-body" id="advBody">${body}</div>
+  </section>`;
+}
+// --- chat ---
+function chatTurns(){ return (ADV.doc&&ADV.doc.chat)||[]; }
+function renderChat(streaming){
+  const box=$("#chatLog"); if(!box) return;
+  const turns=chatTurns();
+  box.innerHTML = (ADV.doc?`<div class="msg adv">${mdLite(ADV.doc.tekst)}</div>`:`<div class="msg adv"><p>Waar wil je over sparren?</p></div>`)
+    + turns.map(m=>`<div class="msg ${m.role==="user"?"me":"adv"}">${m.role==="user"?`<p>${esc(m.content).replace(/\n/g,"<br>")}</p>`:mdLite(m.content)}</div>`).join("")
+    + (streaming!=null?`<div class="msg adv" id="chatStream">${streaming?mdLite(streaming):'<p class="muted">Denkt na…</p>'}</div>`:"");
+  box.scrollTop=box.scrollHeight;
+  $("#chatSend").hidden=ADV.chatBusy; $("#chatStop").hidden=!ADV.chatBusy;
+}
+function openChat(){ const d=$("#chat"); if(!d.open) d.showModal(); renderChat(); setTimeout(()=>$("#chatInput").focus(),30); }
+async function sendChat(){
+  const inp=$("#chatInput"), msg=inp.value.trim(); if(!msg||ADV.chatBusy||!ADV.sample) return;
+  inp.value=""; ADV.chatBusy=true;
+  const base=chatTurns().slice(-30), turns=[...base,{role:"user",content:msg}];
+  ADV.doc={...(ADV.doc||{tekst:"",at:new Date().toISOString()}),chat:turns}; renderChat("");
+  const lead=advRules()+(ADV.doc.tekst?`\n\nJE ADVIES VAN VANDAAG WAS:\n${ADV.doc.tekst}`:"")+`\n\nHij wil nu met je sparren. Antwoord als sparringpartner: kort (maximaal 150 woorden tenzij hij om meer vraagt), concreet, en stel waar nuttig een vraag terug.`;
+  ADV.ctl=new AbortController();
+  try{
+    const {text}=await ADV.sample([{role:"user",content:lead},...turns],{cache:false,signal:ADV.ctl.signal,onText:({text})=>{ const el=$("#chatStream"); if(el){ el.innerHTML=mdLite(text); $("#chatLog").scrollTop=1e9; } }});
+    ADV.doc={...ADV.doc,chat:[...turns,{role:"assistant",content:text}]};
+  }catch(e){
+    const keep=e&&e.text; ADV.doc={...ADV.doc,chat:keep?[...turns,{role:"assistant",content:keep}]:turns};
+    if(e&&e.code!=="cancelled") toast(advErr(e.code)||"Geen antwoord ontvangen");
+  }
+  ADV.chatBusy=false; renderChat();
+  if(db) db.doc("advice/"+TODAY()).set(ADV.doc).catch(()=>{});
 }
 
 // ---------- boot ----------
@@ -833,13 +974,16 @@ render();
   const timeout=setTimeout(()=>{ if(loading()){ S.err="Je gegevens zijn nog niet bereikbaar. Controleer je verbinding; de pagina probeert het automatisch opnieuw."; schedule(); } },10000);
   try{ downloads = await window.claude?.use?.("downloads"); }catch{}
   try{ db = await window.claude?.use?.("db"); }catch{ db=null; }
+  try{ ADV.sample = await window.claude?.use?.("sample"); }catch{ ADV.sample=null; }
   if(!db){ clearTimeout(timeout); S.nodb=true; render(); return; }
-  const done=()=>{ if(!loading()){ clearTimeout(timeout); S.err=null; } schedule(); };
+  const done=()=>{ if(!loading()){ clearTimeout(timeout); S.err=null; } schedule(); maybeAutoAdvice(); };
   COLLS.forEach(c=>{
     db.collection(c).onSnapshot(snap=>{ S[c]=snap.docs.map(d=>({id:d.id,...d.data()})); if(!snap.metadata.fromCache) S.loaded[c]=true; done(); },
       err=>{ S.loaded[c]=true; S.err="Een deel van je gegevens kon niet geladen worden ("+err.code+")."; schedule(); });
   });
   db.doc("settings/main").onSnapshot(s=>{ S.settings={...S_DEF,...(s.exists?s.data():{})}; schedule(); }, ()=>{});
+  db.doc("advisor/profile").onSnapshot(s=>{ ADV.profile=s.exists?String(s.data().tekst||""):""; schedule(); }, ()=>{});
+  db.doc("advice/"+TODAY()).onSnapshot(s=>{ if(!ADV.busy&&!ADV.chatBusy) ADV.doc=s.exists?s.data():ADV.doc; ADV.loaded=true; schedule(); maybeAutoAdvice(); }, ()=>{ ADV.loaded=true; });
 })();
 })();
 </script>
