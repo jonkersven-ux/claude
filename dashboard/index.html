@@ -114,6 +114,12 @@ a.org:hover{color:var(--accent)}
 .goalgrid b{font-family:var(--f-display);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
 .goalgrid .sub{color:var(--muted);font-size:12px}
 @media (max-width:700px){.goalgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.tasks:empty{display:none}
+.tasks li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px}
+.tasks li span[data-edit]{cursor:pointer;overflow-wrap:anywhere}
+.tick{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--muted);background:var(--surface);cursor:pointer;padding:0}
+.tick:hover{border-color:var(--good);background:var(--good-soft)}
 .pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .pill.good{background:var(--good-soft);color:var(--good);border-color:transparent}
 .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
@@ -281,6 +287,11 @@ const SCHEMA = {
     {k:"start",l:"Start",t:"date"},
     {k:"eind",l:"Eind / deadline",t:"date",hint:"Retainer zonder einddatum telt door t/m "+(YEAR()+2)},
     {k:"notitie",l:"Notitie",t:"textarea",full:1}]},
+  tasks:{one:"actiepunt", fields:[
+    {k:"titel",l:"Actiepunt",t:"text",req:1,full:1,ph:"Bijv. ruwe edit naar Martin sturen"},
+    {k:"project",l:"Project",t:"ref",ref:"projects",req:1},
+    {k:"datum",l:"Wanneer doen?",t:"date",req:1,def:TODAY},
+    {k:"notitie",l:"Notitie",t:"text",full:1}]},
   ideas:{one:"idee", fields:[
     {k:"titel",l:"Idee",t:"text",req:1,full:1},
     {k:"categorie",l:"Categorie",t:"select",o:["Concept / event","Merch & merk","Content & storytelling","Hospitality","Sportreis","Samenwerking","Eigen business"]},
@@ -320,7 +331,9 @@ function todos(){
   const t=TODAY(), out=[];
   S.projects.forEach(p=>{ if(p.status==="Lopend" && p.vorm!=="Retainer" && p.eind && p.eind<t) out.push({sev:"warn",txt:`Is ${p.naam} afgerond en betaald?`,sub:`Deadline ${fmtD(p.eind)} voorbij · zet op Afgerond, dan telt het als gefactureerd`,go:["projects",p.id],k:0}); });
   S.contacts.forEach(c=>{ if(c.followUp && c.followUp<=t) out.push({sev:c.followUp<t?"warn":"ok",txt:`Follow-up ${c.naam}${c.organisatie?" ("+c.organisatie+")":""}`,sub:c.followUp<t?`Gepland ${fmtD(c.followUp)}`:"Vandaag",go:["contacts",c.id],k:1}); });
-  S.deals.forEach(d=>{ if(OPEN_STAGES.includes(d.fase) && d.stapDatum && d.stapDatum<=addDays(t,2)) out.push({sev:d.stapDatum<t?"warn":"ok",txt:`${d.volgendeStap||"Volgende stap"} – ${d.naam}`,sub:`${d.fase} · ${fmtD(d.stapDatum)}`,go:["deals",d.id],k:1}); });
+  S.tasks.forEach(a=>{ if(!a.klaar && a.datum && a.datum<=t){ const p=projById(a.project);
+    out.push({sev:a.datum<t?"warn":"ok",txt:a.titel,sub:`${p?p.naam:"Project"} · ${a.datum<t?"was gepland "+fmtD(a.datum):"vandaag"}`,go:["tasks",a.id],done:a.id,k:1}); } });
+  S.deals.forEach(d=>{ if(OPEN_STAGES.includes(d.fase) && d.stapDatum && d.stapDatum<=t) out.push({sev:d.stapDatum<t?"warn":"ok",txt:`${d.volgendeStap||"Volgende stap"} – ${d.naam}`,sub:`${d.fase} · ${fmtD(d.stapDatum)}`,go:["deals",d.id],k:1}); });
   S.projects.forEach(p=>{ if(p.status==="Lopend" && p.eind && p.eind>=t && p.eind<=addDays(t,7)) out.push({sev:"ok",txt:`Deadline ${p.naam}`,sub:fmtD(p.eind),go:["projects",p.id],k:3}); });
   const tx=taxCalc(); if(tx.todo>=50) out.push({sev:"warn",txt:`Zet ${eur(tx.todo)} over naar je belastingpot`,sub:`Pot ${eur(tx.saldo)} · nodig ${eur(tx.needed)}`,go:null,k:1});
   return out.sort((a,b)=>a.k-b.k);
@@ -408,7 +421,7 @@ function vOverview(){
   <div class="grid2">
     <div class="panel"><h3>Per maand <small>${y}</small></h3>${stackSvg(items,"Akkoord en pipeline per maand "+y)}${stackLegend()}</div>
     <div class="panel"><h3>Actiepunten <small>vandaag · ${td.length} open</small></h3>
-      ${td.length?`<ul class="todo">${td.slice(0,8).map(x=>`<li><span class="sev ${x.sev}"></span><div class="t">${esc(x.txt)}<span>${esc(x.sub)}</span></div>${x.go?`<button class="btn sm" data-edit="${x.go[0]}:${x.go[1]}">Open</button>`:""}</li>`).join("")}</ul>`:`<div class="empty">Alles bij. Geen verlopen facturen of follow-ups.</div>`}
+      ${td.length?`<ul class="todo">${td.slice(0,14).map(x=>`<li><span class="sev ${x.sev}"></span><div class="t">${esc(x.txt)}<span>${esc(x.sub)}</span></div><div class="actions">${x.done?`<button class="btn sm pri" data-done="${x.done}">✓ Klaar</button>`:""}${x.go?`<button class="btn sm" data-edit="${x.go[0]}:${x.go[1]}">Open</button>`:""}</div></li>`).join("")}</ul>`:`<div class="empty">Alles bij. Geen verlopen facturen of follow-ups.</div>`}
     </div>
   </div>
   <div class="grid2">
@@ -652,6 +665,9 @@ function lProjects(q){
       <p>${orgLink(p.klant)}${p.type?" · "+esc(p.type):""}</p>
       <p>${p.vorm==="Retainer"?`<span class="pill acc">retainer ${eur(p.maandbedrag)} p/m</span> `:""}${p.start?fmtD(p.start):"?"} → ${p.eind?fmtD(p.eind):p.vorm==="Retainer"?"doorlopend":"?"}</p>
       <div class="meta" style="display:flex;justify-content:space-between;font-size:12.5px"><span>${eur(projValue(p))} opdrachtwaarde</span><span>${p.status==="Afgerond"?"afgerond & betaald":p.vorm==="Retainer"?eur(sum(projBilled(p),x=>x[1]))+" betaald":"nog te factureren"}</span></div>
+      ${(()=>{ const ts=S.tasks.filter(a=>a.project===p.id), open=ts.filter(a=>!a.klaar).sort((a,b)=>(a.datum||"").localeCompare(b.datum||"")), done=ts.length-open.length, t=TODAY();
+        return `<ul class="tasks">${open.map(a=>`<li><button class="tick" data-done="${a.id}" aria-label="Afvinken: ${esc(a.titel)}"></button><span data-edit="tasks:${a.id}">${esc(a.titel)}</span><span class="pill ${a.datum<t?"bad":a.datum===t?"warn":""}">${a.datum===t?"vandaag":fmtD(a.datum)}</span></li>`).join("")}</ul>
+        <div class="meta" style="display:flex;justify-content:space-between;font-size:12px"><button class="btn sm" data-newfor="tasks" data-k="project" data-v="${p.id}">+ Actiepunt</button><span class="muted">${done?done+" afgevinkt":""}</span></div>`; })()}
     </div>`;}).join("")}</div>`;
 }
 function lIdeas(q){
@@ -758,7 +774,7 @@ async function exportCsv(c){
 // ---------- events ----------
 document.addEventListener("click", async e=>{
   const mn=e.target.closest("nav.menu a"); if(mn&&mn.getAttribute("href")==="#bedrijven"){ F.org=null; if(view()==="bedrijven") render(); }
-  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-touch],[data-export],[data-csort],[data-mkproj],[data-dyear],[data-oyear],[data-dgo],[data-org],[data-newfor]");
+  const t=e.target.closest("[data-new],[data-edit],[data-act],[data-stage],[data-touch],[data-done],[data-export],[data-csort],[data-mkproj],[data-dyear],[data-oyear],[data-dgo],[data-org],[data-newfor]");
   if(!t) return;
   const d=t.dataset;
   if(d.stage||d.istate||d.touch){ e.stopPropagation(); }
@@ -776,6 +792,7 @@ document.addEventListener("click", async e=>{
       if(to==="Gewonnen"){ if(await ensureProject(deal)) toast(wonMsg(deal)); }
       else if(deal.fase==="Gewonnen"){ const pr=S.projects.find(p=>p.deal===id); if(pr) toast(`Let op: project "${pr.naam}" telt nog als omzet. Verwijder het als de deal niet doorgaat.`); }
     }); }
+  if(d.done){ return patch("tasks",d.done,{klaar:true,klaarOp:TODAY()}).then(()=>toast("Afgevinkt")); }
   if(d.touch){ return patch("contacts",d.touch,{laatsteContact:TODAY()}).then(()=>toast("Laatste contact: vandaag")); }
   if(d.edit){ const [c,id]=d.edit.split(":"); return openForm(c,id); }
   if(d.export) return exportCsv(d.export);
